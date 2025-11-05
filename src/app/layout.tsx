@@ -20,9 +20,11 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Meal Ease",
+  title: "EaseMeals",
   description: "Your personal meal planner",
-  icons: "/logo.png",
+  icons: {
+    icon: "/logo.png",
+  },
 };
 
 export default function RootLayout({
@@ -32,7 +34,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} antialiased flex items-center justify-center min-h-screen`}>{children}</body>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen`}
+      >
+        {children}
+      </body>
     </html>
   );
 }
