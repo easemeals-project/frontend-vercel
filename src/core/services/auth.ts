@@ -69,7 +69,7 @@ class AuthService {
       await confirmResetPassword({
         username: email,
         newPassword: params.newPassword,
-        confirmationCode: params.newPassword,
+        confirmationCode: params.confirmationCode,
       });
     } catch (error) {
       return getErrorMessage(error);

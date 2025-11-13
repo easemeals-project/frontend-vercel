@@ -38,6 +38,7 @@ export function ResetPasswordForm() {
     validationSchema: ResetPasswordSchema,
     onSubmit: async (values, { setSubmitting }) => {
       setAuthError(null);
+      console.log(email, values);
       const error = await authService.confirmResetPassword(values, email);
 
       // show background error
