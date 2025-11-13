@@ -11,6 +11,7 @@ export default {
   },
   msg: {
     reset: "Your password has been changed! Please Signin.",
+    signup: "Your email has been validated! Please Signin.",
   },
   features: {
     socialsAuth: false,

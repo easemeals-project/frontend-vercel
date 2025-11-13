@@ -27,6 +27,10 @@ export default function SignInForm() {
       if (msgType == MsgType.reset) {
         setMsg(conts.msg.reset);
       }
+
+      if (msgType == MsgType.signup) {
+        setMsg(conts.msg.signup);
+      }
       setTimeout(() => {
         setMsg(null);
       }, 5000);
