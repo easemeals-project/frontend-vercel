@@ -9,7 +9,6 @@ import conts from "@/lib/conts";
 import { authService } from "@/core/services/auth";
 import { resendSignUpCode } from "aws-amplify/auth";
 import OtpInput from "@/app/_components/global/OtpInput";
-import { MsgType } from "@/lib/types";
 
 export default function VerifyEmailForm() {
   const router = useRouter();
@@ -45,7 +44,7 @@ export default function VerifyEmailForm() {
           setAuthError(null);
         }, 5000);
       } else {
-        router.push(`${conts.paths.signin}?msg=${MsgType.signup}`);
+        router.push(conts.paths.dashboard);
       }
       setSubmitting(false);
     },

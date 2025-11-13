@@ -4,5 +4,4 @@ enum MsgCategory {
 
 export enum MsgType {
   reset = "reset",
-  signup = "signup",
 }
