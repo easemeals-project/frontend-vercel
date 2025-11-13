@@ -46,6 +46,16 @@ export async function middleware(request: NextRequest) {
   return response;
 }
 
+// `config.matcher` must be statically analyzable by Next.js (no template
+// expressions). Use literal strings here so the build can validate the
+// exported config.
 export const config = {
-  matcher: [`${path.dashboard}/:path*`, ...publicAuthRoutes],
+  matcher: [
+    "/dashboard/:path*",
+    "/auth/forgot_pass",
+    "/auth/reset_pass",
+    "/auth/signin",
+    "/auth/signup",
+    "/auth/verify_email",
+  ],
 };

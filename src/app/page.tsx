@@ -20,7 +20,7 @@ export default function HomePage() {
         <HeroSection />
       </div>
 
-      <main className="flex-grow">
+      <main className="grow">
         <WhyChooseUsSection />
         <HowItWorksSection />
         <TestimonialsSection />
@@ -70,12 +70,12 @@ function HeroSection() {
               height={400}
               className="rounded-lg object-cover w-full h-full"
             />
-            <div className="absolute top-[-20px] right-0 flex items-center gap-x-4 bg-white p-4 rounded-md shadow-md">
-              <IoTimer className="!text-app_secondary text-2xl flex-shrink-0 mt-1" />
+            <div className="absolute -top-5 right-0 flex items-center gap-x-4 bg-white p-4 rounded-md shadow-md">
+              <IoTimer className="text-app_secondary! text-2xl shrink-0 mt-1" />
               Save 5+ hours weekly
             </div>
             <div className="absolute bottom-2 flex items-center gap-x-4 bg-white p-4 rounded-md shadow-md">
-              <CheckCircleFilled className="!text-green-600 text-2xl flex-shrink-0 mt-1" />
+              <CheckCircleFilled className="text-green-600! text-2xl shrink-0 mt-1" />
               2500+ recipes
             </div>
           </div>
@@ -190,7 +190,7 @@ function HowItWorksSection() {
           <div className="space-y-6">
             {steps.map((step, index) => (
               <div key={uniqid()} className="flex items-start space-x-4">
-                <CheckCircleFilled className="!text-green-600 text-2xl flex-shrink-0 mt-1" />
+                <CheckCircleFilled className="text-green-600! text-2xl shrink-0 mt-1" />
                 <div>
                   <h3 className="text-xl font-semibold text-gray-900">
                     Step {index + 1}: {step.title}
@@ -244,7 +244,7 @@ function TestimonialsSection() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {testimonials.map((testimonial, i) => (
-            <Card key={uniqid()} className={`!bg-app_bg shadow-md`}>
+            <Card key={uniqid()} className={`bg-app_bg! shadow-md`}>
               <div className="flex gap-x-6 align-middle content-center">
                 <Image
                   src={testimonial.img}

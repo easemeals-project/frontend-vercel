@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { Suspense } from "react";
 import SignInForm from "./_components/form"; // Assuming @ is an alias for src/
 import conts from "@/lib/conts";
 
@@ -25,7 +26,9 @@ export default function SignInPage() {
         </div>
 
         {/* Sign In Form Client Component */}
-        <SignInForm />
+        <Suspense>
+          <SignInForm />
+        </Suspense>
       </div>
     </div>
   );

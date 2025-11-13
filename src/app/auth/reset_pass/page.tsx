@@ -1,4 +1,5 @@
 import { Card } from "antd";
+import { Suspense } from "react";
 import { ResetPasswordForm } from "./_components/form";
 
 export default function ResetPassword() {
@@ -17,7 +18,9 @@ export default function ResetPassword() {
 
           {/* 3. Confirmation Form Client Component */}
           <div className="mt-8">
-            <ResetPasswordForm />
+            <Suspense fallback={null}>
+              <ResetPasswordForm />
+            </Suspense>
           </div>
         </Card>
       </div>

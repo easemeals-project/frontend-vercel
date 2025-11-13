@@ -131,7 +131,7 @@ export default function SignInForm() {
             </label>
             <Link
               href={conts.paths.forgotPass} // Dummy link
-              className="text-sm font-medium !text-app_primary"
+              className="text-sm font-medium text-app_primary!"
             >
               Forgot Password?
             </Link>
@@ -186,11 +186,11 @@ export default function SignInForm() {
           <>
             {/* Divider */}
             <div className="relative flex items-center">
-              <div className="flex-grow border-t border-gray-400"></div>
-              <span className="flex-shrink mx-4 text-gray-400">
+              <div className="grow border-t border-gray-400"></div>
+              <span className="shrink mx-4 text-gray-400">
                 Or continue with
               </span>
-              <div className="flex-grow border-t border-gray-400"></div>
+              <div className="grow border-t border-gray-400"></div>
             </div>
 
             {/* Google Sign In Button */}

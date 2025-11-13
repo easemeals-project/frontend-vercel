@@ -21,7 +21,7 @@ export default function Header() {
     <header className="bg-app_bg w-full top-0 z-50">
       <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
-          <div className="flex-shrink-0">
+          <div className="shrink-0">
             <Link href="/" className="flex items-center space-x-2">
               <Image
                 src="/logo.png"

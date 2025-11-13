@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build --webpack",
+    "build": "next build",
     "start": "next start"
   },
   "dependencies": {
@@ -36,6 +36,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/uniqid": "^5.3.4",
+    "eslint": "^9.39.1",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
