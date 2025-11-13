@@ -39,7 +39,6 @@ export function ResetPasswordForm() {
     onSubmit: async (values, { setSubmitting }) => {
       setAuthError(null);
       const error = await authService.confirmResetPassword(values, email);
-
       // show background error
       if (error) {
         setAuthError(error);
