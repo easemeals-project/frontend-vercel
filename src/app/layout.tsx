@@ -1,17 +1,11 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Inter } from "next/font/google";
 import "./globals.css";
+import ConfigureAmplifyClientSide from "./_components/auth-config";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
-});
-
-const inter = Inter({
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font-inter", // Optional: for use in CSS
-  weight: ["400", "500", "600", "700"], // Include weights you'll use
 });
 
 const geistMono = Geist_Mono({
@@ -34,8 +28,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} antialiased min-h-screen`}>
-        {children}
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen`}
+      >
+        <>
+          <ConfigureAmplifyClientSide />
+          {children}
+        </>
       </body>
     </html>
   );

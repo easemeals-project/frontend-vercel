@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { useFormik } from "formik";
 import Link from "next/link";
 import { EyeOutlined, EyeInvisibleOutlined } from "@ant-design/icons"; // Using antd icons as requested
@@ -8,10 +7,42 @@ import { FcGoogle } from "react-icons/fc";
 import { SignInSchema } from "@/lib/types/auth";
 import { Card } from "antd";
 import conts from "@/lib/conts";
+import { authService } from "@/core/services/auth";
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { MsgType } from "@/lib/types";
 
 // 2. --- Form Component ---
 export default function SignInForm() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [msg, setMsg] = useState<string | null>(null);
+
+  // Get email from URL
+  useEffect(() => {
+    const msgType = searchParams.get("msg");
+    if (msgType) {
+      if (msgType == MsgType.reset) {
+        setMsg(conts.msg.reset);
+      }
+      setTimeout(() => {
+        setMsg(null);
+      }, 5000);
+    }
+  }, []);
+
+  const handleSocials = async (providers: "Google" | "Facebook") => {
+    setAuthError(null);
+    const error = await authService.socialSignIn(providers);
+    // show background error
+    if (error) {
+      setAuthError(error);
+      return;
+    }
+    router.push(conts.paths.dashboard);
+  };
 
   // 3. --- Formik Hook ---
   const formik = useFormik({
@@ -20,13 +51,18 @@ export default function SignInForm() {
       password: "",
     },
     validationSchema: SignInSchema,
-    onSubmit: (values, { setSubmitting }) => {
-      console.log("Form values:", values);
-      // Replace with your actual API call
-      setTimeout(() => {
-        alert(JSON.stringify(values, null, 2));
-        setSubmitting(false);
-      }, 1000);
+    onSubmit: async (values, { setSubmitting }) => {
+      setAuthError(null);
+      const error = await authService.signin(values, router);
+
+      // show background error
+      if (error) {
+        setAuthError(error);
+        setTimeout(() => {
+          setAuthError(null);
+        }, 5000);
+      }
+      setSubmitting(false);
     },
   });
 
@@ -49,6 +85,17 @@ export default function SignInForm() {
   return (
     <Card>
       <form onSubmit={formik.handleSubmit} className="space-y-4">
+        {authError && (
+          <div className="rounded-md border border-red-400 bg-red-100 px-4 py-3 text-red-700">
+            <p>{authError}</p>
+          </div>
+        )}
+        {msg && (
+          <div className="rounded-md border border-green-400 bg-green-100 px-4 py-3 text-green-700">
+            <p>{msg}</p>
+          </div>
+        )}
+
         {/* Email Field */}
         <div className="relative">
           <label
@@ -135,26 +182,30 @@ export default function SignInForm() {
           </button>
         </div>
 
-        {/* Divider */}
-        <div className="relative flex items-center">
-          <div className="flex-grow border-t border-gray-400"></div>
-          <span className="flex-shrink mx-4 text-gray-400">
-            Or continue with
-          </span>
-          <div className="flex-grow border-t border-gray-400"></div>
-        </div>
+        {conts.features.socialsAuth && (
+          <>
+            {/* Divider */}
+            <div className="relative flex items-center">
+              <div className="flex-grow border-t border-gray-400"></div>
+              <span className="flex-shrink mx-4 text-gray-400">
+                Or continue with
+              </span>
+              <div className="flex-grow border-t border-gray-400"></div>
+            </div>
 
-        {/* Google Sign In Button */}
-        <div>
-          <button
-            type="button"
-            // onClick={handleGoogleSignIn} // This would be the handler
-            className="w-full cursor-pointer flex justify-center items-center py-3 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-          >
-            <FcGoogle className="mr-4 scale-150" />
-            Sign in with Google
-          </button>
-        </div>
+            {/* Google Sign In Button */}
+            <div>
+              <button
+                type="button"
+                onClick={() => handleSocials("Google")} // This would be the handler
+                className="w-full cursor-pointer flex justify-center items-center py-3 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                <FcGoogle className="mr-4 scale-150" />
+                Sign in with Google
+              </button>
+            </div>
+          </>
+        )}
       </form>
     </Card>
   );

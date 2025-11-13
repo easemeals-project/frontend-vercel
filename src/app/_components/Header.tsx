@@ -5,6 +5,7 @@ import Link from "next/link";
 import { MenuOutlined, CloseOutlined } from "@ant-design/icons";
 import Image from "next/image";
 import conts from "@/lib/conts";
+import uniqid from "uniqid";
 
 export default function Header() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -84,7 +85,7 @@ export default function Header() {
           <div className="mt-10">
             {navLinks.map((link) => (
               <Link
-                key={link.name}
+                key={uniqid()}
                 href={link.href}
                 onClick={() => setIsSidebarOpen(false)}
                 className="block py-2 text-gray-800"
