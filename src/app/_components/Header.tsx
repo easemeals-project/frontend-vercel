@@ -2,19 +2,26 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { MenuOutlined, CloseOutlined } from "@ant-design/icons";
+import { MenuOutlined, CloseOutlined, UserOutlined } from "@ant-design/icons";
 import Image from "next/image";
 import conts from "@/lib/conts";
 import uniqid from "uniqid";
 
-export default function Header() {
+interface HeaderProps {
+  user?: {
+    name: string;
+    email: string;
+    role: string;
+  };
+}
+
+export default function Header({ user }: HeaderProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const navLinks = [
     { name: "Features", href: "#why-choose-us" },
     { name: "How it Works", href: "#how-it-works" },
     { name: "Testimonials", href: "#testimonials" },
-    { name: "Sign in", href: conts.paths.signin },
   ];
 
   return (
@@ -46,12 +53,36 @@ export default function Header() {
                 {link.name}
               </Link>
             ))}
-            <Link
-              href="/signup"
-              className="inline-flex items-center justify-center px-6 py-2 border border-transparent rounded-sm shadow-sm text-base font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-            >
-              Get Started
-            </Link>
+            
+            {user ? (
+              <div className="flex items-center gap-4">
+                 <Link
+                  href="/dashboard"
+                  className="font-medium text-text1 hover:text-green-600 transition-colors"
+                >
+                  Dashboard
+                </Link>
+                <div className="flex items-center gap-2 text-app_primary font-medium">
+                  <UserOutlined />
+                  <span>{user.name}</span>
+                </div>
+              </div>
+            ) : (
+              <>
+                <Link
+                  href={conts.paths.signin}
+                  className="font-medium text-text1 hover:text-green-600 transition-colors"
+                >
+                  Sign in
+                </Link>
+                <Link
+                  href="/signup"
+                  className="inline-flex items-center justify-center px-6 py-2 border border-transparent rounded-sm shadow-sm text-base font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                >
+                  Get Started
+                </Link>
+              </>
+            )}
           </nav>
 
           <div className="md:hidden flex items-center">
@@ -93,13 +124,33 @@ export default function Header() {
                 {link.name}
               </Link>
             ))}
-            <Link
-              href="/signup"
-              onClick={() => setIsSidebarOpen(false)}
-              className="block mt-4 w-full text-center px-6 py-2 border border-transparent rounded-full shadow-sm text-base font-medium text-white bg-green-600 hover:bg-green-700"
-            >
-              Sign Up
-            </Link>
+            
+            {user ? (
+               <Link
+                href="/dashboard"
+                onClick={() => setIsSidebarOpen(false)}
+                className="block mt-4 w-full text-center px-6 py-2 border border-transparent rounded-full shadow-sm text-base font-medium text-white bg-green-600 hover:bg-green-700"
+              >
+                Go to Dashboard
+              </Link>
+            ) : (
+              <>
+                <Link
+                  href={conts.paths.signin}
+                  onClick={() => setIsSidebarOpen(false)}
+                  className="block py-2 text-gray-800"
+                >
+                  Sign in
+                </Link>
+                <Link
+                  href="/signup"
+                  onClick={() => setIsSidebarOpen(false)}
+                  className="block mt-4 w-full text-center px-6 py-2 border border-transparent rounded-full shadow-sm text-base font-medium text-white bg-green-600 hover:bg-green-700"
+                >
+                  Sign Up
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </div>

@@ -10,13 +10,16 @@ import { MdOutlineShoppingCart } from "react-icons/md";
 import { IoTimer } from "react-icons/io5";
 import CtaSection from "./_components/CtaSection";
 import uniqid from "uniqid";
+import { getAuthUserServer } from "@/lib/utils/auth-utils";
 
 // --- Main Page Component ---
-export default function HomePage() {
+export default async function HomePage() {
+  const user = await getAuthUserServer();
+
   return (
     <div className="flex flex-col min-h-screen bg-white text-gray-800">
       <div>
-        <Header />
+        <Header user={user} />
         <HeroSection />
       </div>
 

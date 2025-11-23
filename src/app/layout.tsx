@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Inter } from "next/font/google";
 import "./globals.css";
 import ConfigureAmplifyClientSide from "./_components/auth-config";
 
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -29,7 +30,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen`}
+        className={`${inter.variable} antialiased min-h-screen`}
       >
         <>
           <ConfigureAmplifyClientSide />

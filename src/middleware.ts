@@ -13,6 +13,7 @@ const publicAuthRoutes = [
   path.signin,
   path.signup,
   path.verify_email,
+  path.role,
 ];
 
 // This function can be marked `async` if using `await` inside
@@ -52,10 +53,8 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     "/dashboard/:path*",
-    "/auth/forgot_pass",
-    "/auth/reset_pass",
-    "/auth/signin",
-    "/auth/signup",
-    "/auth/verify_email",
+    "/auth/:path*",
+    "/checkout",
+    "/order-confirmed"
   ],
 };
