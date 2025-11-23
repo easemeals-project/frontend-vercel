@@ -3,6 +3,7 @@
 import Link from "next/link";
 import SignInForm from "./_components/form";
 import conts from "@/lib/conts";
+import { Suspense } from "react";
 
 export default function SignInPage() {
   return (
@@ -26,7 +27,9 @@ export default function SignInPage() {
         </div>
 
         {/* Sign In Form Client Component */}
-        <SignInForm />
+        <Suspense fallback={<div>Loading...</div>}>
+          <SignInForm />
+        </Suspense>
       </div>
     </div>
   );

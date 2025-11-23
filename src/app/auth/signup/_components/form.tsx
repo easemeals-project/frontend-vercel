@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useFormik } from "formik";
 import { EyeOutlined, EyeInvisibleOutlined } from "@ant-design/icons"; // Using antd icons as requested
 import { FcGoogle } from "react-icons/fc";
@@ -21,7 +21,7 @@ export default function SignUpForm() {
   const [role, setRole] = useState<UserRole>(UserRole.shopper);
 
   // Get email from URL
-  useLayoutEffect(() => {
+  useEffect(() => {
     const role = searchParams.get("role");
     if (role && Object.values(UserRole).includes(role as UserRole)) {
       setRole(role.toLocaleLowerCase() as UserRole);
