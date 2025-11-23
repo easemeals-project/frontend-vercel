@@ -57,7 +57,7 @@ export default function Header({ user }: HeaderProps) {
             {user ? (
               <div className="flex items-center gap-4">
                  <Link
-                  href="/dashboard"
+                  href={conts.paths.dashboard}
                   className="font-medium text-text1 hover:text-green-600 transition-colors"
                 >
                   Dashboard
@@ -76,7 +76,7 @@ export default function Header({ user }: HeaderProps) {
                   Sign in
                 </Link>
                 <Link
-                  href="/signup"
+                  href={conts.paths.signup}
                   className="inline-flex items-center justify-center px-6 py-2 border border-transparent rounded-sm shadow-sm text-base font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
                 >
                   Get Started
@@ -127,7 +127,7 @@ export default function Header({ user }: HeaderProps) {
             
             {user ? (
                <Link
-                href="/dashboard"
+                href={conts.paths.dashboard}
                 onClick={() => setIsSidebarOpen(false)}
                 className="block mt-4 w-full text-center px-6 py-2 border border-transparent rounded-full shadow-sm text-base font-medium text-white bg-green-600 hover:bg-green-700"
               >
@@ -143,7 +143,7 @@ export default function Header({ user }: HeaderProps) {
                   Sign in
                 </Link>
                 <Link
-                  href="/signup"
+                  href={conts.paths.signup}
                   onClick={() => setIsSidebarOpen(false)}
                   className="block mt-4 w-full text-center px-6 py-2 border border-transparent rounded-full shadow-sm text-base font-medium text-white bg-green-600 hover:bg-green-700"
                 >
