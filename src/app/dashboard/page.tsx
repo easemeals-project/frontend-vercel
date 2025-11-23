@@ -1,3 +1,6 @@
-export default function HomePage() {
-  return <div>dashboard</div>;
+import { redirect } from "next/navigation";
+import conts from "@/lib/conts";
+
+export default function DashboardPage() {
+  redirect(conts.paths.timetable);
 }
