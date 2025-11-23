@@ -18,16 +18,17 @@ import {
 import conts from "@/lib/conts";
 import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
 import { getErrorMessage } from "@/lib/utils/helpers";
+import { UserRole } from "@/lib/types";
 
 // --- AppSync Service ---
 class AuthService {
-  signup = async (params: InferType<typeof SignUpSchema>) => {
+  signup = async (params: InferType<typeof SignUpSchema>, role: UserRole) => {
     try {
       const { nextStep } = await signUp({
         username: params.email,
         password: params.password,
         options: {
-          userAttributes: { name: params.fullName },
+          userAttributes: { name: params.fullName, "custom:role": role },
           autoSignIn: true,
         },
       });
@@ -47,7 +48,7 @@ class AuthService {
     try {
       // This redirects user to Google for authentication
       await confirmSignUp({ confirmationCode: code, username: email });
-      autoSignIn();
+      await autoSignIn();
     } catch (error) {
       return getErrorMessage(error);
     }

@@ -47,8 +47,8 @@ export default function VerifyEmailForm() {
       } else {
         // Give auth cookies time to sync before redirecting
         // This ensures middleware can verify the user is authenticated
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        router.refresh();
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        window.location.href = conts.paths.dashboard;
       }
     },
   });

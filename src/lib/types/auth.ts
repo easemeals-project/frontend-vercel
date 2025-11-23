@@ -32,8 +32,7 @@ export const ForgotPasswordSchema = object().shape({
   email: string().email("Invalid email address").required("Email is required"),
 });
 
-export // --- Validation Schema ---
-const ResetPasswordSchema = object().shape({
+export const ResetPasswordSchema = object().shape({
   confirmationCode: string()
     .required("Verification code is required")
     .matches(/^[0-9]{6}$/, "Must be a 6-digit code"),

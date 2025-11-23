@@ -1,8 +1,8 @@
-import Image from "next/image";
+"use client";
+
 import Link from "next/link";
-import SignInForm from "./_components/form"; // Assuming @ is an alias for src/
+import SignInForm from "./_components/form";
 import conts from "@/lib/conts";
-import { Suspense } from "react";
 
 export default function SignInPage() {
   return (

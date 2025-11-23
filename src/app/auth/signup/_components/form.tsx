@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useLayoutEffect, useState } from "react";
 import { useFormik } from "formik";
 import { EyeOutlined, EyeInvisibleOutlined } from "@ant-design/icons"; // Using antd icons as requested
 import { FcGoogle } from "react-icons/fc";
@@ -8,14 +8,25 @@ import { Card } from "antd";
 import { SignUpSchema } from "@/lib/types/auth";
 import { InferType } from "yup";
 import { authService } from "@/core/services/auth";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import conts from "@/lib/conts";
+import { UserRole } from "@/lib/types";
 
 // 2. --- Form Component ---
 export default function SignUpForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [role, setRole] = useState<UserRole>(UserRole.shopper);
+
+  // Get email from URL
+  useLayoutEffect(() => {
+    const role = searchParams.get("role");
+    if (role && Object.values(UserRole).includes(role as UserRole)) {
+      setRole(role.toLocaleLowerCase() as UserRole);
+    }
+  }, []);
 
   const handleSocials = async (providers: "Google" | "Facebook") => {
     setAuthError(null);
@@ -39,7 +50,7 @@ export default function SignUpForm() {
     } as InferType<typeof SignUpSchema>,
     validationSchema: SignUpSchema,
     onSubmit: async (values, { setSubmitting }) => {
-      const error = await authService.signup(values);
+      const error = await authService.signup(values, role);
       // show background error
       if (error) {
         setAuthError(error);
@@ -205,7 +216,7 @@ export default function SignUpForm() {
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
             checked={formik.values.agreeToTerms}
-            className="h-4 w-4 !text-app_primary focus:!text-app_primary cursor-pointer border-gray-300 rounded"
+            className="h-4 w-4 text-app_primary! focus:text-app_primary! cursor-pointer border-gray-300 rounded"
           />
           <label
             htmlFor="agreeToTerms"
@@ -214,14 +225,14 @@ export default function SignUpForm() {
             I agree to the{" "}
             <a
               href="/terms"
-              className="font-medium !text-app_primary hover:text-orange-500"
+              className="font-medium text-app_primary! hover:text-orange-500"
             >
               Terms of Use
             </a>{" "}
             and{" "}
             <a
               href="/privacy"
-              className="font-medium !text-app_primary hover:text-orange-500"
+              className="font-medium text-app_primary! hover:text-orange-500"
             >
               Privacy Policy
             </a>
@@ -251,11 +262,11 @@ export default function SignUpForm() {
           <>
             {/* Divider */}
             <div className="relative flex items-center">
-              <div className="flex-grow border-t border-gray-400"></div>
-              <span className="flex-shrink mx-4 text-gray-400">
+              <div className="grow border-t border-gray-400"></div>
+              <span className="shrink mx-4 text-gray-400">
                 Or continue with
               </span>
-              <div className="flex-grow border-t border-gray-400"></div>
+              <div className="grow border-t border-gray-400"></div>
             </div>
 
             {/* Google Sign In Button */}
