@@ -3,7 +3,7 @@ import { fetchAuthSession, getCurrentUser } from "aws-amplify/auth/server";
 import { generateServerClientUsingCookies } from "@aws-amplify/adapter-nextjs/api";
 import { cookies } from "next/headers";
 import { amplifyConfig } from "@/app/_components/auth-config-export";
-import { UserRole } from "../types";
+import { UserRole, UserSession } from "../types";
 
 export const { runWithAmplifyServerContext } = createServerRunner({
   config: amplifyConfig,
@@ -13,12 +13,6 @@ export const cookiesClient = generateServerClientUsingCookies({
   config: amplifyConfig,
   cookies,
 });
-
-type UserSession = {
-  name: string;
-  email: string;
-  role: UserRole;
-};
 
 export async function getAuthUserServer() {
   return await runWithAmplifyServerContext({

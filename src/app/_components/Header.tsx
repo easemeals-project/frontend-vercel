@@ -6,13 +6,10 @@ import { MenuOutlined, CloseOutlined, UserOutlined } from "@ant-design/icons";
 import Image from "next/image";
 import conts from "@/lib/conts";
 import uniqid from "uniqid";
+import { UserSession } from "@/lib/types";
 
 interface HeaderProps {
-  user?: {
-    name: string;
-    email: string;
-    role: string;
-  };
+  user?: UserSession;
 }
 
 export default function Header({ user }: HeaderProps) {
@@ -62,7 +59,7 @@ export default function Header({ user }: HeaderProps) {
                 >
                   Dashboard
                 </Link>
-                <div className="flex items-center gap-2 text-app_primary font-medium">
+                <div className="flex items-center gap-2 text-app_primary font-medium text-ellipsis overflow-hidden whitespace-nowrap">
                   <UserOutlined />
                   <span>{user.name}</span>
                 </div>
