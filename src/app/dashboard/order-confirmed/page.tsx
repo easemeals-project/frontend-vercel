@@ -34,7 +34,7 @@ export default function OrderConfirmationPage() {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto p-4 lg:p-8">
+      <div className="max-w-7xl flex flex-col gap-5 mx-auto p-4 lg:p-8">
         {/* Success Banner */}
         <Card className="shadow-sm border-none rounded-xl mb-8 text-center py-12">
           <div className="w-20 h-20 bg-[#E8F5E9] rounded-full flex items-center justify-center mx-auto mb-6">
@@ -60,9 +60,9 @@ export default function OrderConfirmationPage() {
           </div>
         </Card>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           {/* Left Column */}
-          <div className="lg:col-span-2 space-y-8">
+          <div className="lg:col-span-2 flex flex-col gap-5">
             {/* Delivery Information */}
             <Card className="shadow-sm border-none rounded-xl">
               <h3 className="text-lg font-bold text-text1 mb-6">
@@ -98,7 +98,7 @@ export default function OrderConfirmationPage() {
                 Service Option
               </h3>
               <div className="bg-[#E8F5E9] border border-[#C8E6C9] rounded-xl p-6 flex items-start gap-4">
-                <CheckCircleFilled className="text-[#4CAF50] text-xl mt-1" />
+                <CheckCircleFilled className="text-app_primary/80! text-xl mt-1" />
                 <div>
                   <h4 className="font-bold text-text1 mb-1">Only Ingredients</h4>
                   <p className="text-sm text-text2">
@@ -196,7 +196,7 @@ export default function OrderConfirmationPage() {
                 <span className="text-sm text-text2">Payment Method</span>
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium text-text1">Wallet</span>
-                  <CheckCircleFilled className="text-[#4CAF50]" />
+                  <CheckCircleFilled className="text-app_primary/80!" />
                 </div>
               </div>
 
@@ -204,7 +204,7 @@ export default function OrderConfirmationPage() {
                 type="primary"
                 size="large"
                 block
-                className="bg-[#25D366] hover:bg-[#128C7E] border-none h-12 text-lg font-bold rounded-lg"
+                className="bg-app_primary! hover:bg-app_primary/80! border-none h-12 text-lg font-bold rounded-lg"
                 onClick={() => router.push("/dashboard/timetable")}
               >
                 View My Meal Plan

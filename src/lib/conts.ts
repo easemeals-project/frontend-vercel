@@ -17,8 +17,8 @@ export default {
     event: "/dashboard/event",
     vendors: "/dashboard/vendors",
     profile: "/dashboard/profile",
-    checkout: "/checkout",
-    orderConfirmed: "/order-confirmed",
+    checkout: "/dashboard/checkout",
+    orderConfirmed: "/dashboard/order-confirmed",
   },
   msg: {
     reset: "Your password has been changed! Please Signin.",

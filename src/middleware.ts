@@ -54,7 +54,5 @@ export const config = {
   matcher: [
     "/dashboard/:path*",
     "/auth/:path*",
-    "/checkout",
-    "/order-confirmed"
   ],
 };

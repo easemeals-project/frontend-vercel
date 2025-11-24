@@ -19,11 +19,36 @@ interface Address {
   instructions?: string;
 }
 
+
+const serviceOptions = [
+  {
+    id: "ingredients",
+    title: "Only Ingredients",
+    description: "Get all ingredients delivered to your doorstep",
+  },
+  {
+    id: "vendors",
+    title: "Food Vendors",
+    description: "Order prepared meals from our partner restaurants",
+  },
+  {
+    id: "chef_ingredients",
+    title: "Ingredients + Chef",
+    description: "Get ingredients and a chef to prepare your meals",
+  },
+  {
+    id: "chef_only",
+    title: "Chef Only",
+    description: "Hire a chef to prepare meals with your own ingredients",
+  },
+];
+
 export default function CheckoutPage() {
   const router = useRouter();
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [serviceOption, setServiceOption] = useState("ingredients");
   const [paymentMethod, setPaymentMethod] = useState("card");
+  const [isLoading, setIsLoading] = useState(true);
   
   // Form states
   const [fullName, setFullName] = useState("");
@@ -44,12 +69,21 @@ export default function CheckoutPage() {
         setDeliveryInstructions(defaultAddr.instructions || "");
       }
     }
+    setIsLoading(false);
   }, []);
 
   const handlePlaceOrder = () => {
     message.success("Order placed successfully!");
-    router.push("/dashboard/order-confirmation");
+    router.push(conts.paths.orderConfirmed);
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-app_bg font-sans flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-app_secondary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-app_bg font-sans">
@@ -73,96 +107,35 @@ export default function CheckoutPage() {
       <div className="max-w-7xl mx-auto p-4 lg:p-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column */}
-          <div className="lg:col-span-2 space-y-8">
+          <div className="flex flex-col gap-4 lg:col-span-2 space-y-6">
             {/* Service Option */}
             <Card className="shadow-sm border-none rounded-xl">
               <h2 className="text-lg font-bold text-text1 mb-6">
                 Select Service Option
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div
-                  onClick={() => setServiceOption("ingredients")}
-                  className={`p-6 rounded-xl border cursor-pointer transition-all relative ${
-                    serviceOption === "ingredients"
-                      ? "border-green-500 bg-[#E8F5E9]"
-                      : "border-gray-200 hover:border-gray-300"
-                  }`}
-                >
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-bold text-text1">Only Ingredients</h3>
-                    {serviceOption === "ingredients" ? (
-                      <CheckCircleFilled className="text-[#FF7043] text-xl" />
-                    ) : (
-                      <div className="w-5 h-5 rounded-full border-2 border-gray-300" />
-                    )}
+                {
+                serviceOptions.map((option) => (
+                  <div
+                    key={option.id}
+                    onClick={() => setServiceOption(option.id)}
+                    className={`p-6 rounded-xl border cursor-pointer transition-all relative ${
+                      serviceOption === option.id
+                        ? "border-green-500 bg-[#E8F5E9]"
+                        : "border-gray-200 hover:border-gray-300"
+                    }`}
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="font-bold text-text1">{option.title}</h3>
+                      {serviceOption === option.id ? (
+                        <CheckCircleFilled className="text-app_secondary! text-xl" />
+                      ) : (
+                        <div className="w-5 h-5 rounded-full border-2 border-gray-300" />
+                      )}
+                    </div>
+                    <p className="text-sm text-text2">{option.description}</p>
                   </div>
-                  <p className="text-sm text-text2">
-                    Get all ingredients delivered to your doorstep
-                  </p>
-                </div>
-
-                <div
-                  onClick={() => setServiceOption("vendors")}
-                  className={`p-6 rounded-xl border cursor-pointer transition-all relative ${
-                    serviceOption === "vendors"
-                      ? "border-green-500 bg-[#E8F5E9]"
-                      : "border-gray-200 hover:border-gray-300"
-                  }`}
-                >
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-bold text-text1">Food Vendors</h3>
-                    {serviceOption === "vendors" ? (
-                      <CheckCircleFilled className="text-[#FF7043] text-xl" />
-                    ) : (
-                      <div className="w-5 h-5 rounded-full border-2 border-gray-300" />
-                    )}
-                  </div>
-                  <p className="text-sm text-text2">
-                    Order prepared meals from our partner restaurants
-                  </p>
-                </div>
-
-                <div
-                  onClick={() => setServiceOption("chef_ingredients")}
-                  className={`p-6 rounded-xl border cursor-pointer transition-all relative ${
-                    serviceOption === "chef_ingredients"
-                      ? "border-green-500 bg-[#E8F5E9]"
-                      : "border-gray-200 hover:border-gray-300"
-                  }`}
-                >
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-bold text-text1">Ingredients + Chef</h3>
-                    {serviceOption === "chef_ingredients" ? (
-                      <CheckCircleFilled className="text-[#FF7043] text-xl" />
-                    ) : (
-                      <div className="w-5 h-5 rounded-full border-2 border-gray-300" />
-                    )}
-                  </div>
-                  <p className="text-sm text-text2">
-                    Get ingredients and a chef to prepare your meals
-                  </p>
-                </div>
-
-                <div
-                  onClick={() => setServiceOption("chef_only")}
-                  className={`p-6 rounded-xl border cursor-pointer transition-all relative ${
-                    serviceOption === "chef_only"
-                      ? "border-green-500 bg-[#E8F5E9]"
-                      : "border-gray-200 hover:border-gray-300"
-                  }`}
-                >
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-bold text-text1">Chef Only</h3>
-                    {serviceOption === "chef_only" ? (
-                      <CheckCircleFilled className="text-[#FF7043] text-xl" />
-                    ) : (
-                      <div className="w-5 h-5 rounded-full border-2 border-gray-300" />
-                    )}
-                  </div>
-                  <p className="text-sm text-text2">
-                    Hire a chef to prepare meals with your own ingredients
-                  </p>
-                </div>
+                ))}
               </div>
             </Card>
 
@@ -224,7 +197,7 @@ export default function CheckoutPage() {
 
           {/* Right Column - Order Summary */}
           <div className="lg:col-span-1">
-            <Card className="shadow-sm border-none rounded-xl sticky top-24">
+            <Card className="shadow-sm border-none rounded-xl sticky">
               <h2 className="text-lg font-bold text-text1 mb-6">
                 Order Summary
               </h2>
@@ -332,7 +305,7 @@ export default function CheckoutPage() {
                 size="large"
                 block
                 onClick={handlePlaceOrder}
-                className="bg-[#FF5722] hover:bg-[#F4511E] border-none h-12 text-lg font-bold rounded-lg"
+                className="bg-app_secondary! hover:bg-app_secondary/80! border-none h-12 text-lg font-bold rounded-lg"
               >
                 Complete Order
               </Button>
