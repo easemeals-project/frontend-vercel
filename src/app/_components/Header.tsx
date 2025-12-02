@@ -6,11 +6,7 @@ import { MenuOutlined, CloseOutlined, UserOutlined } from "@ant-design/icons";
 import Image from "next/image";
 import conts from "@/lib/conts";
 import uniqid from "uniqid";
-import { UserSession } from "@/lib/types";
-
-interface HeaderProps {
-  user?: UserSession;
-}
+import { HeaderProps } from "@/lib/types";
 
 export default function Header({ user }: HeaderProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -22,7 +18,7 @@ export default function Header({ user }: HeaderProps) {
   ];
 
   return (
-    <header className="bg-app_bg w-full top-0 z-50">
+    <header className="bg-app_bg w-full top-0 z-50 sticky">
       <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
           <div className="shrink-0">
@@ -50,10 +46,10 @@ export default function Header({ user }: HeaderProps) {
                 {link.name}
               </Link>
             ))}
-            
+
             {user ? (
               <div className="flex items-center gap-4">
-                 <Link
+                <Link
                   href={conts.paths.dashboard}
                   className="font-medium text-text1 hover:text-green-600 transition-colors"
                 >
@@ -121,9 +117,9 @@ export default function Header({ user }: HeaderProps) {
                 {link.name}
               </Link>
             ))}
-            
+
             {user ? (
-               <Link
+              <Link
                 href={conts.paths.dashboard}
                 onClick={() => setIsSidebarOpen(false)}
                 className="block mt-4 w-full text-center px-6 py-2 border border-transparent rounded-full shadow-sm text-base font-medium text-white bg-green-600 hover:bg-green-700"

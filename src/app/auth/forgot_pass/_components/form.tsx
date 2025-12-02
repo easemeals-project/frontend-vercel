@@ -5,7 +5,9 @@ import { useRouter } from "next/navigation";
 import { useFormik } from "formik";
 import { ForgotPasswordSchema } from "@/lib/types/auth";
 import { authService } from "@/core/services/auth";
+import { IoArrowBack } from "react-icons/io5";
 import conts from "@/lib/conts";
+import Link from "next/link";
 
 // --- Validation Schema ---
 
@@ -80,7 +82,7 @@ export function ForgotPasswordForm() {
       </div>
 
       {/* Submit Button */}
-      <div className="pt-4">
+      <div className="py-3">
         <button
           type="submit"
           disabled={formik.isSubmitting}
@@ -88,6 +90,15 @@ export function ForgotPasswordForm() {
         >
           {formik.isSubmitting ? "Sending Code..." : "Send Reset Code"}
         </button>
+      </div>
+      <div>
+        <Link
+          href={conts.paths.signin}
+          className="flex gap-3 justify-center items-center text-app_primary!"
+        >
+          <IoArrowBack className="max-h-min" />
+          Back to sign in
+        </Link>
       </div>
     </form>
   );

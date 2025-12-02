@@ -12,11 +12,7 @@ import {
 } from "@ant-design/icons";
 import { CloseOutlined } from "@ant-design/icons";
 import conts from "@/lib/conts";
-
-interface SidebarProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
+import { SidebarProps } from "@/lib/types";
 
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
@@ -116,4 +112,3 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     </>
   );
 }
-

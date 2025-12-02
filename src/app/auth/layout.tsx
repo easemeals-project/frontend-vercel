@@ -6,7 +6,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className="min-h-screen w-full bg-app_bg flex flex-col items-center justify-center">
+    <div className="min-h-screen w-full bg-app_bg flex flex-col items-center justify-center pt-7 pb-5">
       {/* 1. Left Side (Image) */}
       <Image
         // Using a placeholder that matches the orange theme from the image

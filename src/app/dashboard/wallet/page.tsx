@@ -54,7 +54,7 @@ export default function WalletPage() {
   const filteredTransactions =
     activeTab === "All"
       ? transactions
-      : transactions.filter((t) => 
+      : transactions.filter((t) =>
           activeTab === "Credit" ? t.type === "credit" : t.type === "debit"
         );
 
@@ -74,7 +74,7 @@ export default function WalletPage() {
             </button>
             <div className="hidden lg:block w-6" />
           </div>
-          
+
           <h1 className="text-xl font-bold text-text1 absolute left-1/2 transform -translate-x-1/2">
             Wallet
           </h1>
@@ -92,12 +92,11 @@ export default function WalletPage() {
         {/* Scrollable Content */}
         <main className="flex-1 overflow-y-auto p-4 lg:p-8">
           <div className="max-w-5xl mx-auto space-y-6">
-            
             {/* Available Balance Card */}
             <div className="bg-[#FF7043] rounded-xl p-8 text-white shadow-lg">
               <p className="text-sm opacity-90 mb-2">Available Balance</p>
               <h2 className="text-5xl font-bold mb-8">₦25,000</h2>
-              <button className="w-48 bg-[#FF8A65] hover:bg-[#FFAB91] text-white py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors">
+              <button className="w-full sm:w-1/2 bg-[#FF8A65] hover:bg-[#FFAB91] text-white py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors">
                 <PlusOutlined />
                 Add Money
               </button>
@@ -125,8 +124,10 @@ export default function WalletPage() {
             {/* Transaction History */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
-                <h3 className="text-lg font-bold text-text1">Transaction History</h3>
-                <div className="flex bg-gray-100 p-1 rounded-lg">
+                <h3 className="text-lg font-bold text-text1">
+                  Transaction History
+                </h3>
+                <div className="flex gap-3 p-1 rounded-lg">
                   {["All", "Credit", "Debit"].map((tab) => (
                     <button
                       key={tab}
@@ -134,7 +135,7 @@ export default function WalletPage() {
                       className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${
                         activeTab === tab
                           ? "bg-[#FF7043] text-white shadow-sm"
-                          : "text-text2 hover:text-text1"
+                          : "bg-gray-100 text-text2 hover:text-text1"
                       }`}
                     >
                       {tab}
@@ -164,8 +165,12 @@ export default function WalletPage() {
                         )}
                       </div>
                       <div>
-                        <p className="font-semibold text-text1">{transaction.name}</p>
-                        <p className="text-xs text-text2 mt-0.5">{transaction.date}</p>
+                        <p className="font-semibold text-text1">
+                          {transaction.name}
+                        </p>
+                        <p className="text-xs text-text2 mt-0.5">
+                          {transaction.date}
+                        </p>
                       </div>
                     </div>
                     <div className="text-right">
@@ -179,7 +184,9 @@ export default function WalletPage() {
                         {transaction.type === "credit" ? "+" : "-"}₦
                         {transaction.amount.toLocaleString()}
                       </p>
-                      <p className="text-xs text-text2 mt-0.5">{transaction.status}</p>
+                      <p className="text-xs text-text2 mt-0.5">
+                        {transaction.status}
+                      </p>
                     </div>
                   </div>
                 ))}
@@ -191,4 +198,3 @@ export default function WalletPage() {
     </div>
   );
 }
-

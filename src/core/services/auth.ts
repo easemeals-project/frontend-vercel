@@ -8,6 +8,7 @@ import {
   confirmResetPassword,
   signInWithRedirect,
   autoSignIn,
+  fetchAuthSession,
 } from "aws-amplify/auth";
 import { InferType } from "yup";
 import {
@@ -19,6 +20,9 @@ import conts from "@/lib/conts";
 import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
 import { getErrorMessage } from "@/lib/utils/helpers";
 import { UserRole } from "@/lib/types";
+// Do NOT import server-only helpers like getAuthUserServer here; this module
+// is used by client components. We'll rely on client-side fetchAuthSession
+// from `aws-amplify/auth` to confirm the session after `autoSignIn()`.
 
 // --- AppSync Service ---
 class AuthService {
@@ -49,6 +53,21 @@ class AuthService {
       // This redirects user to Google for authentication
       await confirmSignUp({ confirmationCode: code, username: email });
       await autoSignIn();
+      // Poll for a valid client-side session using the client fetchAuthSession
+      // so the redirect that happens in the UI won't hit the middleware
+      // before the session cookie and tokens are available.
+      const maxAttempts = 10;
+      let attempt = 0;
+      while (attempt < maxAttempts) {
+        try {
+          const session = await fetchAuthSession({ forceRefresh: false });
+          if (session?.tokens) break;
+        } catch (err) {
+          // swallow - we'll retry
+        }
+        await new Promise((resolve) => setTimeout(resolve, 200));
+        attempt++;
+      }
     } catch (error) {
       return getErrorMessage(error);
     }
@@ -94,9 +113,9 @@ class AuthService {
         redirectLink = `${conts.paths.verify_email}?email=${params.email}`;
       }
     } catch (error) {
-      return getErrorMessage(error);
+      return { error: getErrorMessage(error) };
     }
-    router.push(redirectLink);
+    return { redirectLink };
   };
   signout = async (params: string) => {
     try {

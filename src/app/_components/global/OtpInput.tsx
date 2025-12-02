@@ -1,15 +1,5 @@
 import { ChangeEvent, KeyboardEvent, useEffect, useRef, useState } from "react";
-
-interface OtpInputProps {
-  numInputs?: number;
-  // for generic controlled component
-  value?: string;
-  onBlur: React.FocusEventHandler<HTMLInputElement>;
-  onChange?: (value: string) => void;
-  error?: string;
-  // for formik integration
-  name?: string;
-}
+import { OtpInputProps } from "@/lib/types";
 
 export default function OtpInput({
   numInputs = 6,

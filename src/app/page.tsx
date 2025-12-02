@@ -11,17 +11,17 @@ import { IoTimer } from "react-icons/io5";
 import CtaSection from "./_components/CtaSection";
 import uniqid from "uniqid";
 import { getAuthUserServer } from "@/lib/utils/auth-utils";
+import conts from "@/lib/conts";
+import { GrFormNextLink } from "react-icons/gr";
 
 // --- Main Page Component ---
 export default async function HomePage() {
-  const user = await getAuthUserServer();
+  const res = await getAuthUserServer();
 
   return (
     <div className="flex flex-col min-h-screen bg-white text-gray-800">
-      <div>
-        <Header user={user} />
-        <HeroSection />
-      </div>
+      <Header user={res?.user} />
+      <HeroSection />
 
       <main className="grow">
         <WhyChooseUsSection />
@@ -42,22 +42,35 @@ function HeroSection() {
       <div className="container grid grid-cols-1 md:grid-cols-2 gap-12 items-center mx-auto max-w-7xl">
         {/* Left Side: Text Content */}
         <div className="text-center md:text-left">
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
+          <Image
+            src="/logo.png"
+            alt="EaseMeals Logo"
+            width={90}
+            height={90}
+            className="hidden md:block"
+          />
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mt-1 leading-tight">
             Plan Your Meals
             <br />
-            With <span className="text-green-600">Ease</span>
+            With Ease
           </h1>
-          <p className="mt-6 text-lg text-gray-600 max-w-lg mx-auto md:mx-0">
-            Create your meal timetable with ease. Get suggestions based on your
-            preferences and stay on track with your nutritional goals.
+          <p className="mt-6 text-lg text-text2 max-w-lg mx-auto md:mx-0">
+            Create personalized meal timetables in minutes. Save time, eat
+            healthier, and never worry about "what's for dinner" again.
           </p>
-          <div className="mt-10">
+          <div className="mt-10 flex flex-col sm:flex-row w-full gap-4">
             <Link
-              href="/get-started" // Dummy link
-              // Matching the GREEN pill-shaped button
-              className="inline-flex items-center justify-center px-8 py-3 border border-transparent rounded-md shadow-sm text-lg font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+              href={conts.paths.dashboard}
+              className="gap-2 flex-1 flex items-center justify-center px-5 py-3 border border-transparent rounded-md shadow-sm text-lg font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
             >
               Create Your Timetable
+              <GrFormNextLink className="size-7" />
+            </Link>
+            <Link
+              href={conts.paths.dashboard}
+              className="flex-1 flex items-center justify-center px-8 py-3 border border-transparent rounded-md shadow-sm text-lg font-medium text-text2 ring-2 ring-text1/15"
+            >
+              See How It Works
             </Link>
           </div>
         </div>
@@ -94,49 +107,56 @@ function WhyChooseUsSection() {
     {
       title: "Personalized Plans",
       description:
-        "Get meal plans tailored to your specific diet and preferences.",
+        "Get meal plans tailored to your food preferences, dietary restrictions, and budget.",
       img: "/home/2.png",
-      icon: <GrPlan />,
+      icon: <GrPlan className="text-white size-5" />,
     },
     {
       title: "Diverse Recipes",
-      description: "Explore thousands of recipes from various cuisines.",
+      description:
+        "Explore thousands of recipes from different cuisines to keep your meals exciting and varied.",
       img: "/home/3.png",
-      icon: <GiForkKnifeSpoon />,
+      icon: <GiForkKnifeSpoon className="text-white size-5" />,
     },
     {
       title: "Grocery Delivery",
-      description: "Get all your ingredients delivered to your doorstep.",
+      description:
+        "Order all ingredients for your meal plan with one click and get them delivered to your door.",
       img: "/home/4.png",
-      icon: <MdOutlineShoppingCart />,
+      icon: <MdOutlineShoppingCart className="text-white size-5" />,
     },
   ];
 
   return (
-    <section className="bg-gray-50 py-16 md:py-24">
+    <section className="bg-gray-50 py-16 md:py-24" id="why-choose-us">
       <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
+        <h2 className="text-3xl font-bold text-center text-text1">
           Why Choose EaseMeals?
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="max-w-xl my-2 text mx-auto text-center text-text2">
+          Our smart meal planning assistant helps you create balanced meal plans
+          tailored to your preferences and dietary needs.
+        </div>
+        <div className="grid grid-cols-1 mt-5 md:grid-cols-3 gap-8">
           {features.map((feature) => (
             <div
-              className="bg-white rounded-lg shadow-md overflow-hidden"
+              className="flex relative flex-col gap-2 bg-app_bg p-4 rounded-lg shadow-md overflow-hidden"
               key={uniqid()}
             >
+              <div className="bg-app_primary rounded-full p-3.5 max-w-min">
+                {feature.icon}
+              </div>
+              <h3 className="text-xl items-center gap-x-5 flex font-bold! text-text1 mb-2">
+                {feature.title}
+              </h3>
+              <p className="text-gray-600 text-sm">{feature.description}</p>
               <Image
                 src={feature.img}
                 alt={feature.title}
                 width={300}
                 height={200}
-                className="w-full object-cover"
+                className="w-full top-auto relative object-cover"
               />
-              <div className="p-6">
-                <h3 className="text-xl items-center gap-x-5 flex font-semibold text-gray-900 mb-2">
-                  {feature.icon} {feature.title}
-                </h3>
-                <p className="text-gray-600">{feature.description}</p>
-              </div>
             </div>
           ))}
         </div>
@@ -171,11 +191,17 @@ function HowItWorksSection() {
   ];
 
   return (
-    <section className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 md:py-24">
+    <section
+      id="how-it-works"
+      className="container bg-app_bg mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 md:py-24"
+    >
       <div>
-        <h2 className="text-3xl text-center font-bold text-gray-900 mb-8">
+        <h2 className="text-3xl font-bold text-center text-text1">
           How EaseMeals Works
         </h2>
+        <div className="max-w-xl my-2 text mx-auto text-center text-text2">
+          Create your personalized meal plan in just a few simple steps{" "}
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
           {/* Left Side: Image */}
@@ -193,12 +219,12 @@ function HowItWorksSection() {
           <div className="space-y-6">
             {steps.map((step, index) => (
               <div key={uniqid()} className="flex items-start space-x-4">
-                <CheckCircleFilled className="text-green-600! text-2xl shrink-0 mt-1" />
+                <div className="rounded-full bg-app_primary text-white min-h-7 min-w-7 text-center">
+                  {index + 1}
+                </div>
                 <div>
-                  <h3 className="text-xl font-semibold text-gray-900">
-                    Step {index + 1}: {step.title}
-                  </h3>
-                  <p className="text-gray-600">{step.description}</p>
+                  <h3 className="font-bold text-text1">{step.title}</h3>
+                  <p className="text-gray-600 text-sm">{step.description}</p>
                 </div>
               </div>
             ))}
@@ -214,34 +240,34 @@ function TestimonialsSection() {
   const testimonials = [
     {
       name: "Sarah K.",
-      role: "Busy Mom",
+      role: "Busy Mom of 3",
       quote:
-        '"EaseMeals has been a game-changer for my family. Meal planning is no longer a chore!"',
-      img: "/home/2.png",
+        '"EaseMeals has been a game-changer for my family. I used to spend hours planning meals, but now it takes just minutes. My kids love the variety!"',
+      img: "/home/testimonial1.png",
     },
     {
       name: "Michael B.",
       role: "Fitness Enthusiast",
       quote:
-        '"I love the diverse recipes and how it fits my budget. Highly recommend!"',
-      img: "/home/2.png",
+        '"As someone who tracks macros, EaseMeals has been perfect. It generates meal plans that align with my fitness goals while keeping meals interesting."',
+      img: "/home/testimonial2.png",
     },
     {
       name: "Jane D.",
       role: "Budget Conscious",
       quote:
-        '"The personalized plans have helped me stick to my diet goals. Thank you, EaseMeals!"',
-      img: "/home/2.png",
+        '"I\'ve cut my grocery bill by 30% since using EaseMeals. The budget-friendly plans have helped me save money without sacrificing taste or nutrition."',
+      img: "/home/testimonial3.png",
     },
   ];
 
   return (
-    <section className="bg-gray-50 py-16 md:py-24">
+    <section id="testimonials" className="bg-gray-50 py-16 md:py-24">
       <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-7">
-        <h2 className="text-3xl font-bold text-center text-gray-900">
+        <h2 className="text-3xl font-bold text-center text-text1">
           What Our Users Say
         </h2>
-        <div className="max-w-xl text mx-auto text-center">
+        <div className="max-w-xl text mx-auto text-center text-text2">
           Join thousands of satisfied users who have transformed their meal
           planning experience
         </div>

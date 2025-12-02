@@ -10,6 +10,7 @@ import { ResetPasswordSchema } from "@/lib/types/auth";
 import conts from "@/lib/conts";
 import { authService } from "@/core/services/auth";
 import { MsgType } from "@/lib/types";
+import Link from "next/link";
 
 export function ResetPasswordForm() {
   const router = useRouter();
@@ -77,27 +78,12 @@ export function ResetPasswordForm() {
         </div>
       )}
 
-      <p className="text-sm text-gray-600 text-center">
-        Enter the code sent to <span className="font-medium">{email}</span>.
-      </p>
-
-      {/* Confirmation Code */}
-      <div className="relative">
-        <OtpInput
-          value={formik.values.confirmationCode}
-          onChange={(value) => formik.setFieldValue("confirmationCode", value)}
-          onBlur={formik.handleBlur}
-          name="confirmationCode"
-          error={formik.errors.confirmationCode}
-        />
-      </div>
-
       {/* New Password */}
       <div className="relative">
         <div className="flex items-center justify-between mb-2">
           <label
             htmlFor="password"
-            className="block text-sm font-medium text-text2"
+            className="block text-sm font-medium text-gray-700"
           >
             New Password
           </label>
@@ -135,7 +121,7 @@ export function ResetPasswordForm() {
       <div className="relative">
         <label
           htmlFor="confirmNewPassword"
-          className="block text-sm font-medium text-gray-700"
+          className="block text-sm font-medium text-gray-700 mb-2"
         >
           Confirm New Password
         </label>
@@ -156,6 +142,24 @@ export function ResetPasswordForm() {
         ) : null}
       </div>
 
+      {/* Confirmation Code */}
+      <div className="relative">
+        <label className="block text-sm text-gray-600 mb-2">
+          Enter the code sent to <span className="font-medium">{email}</span>.
+        </label>
+        <div className="relative">
+          <OtpInput
+            value={formik.values.confirmationCode}
+            onChange={(value) =>
+              formik.setFieldValue("confirmationCode", value)
+            }
+            onBlur={formik.handleBlur}
+            name="confirmationCode"
+            error={formik.errors.confirmationCode}
+          />
+        </div>
+      </div>
+
       {/* Submit Button */}
       <div className="pt-4">
         <button
@@ -165,6 +169,14 @@ export function ResetPasswordForm() {
         >
           {formik.isSubmitting ? "Resetting..." : "Reset Password"}
         </button>
+      </div>
+      <div>
+        <Link
+          href={conts.paths.signin}
+          className="flex gap-3 justify-center items-center text-app_primary!"
+        >
+          Back to sign in
+        </Link>
       </div>
     </form>
   );

@@ -10,7 +10,14 @@ import conts from "@/lib/conts";
 import { authService } from "@/core/services/auth";
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { MsgType } from "@/lib/types";
+import {
+  MsgType,
+  RegisterUserResult,
+  RegisterUserVariables,
+} from "@/lib/types";
+import { fetchUserAttributes } from "aws-amplify/auth";
+import { useMutation } from "@apollo/client/react";
+import { REGISTER_USER } from "@/graphql/mutations";
 
 // 2. --- Form Component ---
 export default function SignInForm() {
@@ -19,6 +26,10 @@ export default function SignInForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
+
+  const [registerUser] = useMutation<RegisterUserResult, RegisterUserVariables>(
+    REGISTER_USER
+  );
 
   // Get email from URL
   useEffect(() => {
@@ -53,14 +64,30 @@ export default function SignInForm() {
     validationSchema: SignInSchema,
     onSubmit: async (values, { setSubmitting }) => {
       setAuthError(null);
-      const error = await authService.signin(values, router);
+      const result = await authService.signin(values, router);
 
-      // show background error
-      if (error) {
-        setAuthError(error);
+      if (result.error) {
+        setAuthError(result.error);
         setTimeout(() => {
           setAuthError(null);
         }, 5000);
+      } else if (result.redirectLink) {
+        if (!result.redirectLink.includes("verify-email")) {
+          try {
+            const attributes = await fetchUserAttributes();
+            const name = attributes.name;
+            const role = attributes["custom:role"];
+
+            if (name && role) {
+              await registerUser({
+                variables: { name, role },
+              });
+            }
+          } catch (e) {
+            console.error("Failed to register user in DB", e);
+          }
+        }
+        router.push(result.redirectLink);
       }
       setSubmitting(false);
     },
@@ -102,7 +129,7 @@ export default function SignInForm() {
             htmlFor="email"
             className="block text-sm font-medium text-text2 mb-2"
           >
-            Email
+            Email address
           </label>
           <input
             id="email"
@@ -129,12 +156,6 @@ export default function SignInForm() {
             >
               Password
             </label>
-            <Link
-              href={conts.paths.forgotPass} // Dummy link
-              className="text-sm font-medium text-app_primary!"
-            >
-              Forgot Password?
-            </Link>
           </div>
           <input
             id="password"
@@ -166,6 +187,14 @@ export default function SignInForm() {
               {formik.errors.password}
             </p>
           ) : null}
+        </div>
+        <div className="flex items-center justify-between mb-2">
+          <Link
+            href={conts.paths.forgotPass} // Dummy link
+            className="text-sm font-medium text-app_primary! ml-auto"
+          >
+            Forgot Password?
+          </Link>
         </div>
 
         {/* Submit Button */}

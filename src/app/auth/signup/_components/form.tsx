@@ -121,7 +121,7 @@ export default function SignUpForm() {
             htmlFor="email"
             className="block text-sm font-medium text-text2 mb-2"
           >
-            Email
+            Email address
           </label>
           <input
             id="email"

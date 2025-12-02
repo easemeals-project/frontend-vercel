@@ -2,6 +2,7 @@ import { features } from "process";
 
 export default {
   paths: {
+    server: "http://98.92.147.201:8080/query",
     signup: "/auth/signup",
     signin: "/auth/signin",
     forgotPass: "/auth/forgot_pass",

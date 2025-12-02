@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Card, Input, Tag } from "antd";
 import {
   MenuOutlined,
   DownloadOutlined,
@@ -26,7 +25,6 @@ const vendors = [
     image: "/home/1.png",
     scheduled: true,
     scheduleInfo: "Monday / Dinner",
-    scheduleColor: "bg-[#F4511E]", // Orange for Dinner/Lunch
   },
   {
     id: 2,
@@ -39,7 +37,6 @@ const vendors = [
     image: "/home/2.png",
     scheduled: true,
     scheduleInfo: "Monday / Lunch",
-    scheduleColor: "bg-[#00C853]", // Green for Lunch
   },
   {
     id: 3,
@@ -65,7 +62,13 @@ const vendors = [
   },
 ];
 
-const categories = ["All Vendors", "Nigerian", "Continental", "Healthy", "Fast Food"];
+const categories = [
+  "All Vendors",
+  "Nigerian",
+  "Continental",
+  "Healthy",
+  "Fast Food",
+];
 
 export default function VendorsPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -90,7 +93,7 @@ export default function VendorsPage() {
             </button>
             <div className="hidden lg:block w-6" />
           </div>
-          
+
           <h1 className="text-xl font-bold text-text1 absolute left-1/2 transform -translate-x-1/2">
             Food Vendor
           </h1>
@@ -108,7 +111,6 @@ export default function VendorsPage() {
         {/* Scrollable Content */}
         <main className="flex-1 overflow-y-auto p-4 lg:p-8">
           <div className="max-w-7xl mx-auto space-y-8">
-            
             {/* Search and Filter */}
             <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 space-y-4">
               <div className="relative">
@@ -119,22 +121,21 @@ export default function VendorsPage() {
                   className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-lg text-text1 focus:outline-none focus:ring-2 focus:ring-app_primary/20 focus:border-app_primary transition-all placeholder-gray-400"
                 />
               </div>
-
-              <div className="flex flex-wrap gap-2">
-                {categories.map((category) => (
-                  <button
-                    key={category}
-                    onClick={() => setActiveCategory(category)}
-                    className={`px-6 py-2 rounded-lg text-sm font-medium transition-all ${
-                      activeCategory === category
-                        ? "bg-app_secondary text-white shadow-sm"
-                        : "bg-gray-100 text-text2 hover:bg-gray-200"
-                    }`}
-                  >
-                    {category}
-                  </button>
-                ))}
-              </div>
+            </div>
+            <div className="flex flex-wrap gap-2 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+              {categories.map((category) => (
+                <button
+                  key={category}
+                  onClick={() => setActiveCategory(category)}
+                  className={`px-6 py-2 rounded-lg text-sm font-medium transition-all ${
+                    activeCategory === category
+                      ? "bg-app_secondary text-white shadow-sm"
+                      : "bg-gray-100 text-text2 hover:bg-gray-200"
+                  }`}
+                >
+                  {category}
+                </button>
+              ))}
             </div>
 
             {/* Scheduled Vendors */}
@@ -157,7 +158,9 @@ export default function VendorsPage() {
                           className="object-cover group-hover:scale-105 transition-transform duration-500"
                         />
                         {vendor.scheduled && (
-                          <div className={`absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-bold text-white ${vendor.scheduleColor}`}>
+                          <div
+                            className={`absolute top-0 left-0 px-3 py-1 rounded-br-full text-xs font-bold text-white bg-app_primary`}
+                          >
                             {vendor.scheduleInfo}
                           </div>
                         )}
@@ -174,19 +177,25 @@ export default function VendorsPage() {
                             {vendor.name}
                           </h3>
                         </div>
-                        <p className="text-sm text-text2 mb-3">{vendor.cuisine}</p>
-                        
+                        <p className="text-sm text-text2 mb-3">
+                          {vendor.cuisine}
+                        </p>
+
                         <div className="flex items-center gap-4 text-xs text-text2 border-t border-gray-50 pt-3">
                           <div className="flex items-center gap-1.5">
-                            <StarFilled className="text-yellow-400 text-sm" />
-                            <span className="font-bold text-text1">{vendor.rating}</span>
-                            <span className="text-gray-400">({vendor.reviews})</span>
+                            <StarFilled className="text-yellow-400! text-sm" />
+                            <span className="font-bold text-text1">
+                              {vendor.rating}
+                            </span>
+                            <span className="text-gray-400">
+                              ({vendor.reviews})
+                            </span>
                           </div>
                           <div className="flex items-center gap-1.5">
                             <ClockCircleOutlined className="text-gray-400" />
                             <span>{vendor.deliveryTime}</span>
                           </div>
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center ml-auto">
                             <EnvironmentOutlined className="text-gray-400" />
                             <span>{vendor.distance}</span>
                           </div>
@@ -221,19 +230,25 @@ export default function VendorsPage() {
                           {vendor.name}
                         </h3>
                       </div>
-                      <p className="text-sm text-text2 mb-3">{vendor.cuisine}</p>
-                      
+                      <p className="text-sm text-text2 mb-3">
+                        {vendor.cuisine}
+                      </p>
+
                       <div className="flex items-center gap-4 text-xs text-text2 border-t border-gray-50 pt-3">
                         <div className="flex items-center gap-1.5">
-                          <StarFilled className="text-yellow-400 text-sm" />
-                          <span className="font-bold text-text1">{vendor.rating}</span>
-                          <span className="text-gray-400">({vendor.reviews})</span>
+                          <StarFilled className="text-yellow-400! text-sm" />
+                          <span className="font-bold text-text1">
+                            {vendor.rating}
+                          </span>
+                          <span className="text-gray-400">
+                            ({vendor.reviews})
+                          </span>
                         </div>
                         <div className="flex items-center gap-1.5">
                           <ClockCircleOutlined className="text-gray-400" />
                           <span>{vendor.deliveryTime}</span>
                         </div>
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1.5 ml-auto">
                           <EnvironmentOutlined className="text-gray-400" />
                           <span>{vendor.distance}</span>
                         </div>
@@ -249,4 +264,3 @@ export default function VendorsPage() {
     </div>
   );
 }
-

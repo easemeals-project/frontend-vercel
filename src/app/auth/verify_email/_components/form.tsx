@@ -45,10 +45,9 @@ export default function VerifyEmailForm() {
         }, 5000);
         setSubmitting(false);
       } else {
-        // Give auth cookies time to sync before redirecting
-        // This ensures middleware can verify the user is authenticated
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        window.location.href = conts.paths.dashboard;
+        // Wait for authService.verifySignUp to confirm the session is present
+        // (it polls fetchAuthSession), then push to the dashboard route.
+        router.push(conts.paths.dashboard);
       }
     },
   });

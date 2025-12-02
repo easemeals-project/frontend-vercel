@@ -10,15 +10,7 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import conts from "@/lib/conts";
-
-interface Address {
-  id: string;
-  fullName: string;
-  phoneNumber: string;
-  address: string;
-  instructions?: string;
-}
-
+import { Address } from "@/lib/types";
 
 const serviceOptions = [
   {
@@ -49,7 +41,7 @@ export default function CheckoutPage() {
   const [serviceOption, setServiceOption] = useState("ingredients");
   const [paymentMethod, setPaymentMethod] = useState("card");
   const [isLoading, setIsLoading] = useState(true);
-  
+
   // Form states
   const [fullName, setFullName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -100,7 +92,7 @@ export default function CheckoutPage() {
           <h1 className="text-xl font-bold text-text1 absolute left-1/2 transform -translate-x-1/2">
             Checkout
           </h1>
-          <div className="w-24"></div> 
+          <div className="w-24"></div>
         </div>
       </header>
 
@@ -114,8 +106,7 @@ export default function CheckoutPage() {
                 Select Service Option
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {
-                serviceOptions.map((option) => (
+                {serviceOptions.map((option) => (
                   <div
                     key={option.id}
                     onClick={() => setServiceOption(option.id)}
@@ -144,7 +135,7 @@ export default function CheckoutPage() {
               <h2 className="text-lg font-bold text-text1 mb-6">
                 Delivery Information
               </h2>
-              
+
               <div className="space-y-6">
                 <div>
                   <label className="block text-sm font-medium text-text1 mb-2">
@@ -292,7 +283,9 @@ export default function CheckoutPage() {
                 >
                   <div className="flex items-center gap-3">
                     <CreditCardOutlined className="text-xl text-text1" />
-                    <span className="font-medium text-text1">Pay with Card</span>
+                    <span className="font-medium text-text1">
+                      Pay with Card
+                    </span>
                   </div>
                   {paymentMethod === "card" && (
                     <CheckCircleFilled className="text-[#FF7043]" />

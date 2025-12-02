@@ -50,7 +50,7 @@ export default function SchedulePage() {
             </button>
             <div className="hidden lg:block w-6" />
           </div>
-          
+
           <h1 className="text-xl font-bold text-text1 absolute left-1/2 transform -translate-x-1/2">
             Schedule
           </h1>
@@ -82,9 +82,7 @@ export default function SchedulePage() {
                   placeholder="Enter your delivery address"
                   className="flex-1 h-11 rounded-lg border-gray-300 hover:border-app_primary focus:border-app_primary"
                 />
-                <button
-                  className="bg-app_secondary hover:bg-[#F4511E] text-white px-6 py-2.5 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors shadow-sm whitespace-nowrap"
-                >
+                <button className="bg-app_secondary hover:bg-[#F4511E] text-white px-6 py-2.5 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors shadow-sm whitespace-nowrap">
                   <EnvironmentOutlined />
                   Use Current Location
                 </button>
@@ -105,9 +103,11 @@ export default function SchedulePage() {
                     value="now"
                     checked={deliveryOption === "now"}
                     onChange={(e) => setDeliveryOption(e.target.value)}
-                    className="w-4 h-4 text-app_primary border-gray-300 focus:ring-app_primary"
+                    className="w-4 h-4"
                   />
-                  <label htmlFor="now" className="text-text1">Deliver Now</label>
+                  <label htmlFor="now" className="text-text1">
+                    Deliver Now
+                  </label>
                 </div>
                 <div className="flex items-center gap-3">
                   <input
@@ -117,9 +117,11 @@ export default function SchedulePage() {
                     value="schedule"
                     checked={deliveryOption === "schedule"}
                     onChange={(e) => setDeliveryOption(e.target.value)}
-                    className="w-4 h-4 text-app_primary border-gray-300 focus:ring-app_primary"
+                    className="w-4 h-4"
                   />
-                  <label htmlFor="schedule" className="text-text1">Schedule for Later</label>
+                  <label htmlFor="schedule" className="text-text1">
+                    Schedule for Later
+                  </label>
                 </div>
               </div>
             </div>
@@ -140,13 +142,21 @@ export default function SchedulePage() {
                         : "bg-white border-gray-200 text-text1 hover:border-gray-300"
                     }`}
                   >
-                    <span className={`text-2xl font-bold ${selectedDate === day.label ? "text-white" : "text-text1"}`}>
+                    <span
+                      className={`text-2xl font-bold ${
+                        selectedDate === day.label ? "text-white" : "text-text1"
+                      }`}
+                    >
                       {day.label}
                     </span>
                     {day.day === "TODAY" ? (
-                      <span className="text-[10px] font-medium mt-1">TODAY</span>
+                      <span className="text-[10px] font-medium mt-1">
+                        TODAY
+                      </span>
                     ) : (
-                      <span className="text-[10px] font-medium mt-1 uppercase">{day.weekday}</span>
+                      <span className="text-[10px] font-medium mt-1 uppercase">
+                        {day.weekday}
+                      </span>
                     )}
                   </button>
                 ))}
@@ -164,17 +174,16 @@ export default function SchedulePage() {
                   { name: "Lunch", time: "12:00-1:00 PM" },
                   { name: "Dinner", time: "7:00-8:00 PM" },
                 ].map((meal) => (
-                  <div
-                    key={meal.name}
-                    className="flex items-center gap-4"
-                  >
+                  <div key={meal.name} className="flex items-center gap-4">
                     <div className="flex items-center gap-3 w-32">
                       <Checkbox
                         checked={selectedMeals.includes(meal.name)}
                         onChange={() => handleMealToggle(meal.name)}
                         className="scale-110"
                       />
-                      <span className="text-text1 font-medium">{meal.name}</span>
+                      <span className="text-text1 font-medium">
+                        {meal.name}
+                      </span>
                     </div>
                     <div className="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-text2 text-sm">
                       {meal.time}
@@ -187,15 +196,14 @@ export default function SchedulePage() {
             {/* Note */}
             <div className="mb-8 p-4 bg-[#E3F2FD] border border-[#BBDEFB] rounded-lg">
               <p className="text-sm text-[#1565C0]">
-                <span className="font-bold">Note:</span> You will be notified about each meal 20 minutes before its
-                scheduled delivery time to the specified location.
+                <span className="font-bold">Note:</span> You will be notified
+                about each meal 20 minutes before its scheduled delivery time to
+                the specified location.
               </p>
             </div>
 
             {/* Confirm Button */}
-            <button
-              className="w-full bg-app_secondary hover:bg-[#F4511E] text-white py-4 rounded-lg text-lg font-bold shadow-sm transition-colors"
-            >
+            <button className="w-full bg-app_secondary hover:bg-[#F4511E] text-white py-4 rounded-lg text-lg font-bold shadow-sm transition-colors">
               Confirm Schedule
             </button>
           </Card>
@@ -204,4 +212,3 @@ export default function SchedulePage() {
     </div>
   );
 }
-

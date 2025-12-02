@@ -5,21 +5,21 @@ import conts from "@/lib/conts";
 import { useMemo } from "react";
 const sectionsRaw = [
   {
+    name: "Quick Links",
+    items: [
+      { name: "Features", href: "#why-choose-us" },
+      { name: "How it Works", href: "#how-it-works" }, // Links to sections on the page
+      { name: "Testimonials", href: "#testimonials" },
+      { name: "Dashboard", href: conts.paths.dashboard },
+    ],
+  },
+  {
     name: "Resources",
     items: [
       { name: "Blog", href: "/blog" },
       { name: "Recipes", href: "/recipies" }, // Links to sections on the page
       { name: "Nutrition Guide", href: "/guide" },
       { name: "FAQ", href: "/faq" },
-    ],
-  },
-  {
-    name: "Quick Links",
-    items: [
-      { name: "Features", href: "/blog" },
-      { name: "How it Works", href: "/recipies" }, // Links to sections on the page
-      { name: "Testimonials", href: "/guide" },
-      { name: "Dashboard", href: "/faq" },
     ],
   },
   {

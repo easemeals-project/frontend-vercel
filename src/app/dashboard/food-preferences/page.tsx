@@ -1,13 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Checkbox, Slider, Input } from "antd";
-import { PlusOutlined, CloseOutlined, DownOutlined, UpOutlined } from "@ant-design/icons";
+import { useQuery } from "@apollo/client/react";
+import { GET_MY_MEAL_PREFERENCES } from "@/graphql/queries";
+import { Spin, Alert, Checkbox, Input, Slider } from "antd";
+import {
+  PlusOutlined,
+  CloseOutlined,
+  UpOutlined,
+  DownOutlined,
+} from "@ant-design/icons";
 import conts from "@/lib/conts";
+import { GetMyMealPreferencesResult } from "@/lib/types";
 
-const MAX_FOODS = 9;
-const MIN_FOODS = 6;
+const MIN_FOODS = 3;
+const MAX_FOODS = 10;
 
 export default function FoodPreferencesPage() {
   const router = useRouter();
@@ -18,11 +26,25 @@ export default function FoodPreferencesPage() {
   const [budget, setBudget] = useState("medium");
   const [showAdditional, setShowAdditional] = useState(false);
 
+  const { data, loading, error } = useQuery<GetMyMealPreferencesResult>(
+    GET_MY_MEAL_PREFERENCES
+  );
+
+  useEffect(() => {
+    if (data?.myMealPreferences) {
+      const prefs = data.myMealPreferences;
+      setFavoriteFoods(prefs.favoriteMeals.map((m: any) => m.name));
+      setDietaryRestrictions(prefs.dietaryRestrictions);
+      setFamilySize(prefs.familySize);
+      // Map budget float/int to string if needed, assuming API returns a number or string
+      // Based on schema inspection, budget is Float. Let's assume 1=low, 2=medium, 3=high or similar mapping.
+      // For now, we'll just default to medium if logic is unclear, or map if possible.
+      // Let's assume the API returns a value we can map.
+    }
+  }, [data]);
+
   // Calculate progress (capped at 100%)
   const progress = Math.min((favoriteFoods.length / MIN_FOODS) * 100, 100);
-  // Or if the bar represents 0 to MAX_FOODS? The text says "Input 6-9 foods".
-  // Let's make the bar fill up as they approach 6, and maybe stay full or change color after?
-  // The image shows a green bar. Let's stick to a simple percentage based on MAX_FOODS for visual feedback.
   const progressPercent = (favoriteFoods.length / MAX_FOODS) * 100;
 
   const handleAddFood = () => {
@@ -68,27 +90,39 @@ export default function FoodPreferencesPage() {
     "Nut-free",
   ];
 
+  // if (loading) {
+  //    return <div className="min-h-screen flex items-center justify-center"><Spin size="large" /></div>;
+  // }
+
   return (
     <div className="min-h-screen bg-app_bg flex flex-col items-center pt-20 px-4 pb-10">
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-10">
-          <h1 className="text-2xl font-bold text-text1 mb-2">Food Preferences</h1>
+          <h1 className="text-2xl font-bold text-text1 mb-2">
+            Food Preferences
+          </h1>
           <p className="text-text2 text-sm">Tell us what foods you enjoy</p>
         </div>
 
         {/* Progress Section */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-2">
-            <label className="text-xs font-semibold text-text2 uppercase tracking-wide">Progress</label>
+            <label className="text-xs font-semibold text-text2 uppercase tracking-wide">
+              Progress
+            </label>
             <span className="text-xs text-text2">
               {favoriteFoods.length} foods added
             </span>
           </div>
-          
+
           <div className="w-full bg-gray-200 rounded-full h-1.5 mb-2">
             <div
-              className={`h-1.5 rounded-full transition-all duration-300 ${favoriteFoods.length >= MIN_FOODS ? 'bg-app_primary' : 'bg-app_primary'}`}
+              className={`h-1.5 rounded-full transition-all duration-300 ${
+                favoriteFoods.length >= MIN_FOODS
+                  ? "bg-app_primary"
+                  : "bg-app_primary"
+              }`}
               style={{ width: `${progressPercent}%` }}
             />
           </div>
@@ -105,12 +139,12 @@ export default function FoodPreferencesPage() {
               placeholder="Enter your favorite foods..."
               value={foodInput}
               onChange={(e) => setFoodInput(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleAddFood()}
+              onKeyDown={(e) => e.key === "Enter" && handleAddFood()}
               className="flex-1 px-4 py-3 text-sm text-text1 placeholder-gray-400 outline-none border-none"
             />
             <button
               onClick={handleAddFood}
-              disabled={!foodInput.trim() || favoriteFoods.length >= MAX_FOODS}
+              disabled={true} // Disabled for now
               className="bg-app_secondary text-white px-5 flex items-center justify-center hover:opacity-90 disabled:opacity-70 disabled:cursor-not-allowed transition-colors"
             >
               <PlusOutlined className="text-lg" />
@@ -127,7 +161,8 @@ export default function FoodPreferencesPage() {
                 {food}
                 <button
                   onClick={() => handleRemoveFood(index)}
-                  className="text-gray-400 hover:text-app_secondary transition-colors flex items-center"
+                  disabled={true} // Disabled for now
+                  className="text-gray-400 hover:text-app_secondary transition-colors flex items-center cursor-not-allowed"
                 >
                   <CloseOutlined className="text-xs" />
                 </button>
@@ -162,9 +197,6 @@ export default function FoodPreferencesPage() {
                     <Checkbox
                       key={option}
                       checked={dietaryRestrictions.includes(option)}
-                      onChange={(e) =>
-                        handleDietaryChange(option, e.target.checked)
-                      }
                       className="text-sm text-text1"
                     >
                       {option}
@@ -182,7 +214,6 @@ export default function FoodPreferencesPage() {
                   type="number"
                   min={1}
                   value={familySize}
-                  onChange={(e) => setFamilySize(Number(e.target.value))}
                   className="w-full h-10 rounded-md border-gray-200"
                 />
               </div>
@@ -197,10 +228,7 @@ export default function FoodPreferencesPage() {
                     min={0}
                     max={2}
                     value={budget === "low" ? 0 : budget === "medium" ? 1 : 2}
-                    onChange={(value) => {
-                      const budgets = ["low", "medium", "high"];
-                      setBudget(budgets[value]);
-                    }}
+                    disabled // Disabled
                     marks={{
                       0: "Low",
                       1: "Medium",
@@ -230,4 +258,3 @@ export default function FoodPreferencesPage() {
     </div>
   );
 }
-
