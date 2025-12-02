@@ -191,11 +191,8 @@ function HowItWorksSection() {
   ];
 
   return (
-    <section
-      id="how-it-works"
-      className="container bg-app_bg mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 md:py-24"
-    >
-      <div>
+    <section id="how-it-works" className="container bg-app_bg  py-16 md:py-24">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 ">
         <h2 className="text-3xl font-bold text-center text-text1">
           How EaseMeals Works
         </h2>
