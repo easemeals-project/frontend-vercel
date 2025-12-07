@@ -2,10 +2,15 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getAuthUserServer } from "./lib/utils/auth-utils";
 import conts from "./lib/conts";
+import { UserRole } from "./lib/types";
 
 const path = conts.paths;
 
-const protectedRoutes = [path.dashboard];
+const protectedRoutes = [
+  path.shopper,
+  path.vendor,
+  path.chef,
+];
 
 const publicAuthRoutes = [
   path.forgotPass,
@@ -21,18 +26,54 @@ export async function middleware(request: NextRequest) {
   const response = NextResponse.next();
   const { pathname } = request.nextUrl;
 
-  const isAuthenticated = !!(await getAuthUserServer());
+  const authData = await getAuthUserServer();
+  const isAuthenticated = !!authData;
 
   const signInUrl = new URL(conts.paths.signin, request.url);
-  const dashboardUrl = new URL(conts.paths.dashboard, request.url);
 
   if (isAuthenticated) {
-    // If they try to visit a public auth page, redirect to dashboard
+    const userRole = authData.user?.role?.toLowerCase();
+
+    // Determine home based on role
+    let homeUrlStr = path.shopper; // Default/Shopper home (now /shopper/dashboard)
+    if (userRole === UserRole.chef.toLowerCase()) homeUrlStr = path.chef;
+    else if (userRole === UserRole.vendor.toLowerCase()) homeUrlStr = path.vendor;
+
+    const homeUrl = new URL(homeUrlStr, request.url);
+
+    // If they try to visit a public auth page, redirect to their role's home
     if (publicAuthRoutes.some((route) => pathname.startsWith(route))) {
-      return NextResponse.redirect(dashboardUrl);
+      return NextResponse.redirect(homeUrl);
     }
-    // Otherwise, they are authenticated and on a valid page (like /dashboard or /),
-    // so let them proceed.
+
+    // Role-based Access Control
+    if (userRole ===  UserRole.vendor.toLowerCase()) {
+      // Vendors should not access shopper or chef routes
+      if (
+        pathname.startsWith(path.shopper) ||
+        pathname.startsWith(path.chef)
+      ) {
+        return NextResponse.redirect(homeUrl);
+      }
+    } else if (userRole === UserRole.shopper.toLowerCase()) {
+      // Shoppers should not access vendor or chef routes
+      if (
+        pathname.startsWith(path.vendor) ||
+        pathname.startsWith(path.chef)
+      ) {
+        return NextResponse.redirect(homeUrl);
+      }
+    } else if (userRole === UserRole.chef.toLowerCase()) {
+      // Chefs should not access shopper or vendor routes
+      if (
+        pathname.startsWith(path.shopper) ||
+        pathname.startsWith(path.vendor)
+      ) {
+        return NextResponse.redirect(homeUrl);
+      }
+    }
+
+    // Otherwise, they are allowed
     return response;
   }
 
@@ -42,17 +83,17 @@ export async function middleware(request: NextRequest) {
     signInUrl.searchParams.set("redirectedFrom", pathname);
     return NextResponse.redirect(signInUrl);
   }
-  // Otherwise, they are on a public page (like / or /signin),
-  // so let them proceed.
+
+  // Otherwise, they are on a public page
   return response;
 }
 
-// `config.matcher` must be statically analyzable by Next.js (no template
-// expressions). Use literal strings here so the build can validate the
-// exported config.
+// `config.matcher` must be statically analyzable by Next.js
 export const config = {
   matcher: [
-    "/dashboard/:path*",
+    "/shopper/:path*",
+    "/vendor/:path*",
+    "/chef/:path*",
     "/auth/:path*",
   ],
 };

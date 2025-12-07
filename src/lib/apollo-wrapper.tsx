@@ -1,6 +1,7 @@
 "use client";
 
 import { HttpLink } from "@apollo/client";
+import { ConfigProvider, Slider } from 'antd';
 import {
   ApolloNextAppProvider,
   ApolloClient,
@@ -38,7 +39,15 @@ function makeClient() {
 export function ApolloWrapper({ children }: { children: React.ReactNode }) {
   return (
     <ApolloNextAppProvider makeClient={makeClient}>
+      <ConfigProvider
+    theme={{
+      token: {
+        colorPrimary: '#4CAF50', // Your desired primary color for the handle
+      },
+    }}
+  > 
       {children}
+      </ConfigProvider>
     </ApolloNextAppProvider>
   );
 }

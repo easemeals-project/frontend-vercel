@@ -16,10 +16,10 @@ const sectionsRaw = [
   {
     name: "Resources",
     items: [
-      { name: "Blog", href: "/blog" },
-      { name: "Recipes", href: "/recipies" }, // Links to sections on the page
-      { name: "Nutrition Guide", href: "/guide" },
-      { name: "FAQ", href: "/faq" },
+      { name: "Blog", href: conts.paths.blog },
+      { name: "Recipes", href: conts.paths.recipies }, // Links to sections on the page
+      { name: "Nutrition Guide", href: conts.paths.guide },
+      { name: "FAQ", href: conts.paths.faq },
     ],
   },
   {
@@ -90,7 +90,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Column 1: Logo and Social */}
           <div>
-            <Link href="/" className="flex items-center space-x-2 mb-4">
+            <Link href={conts.paths.home} className="flex items-center space-x-2 mb-4">
               <Image
                 src="/logo.png"
                 alt="EaseMeals Logo"

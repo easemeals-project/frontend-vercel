@@ -224,14 +224,14 @@ export default function SignUpForm() {
           >
             I agree to the{" "}
             <a
-              href="/terms"
+              href={conts.paths.terms}
               className="font-medium text-app_primary! hover:text-orange-500"
             >
               Terms of Use
             </a>{" "}
             and{" "}
             <a
-              href="/privacy"
+              href={conts.paths.privacy}
               className="font-medium text-app_primary! hover:text-orange-500"
             >
               Privacy Policy
