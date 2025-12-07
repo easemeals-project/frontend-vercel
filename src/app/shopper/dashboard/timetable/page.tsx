@@ -160,11 +160,7 @@ export default function TimetablePage() {
                 <table className="w-full min-w-[800px]">
                   <thead>
                     <tr className="bg-gray-100 border-b border-gray-100">
-                      <th className="p-4 text-left text-xs font-bold text-text1 uppercase tracking-wider w-24">
-                        <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center text-app_secondary">
-                          <FormOutlined className="text-lg" />
-                        </div>
-                      </th>
+                      <th className="p-4 text-left text-xs font-bold text-text1 uppercase tracking-wider w-24" />
                       {DAYS.map((day) => (
                         <th
                           key={day}
@@ -179,9 +175,9 @@ export default function TimetablePage() {
                     {MEAL_TYPES.map((mealType) => (
                       <tr
                         key={mealType}
-                        className="hover:bg-gray-50/50 transition-colors divide-x"
+                        className="hover:bg-gray-50/50 transition-colors divide-x divide-gray-100"
                       >
-                        <td className="p-4 text-xs font-bold text-text2 uppercase tracking-wide bg-gray-100">
+                        <td className="p-4 align-top text-xs font-bold text-text2 uppercase tracking-wide bg-gray-100">
                           {mealType}
                         </td>
                         {DAYS.map((day) => (
