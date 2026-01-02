@@ -8,13 +8,17 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-outfit);
+  /* Updated to Outfit */
   --font-mono: var(--font-geist-mono);
-  --color-app_bg:#F8F5F0;
-  --color-app_primary:#4CAF50;
-  --color-app_secondary:#FF5722;
-  --color-text1:#3A3427;
-  --color-text2:#5A5347;;
+  --color-app_bg: #F8F5F0;
+  --color-app_primary: #0c513f;
+  /* Deep Green */
+  --color-app_secondary: #ff6b35;
+  /* Burnt Orange */
+  --color-text1: #1a1a1a;
+  /* Darker, cleaner text */
+  --color-text2: #4a4a4a;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -24,9 +28,14 @@
   }
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
   font-weight: 500;
+  overflow-x: hidden;
 }

@@ -1,8 +1,10 @@
+"use client";
+
 import Image from "next/image";
 import uniqid from "uniqid";
+import ScrollAnimation from "./ScrollAnimation";
 
-export default // --- 3. How It Works Section ---
-function HowItWorksSection() {
+export default function HowItWorksSection() {
   const steps = [
     {
       title: "Enter Your Preferences",
@@ -27,39 +29,55 @@ function HowItWorksSection() {
   ];
 
   return (
-    <section id="how-it-works" className="w-fullbg-app_bg  py-16 md:py-24">
-      <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 ">
-        <h2 className="text-3xl font-bold text-center text-text1">
-          How EaseMeals Works
-        </h2>
-        <div className="max-w-xl my-2 text mx-auto text-center text-text2">
-          Create your personalized meal plan in just a few simple steps{" "}
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-          {/* Left Side: Image */}
-          <div className="flex items-center">
-            <Image
-              src="/home/5.png"
-              alt="How EaseMeals works"
-              width={600}
-              height={500}
-              className="rounded-lg object-cover flex-auto w-auto"
-            />
+    <section id="how-it-works" className="w-full bg-app_bg py-20 lg:py-32 overflow-hidden">
+      <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <ScrollAnimation variant="fadeUp">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <h2 className="text-4xl font-extrabold text-gray-900 tracking-tight sm:text-5xl mb-4">
+              How EaseMeals Works
+            </h2>
+            <p className="text-xl text-text2">
+              Create your personalized meal plan in just a few simple steps
+            </p>
           </div>
-          {/* Right Side: Text Content */}
+        </ScrollAnimation>
 
-          <div className="space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+          {/* Left Side: Image */}
+          <ScrollAnimation variant="slideLeft" className="relative flex justify-center lg:justify-start">
+            <div className="relative rounded-2xl overflow-hidden shadow-2xl border-4 border-white transform rotate-2 hover:rotate-0 transition-transform duration-500">
+              <Image
+                src="/home/5.png"
+                alt="How EaseMeals works"
+                width={600}
+                height={500}
+                className="object-cover w-full h-auto"
+              />
+              <div className="absolute inset-0 bg-black/10 hover:bg-transparent transition-colors duration-300" />
+            </div>
+          </ScrollAnimation>
+
+          {/* Right Side: Text Content */}
+          <div className="space-y-4">
             {steps.map((step, index) => (
-              <div key={uniqid()} className="flex items-start space-x-4">
-                <div className="rounded-full bg-app_primary text-white min-h-7 min-w-7 text-center">
+              <ScrollAnimation
+                key={uniqid()}
+                variant="fadeUp"
+                delay={index * 0.15 + 0.2}
+                className="group flex items-start space-x-6 bg-white p-6 rounded-xl hover:shadow-lg transition-all duration-300 border border-transparent hover:border-green-100"
+              >
+                <div className="flex-shrink-0 flex items-center justify-center w-12 h-12 rounded-full bg-green-100 text-green-600 font-bold text-xl group-hover:bg-green-600 group-hover:text-white transition-colors duration-300">
                   {index + 1}
                 </div>
                 <div>
-                  <h3 className="font-bold text-text1">{step.title}</h3>
-                  <p className="text-gray-600 text-sm">{step.description}</p>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-green-700 transition-colors">
+                    {step.title}
+                  </h3>
+                  <p className="text-gray-600 leading-relaxed">
+                    {step.description}
+                  </p>
                 </div>
-              </div>
+              </ScrollAnimation>
             ))}
           </div>
         </div>

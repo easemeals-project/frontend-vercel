@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Outfit } from "next/font/google"; // Import Outfit
 import "./globals.css";
 import ConfigureAmplifyClientSide from "./_components/auth-config";
 import { ApolloWrapper } from "../lib/apollo-wrapper";
@@ -8,6 +8,7 @@ import { GetFaqsResult } from "@/lib/types";
 import { GET_FAQS } from "@/graphql/queries";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" }); // Configure Outfit
 
 export const metadata: Metadata = {
   title: "EaseMeals",
@@ -26,7 +27,7 @@ export default async function RootLayout({
 
   return (
     <html lang="en">
-      <body className={`${inter.variable} antialiased min-h-screen`}>
+      <body className={`${inter.variable} ${outfit.variable} antialiased min-h-screen font-sans`}> 
         <>
           <ConfigureAmplifyClientSide />
           <ApolloWrapper>{children}</ApolloWrapper>

@@ -39,3 +39,5 @@ export const UPLOAD_PROFILE_PICTURE = gql`
     }
   }
 `;
+
+

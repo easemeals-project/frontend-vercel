@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { MenuOutlined, CloseOutlined, UserOutlined } from "@ant-design/icons";
 import Image from "next/image";
@@ -10,6 +10,15 @@ import { HeaderProps } from "@/lib/types";
 
 export default function Header({ user }: HeaderProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const navLinks = [
     { name: "Features", href: "#why-choose-us" },
@@ -18,19 +27,24 @@ export default function Header({ user }: HeaderProps) {
   ];
 
   return (
-    <header className="bg-app_bg w-full top-0 z-50 sticky">
+    <header
+      className={`w-full top-0 z-50 sticky transition-all duration-300 ${isScrolled
+          ? "bg-white/80 backdrop-blur-md shadow-sm py-3"
+          : "bg-transparent py-5"
+        }`}
+    >
       <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-20">
+        <div className="flex justify-between items-center">
           <div className="shrink-0">
-            <Link href={conts.paths.home} className="flex items-center space-x-2">
+            <Link href={conts.paths.home} className="flex items-center space-x-2 group">
               <Image
                 src="/logo.png"
                 alt="EaseMeals Logo"
-                width={36}
-                height={36}
-                className="rounded-md"
+                width={40}
+                height={40}
+                className="rounded-xl shadow-sm transform group-hover:rotate-6 transition-transform"
               />
-              <span className="text-lg font-bold text-app_secondary tracking-wide">
+              <span className={`text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-app_primary to-green-600`}>
                 EaseMeals
               </span>
             </Link>
@@ -41,7 +55,7 @@ export default function Header({ user }: HeaderProps) {
               <Link
                 key={link.name}
                 href={link.href}
-                className="font-medium text-text1 hover:text-green-600 transition-colors"
+                className="font-medium text-gray-600 hover:text-app_primary transition-colors text-sm uppercase tracking-wide"
               >
                 {link.name}
               </Link>
@@ -51,37 +65,37 @@ export default function Header({ user }: HeaderProps) {
               <div className="flex items-center gap-4">
                 <Link
                   href={conts.paths.dashboard}
-                  className="font-medium text-text1 hover:text-green-600 transition-colors"
+                  className="font-medium text-gray-700 hover:text-green-600 transition-colors"
                 >
                   Dashboard
                 </Link>
-                <div className="flex items-center gap-2 text-app_primary font-medium text-ellipsis overflow-hidden whitespace-nowrap">
+                <div className="flex items-center gap-2 text-app_primary font-bold bg-green-50 px-4 py-2 rounded-full border border-green-100">
                   <UserOutlined />
                   <span>{user.name}</span>
                 </div>
               </div>
             ) : (
-              <>
+              <div className="flex items-center gap-4">
                 <Link
                   href={conts.paths.signin}
-                  className="font-medium text-text1 hover:text-green-600 transition-colors"
+                  className="font-medium text-gray-700 hover:text-app_primary transition-colors"
                 >
                   Sign in
                 </Link>
                 <Link
                   href={conts.paths.signup}
-                  className="inline-flex items-center justify-center px-6 py-2 border border-transparent rounded-sm shadow-sm text-base font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                  className="inline-flex items-center justify-center px-6 py-2.5 border border-transparent rounded-full shadow-lg shadow-green-900/10 text-sm font-bold text-white bg-app_primary hover:bg-green-800 transition-all transform hover:-translate-y-0.5"
                 >
                   Get Started
                 </Link>
-              </>
+              </div>
             )}
           </nav>
 
           <div className="md:hidden flex items-center">
             <button
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="inline-flex cursor-pointer items-center justify-center p-2 rounded-md bg-transparent"
+              className="inline-flex cursor-pointer items-center justify-center p-2 rounded-md bg-white/50 hover:bg-white text-gray-700 transition-colors shadow-sm border border-gray-100"
             >
               {isSidebarOpen ? (
                 <CloseOutlined className="h-6 w-6" />
@@ -95,61 +109,77 @@ export default function Header({ user }: HeaderProps) {
 
       {/* Sidebar */}
       <div
-        className={`fixed top-0 left-0 h-full w-[70vw] bg-white shadow-lg z-50 transform transition-transform duration-300 ease-in-out ${
-          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        className={`fixed top-0 left-0 h-full w-[85vw] sm:w-[50vw] bg-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
       >
-        <div className="p-5">
-          <button
-            onClick={() => setIsSidebarOpen(false)}
-            className="absolute top-5 right-5"
-          >
-            <CloseOutlined />
-          </button>
-          <div className="mt-10">
+        <div className="p-6 h-full flex flex-col">
+          <div className="flex justify-between items-center mb-10">
+            <div className="flex items-center space-x-2">
+              <Image
+                src="/logo.png"
+                alt="EaseMeals Logo"
+                width={36}
+                height={36}
+                className="rounded-lg"
+              />
+              <span className="text-xl font-bold text-app_primary">
+                EaseMeals
+              </span>
+            </div>
+            <button
+              onClick={() => setIsSidebarOpen(false)}
+              className="text-gray-400 hover:text-gray-900 transition-colors"
+            >
+              <CloseOutlined className="text-xl" />
+            </button>
+          </div>
+
+          <div className="flex flex-col gap-6">
             {navLinks.map((link) => (
               <Link
                 key={uniqid()}
                 href={link.href}
                 onClick={() => setIsSidebarOpen(false)}
-                className="block py-2 text-gray-800"
+                className="block py-2 text-xl font-bold text-gray-800 hover:text-app_primary transition-colors border-b border-gray-50 pb-4"
               >
                 {link.name}
               </Link>
             ))}
 
-            {user ? (
-              <Link
-                href={conts.paths.dashboard}
-                onClick={() => setIsSidebarOpen(false)}
-                className="block mt-4 w-full text-center px-6 py-2 border border-transparent rounded-full shadow-sm text-base font-medium text-white bg-green-600 hover:bg-green-700"
-              >
-                Go to Dashboard
-              </Link>
-            ) : (
-              <>
+            <div className="mt-auto pt-8">
+              {user ? (
                 <Link
-                  href={conts.paths.signin}
+                  href={conts.paths.dashboard}
                   onClick={() => setIsSidebarOpen(false)}
-                  className="block py-2 text-gray-800"
+                  className="flex items-center justify-center w-full px-6 py-4 border border-transparent rounded-full shadow-lg shadow-green-900/10 text-base font-bold text-white bg-app_primary hover:bg-green-800"
                 >
-                  Sign in
+                  Go to Dashboard
                 </Link>
-                <Link
-                  href={conts.paths.signup}
-                  onClick={() => setIsSidebarOpen(false)}
-                  className="block mt-4 w-full text-center px-6 py-2 border border-transparent rounded-full shadow-sm text-base font-medium text-white bg-green-600 hover:bg-green-700"
-                >
-                  Sign Up
-                </Link>
-              </>
-            )}
+              ) : (
+                <div className="flex flex-col gap-4">
+                  <Link
+                    href={conts.paths.signup}
+                    onClick={() => setIsSidebarOpen(false)}
+                    className="flex items-center justify-center w-full px-6 py-4 border border-transparent rounded-full shadow-lg shadow-green-900/10 text-base font-bold text-white bg-app_primary hover:bg-green-800"
+                  >
+                    Get Started Free
+                  </Link>
+                  <Link
+                    href={conts.paths.signin}
+                    onClick={() => setIsSidebarOpen(false)}
+                    className="block w-full text-center py-4 text-gray-600 font-semibold hover:text-app_primary"
+                  >
+                    Already have an account? Sign in
+                  </Link>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
       {isSidebarOpen && (
         <div
-          className="fixed top-0 left-0 w-full h-full bg-black opacity-50 z-40"
+          className="fixed top-0 left-0 w-full h-full bg-black/20 backdrop-blur-sm z-40"
           onClick={() => setIsSidebarOpen(false)}
         ></div>
       )}
