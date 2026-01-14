@@ -6,11 +6,22 @@ import { AppleFilled, AndroidFilled } from "@ant-design/icons";
 
 export default function DownloadAppSection() {
     return (
-        <section className="py-24 bg-gradient-to-br from-[#0a4031] to-[#042119] text-white overflow-hidden relative">
-            {/* Background Texture/Glow */}
-            <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+        <section className="py-24 relative overflow-hidden">
+            {/* Background Image & Overlay */}
+            <div className="absolute inset-0 z-0">
+                <Image
+                    src="/app_banner/download_bg_brush.png"
+                    alt="Background Texture"
+                    fill
+                    className="object-cover"
+                    priority
+                />
+                <div className="absolute inset-0 bg-[#0a4031]/90 mix-blend-multiply" /> {/* Dark Green Overlay for readability */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+            </div>
 
-            <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            {/* Content Container */}
+            <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10 text-white">
                 <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
 
                     {/* Text Content */}

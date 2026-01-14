@@ -129,8 +129,12 @@ export default function HeroSection() {
                 </Link>
 
                 <div className="flex items-center gap-2 text-sm font-bold text-gray-500">
-                  <div className="flex -space-x-2">
-                    {[1, 2, 3].map(i => <div key={i} className="w-8 h-8 rounded-full bg-gray-200 border-2 border-white ring-2 ring-white" />)}
+                  <div className="flex -space-x-3">
+                    {[1, 2, 3].map((num) => (
+                      <div key={num} className="relative w-9 h-9 rounded-full border-2 border-white ring-1 ring-gray-100 overflow-hidden shadow-sm">
+                        <Image src={`/hero_assets/testimonial${num}.png`} alt="Happy User" fill className="object-cover" />
+                      </div>
+                    ))}
                   </div>
                   <span>Join 2,000+ Users</span>
                 </div>
@@ -310,9 +314,9 @@ export default function HeroSection() {
                         priority
                       />
 
-                      {/* Speed Lines */}
+                      {/* Speed Lines - White Light */}
                       <motion.div
-                        className="absolute top-1/2 left-[-2rem] lg:-left-32 w-40 lg:w-64 h-2 bg-gradient-to-r from-transparent via-[#0a4031]/30 to-transparent rounded-full blur-[1px]"
+                        className="absolute top-1/2 left-[-2rem] lg:-left-32 w-40 lg:w-64 h-2 bg-gradient-to-r from-transparent via-white/60 to-transparent rounded-full blur-[1px]"
                         animate={{ opacity: [0, 0.8, 0], x: [0, 80, 0] }}
                         transition={{ repeat: Infinity, duration: 0.4 }}
                       />
