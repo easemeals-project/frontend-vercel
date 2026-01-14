@@ -59,17 +59,17 @@ export default function HeroSection() {
   return (
     <section className="relative w-full overflow-hidden bg-white min-h-[90vh] flex items-center pt-16 pb-12 lg:pt-32 lg:pb-24">
 
-      {/* 1. Abstract Background Shapes - Softer Spread */}
+      {/* 1. Abstract Background Shapes - Optimized */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <motion.div
-          animate={{ scale: [1, 1.2, 1], rotate: [0, 90, 0] }}
-          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-          className={`absolute top-[-20%] right-[-10%] w-[500px] lg:w-[700px] h-[500px] lg:h-[700px] rounded-full blur-[120px] lg:blur-[160px] opacity-15 bg-gradient-to-br ${current.accent}`}
+          animate={{ scale: [1, 1.1, 1] }}
+          transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+          className={`absolute top-[-20%] right-[-10%] w-[500px] lg:w-[700px] h-[500px] lg:h-[700px] rounded-full blur-[80px] lg:blur-[100px] opacity-15 bg-gradient-to-br ${current.accent} will-change-transform`}
         />
         <motion.div
-          animate={{ x: [-50, 50, -50], y: [50, -50, 50] }}
-          transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
-          className={`absolute bottom-[-10%] left-[-10%] w-[400px] lg:w-[600px] h-[400px] lg:h-[600px] rounded-full blur-[120px] lg:blur-[160px] opacity-10 bg-[#0a4031]`}
+          animate={{ y: [20, -20, 20] }}
+          transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
+          className={`absolute bottom-[-10%] left-[-10%] w-[400px] lg:w-[600px] h-[400px] lg:h-[600px] rounded-full blur-[80px] lg:blur-[100px] opacity-10 bg-[#0a4031] will-change-transform`}
         />
       </div>
 
@@ -149,9 +149,9 @@ export default function HeroSection() {
 
               {/* Ambient Glow */}
               <motion.div
-                animate={{ scale: [1, 1.1, 1], opacity: [0.5, 0.8, 0.5] }}
+                animate={{ scale: [1, 1.05, 1], opacity: [0.3, 0.5, 0.3] }}
                 transition={{ repeat: Infinity, duration: 4 }}
-                className={`absolute inset-0 z-0 bg-gradient-to-tr ${current.accent} rounded-full blur-[80px] opacity-20 transition-all duration-1000`}
+                className={`absolute inset-0 z-0 bg-gradient-to-tr ${current.accent} rounded-full blur-[80px] opacity-20 transition-all duration-1000 will-change-transform`}
               />
 
               {/* CONTENT SWAPPER */}
@@ -162,7 +162,7 @@ export default function HeroSection() {
                   <motion.div
                     key="feast-mode"
                     className="relative w-full h-full flex items-center justify-center"
-                    exit={{ opacity: 0, scale: 0.9, filter: "blur(10px)", transition: { duration: 0.4 } }}
+                    exit={{ opacity: 0, scale: 0.9, filter: "blur(5px)", transition: { duration: 0.3 } }}
                   >
                     {/* 1. Main Dish (Smoked Chicken) - Center */}
                     <motion.div
@@ -175,10 +175,11 @@ export default function HeroSection() {
                         src={current.img!}
                         alt="Chef Prepared Smoked Chicken" fill className="object-contain drop-shadow-2xl"
                         priority
+                        sizes="(max-width: 768px) 220px, 380px"
                       />
                     </motion.div>
 
-                    {/* --- Floating Galaxy Elements --- */}
+                    {/* --- Floating Galaxy Elements (Optimized: Simple Y Float) --- */}
 
                     {/* 2. Jollof Rice */}
                     <motion.div
@@ -188,11 +189,11 @@ export default function HeroSection() {
                       className="absolute top-[-5%] lg:top-[-10%] right-[0%] lg:right-[-5%] w-[110px] sm:w-[130px] lg:w-[160px] h-[110px] sm:h-[130px] lg:h-[160px] z-10"
                     >
                       <motion.div
-                        animate={{ y: [0, -15, 0], rotate: [0, 5, 0] }}
-                        transition={{ repeat: Infinity, duration: 5, ease: "easeInOut" }}
-                        className="w-full h-full relative"
+                        animate={{ y: [-10, 10, -10] }}
+                        transition={{ repeat: Infinity, duration: 6, ease: "easeInOut" }}
+                        className="w-full h-full relative will-change-transform"
                       >
-                        <Image src="/hero_assets/hero_dish_jollof.png" alt="Jollof Rice" fill className="object-contain drop-shadow-xl" />
+                        <Image src="/hero_assets/hero_dish_jollof.png" alt="Jollof Rice" fill className="object-contain drop-shadow-xl" sizes="(max-width: 768px) 110px, 160px" />
                       </motion.div>
                     </motion.div>
 
@@ -204,11 +205,11 @@ export default function HeroSection() {
                       className="absolute bottom-[-5%] lg:bottom-[-10%] left-[0%] lg:left-[-5%] w-[110px] sm:w-[130px] lg:w-[150px] h-[110px] sm:h-[130px] lg:h-[150px] z-30"
                     >
                       <motion.div
-                        animate={{ y: [0, 15, 0], rotate: [0, -5, 0] }}
-                        transition={{ repeat: Infinity, duration: 6, ease: "easeInOut" }}
-                        className="w-full h-full relative"
+                        animate={{ y: [10, -10, 10] }}
+                        transition={{ repeat: Infinity, duration: 7, ease: "easeInOut" }}
+                        className="w-full h-full relative will-change-transform"
                       >
-                        <Image src="/hero_assets/hero_dish_healthy.png" alt="Healthy Bowl" fill className="object-contain drop-shadow-xl" />
+                        <Image src="/hero_assets/hero_dish_healthy.png" alt="Healthy Bowl" fill className="object-contain drop-shadow-xl" sizes="(max-width: 768px) 110px, 150px" />
                       </motion.div>
                     </motion.div>
 
@@ -220,11 +221,11 @@ export default function HeroSection() {
                       className="absolute top-[0%] lg:top-[-5%] left-[5%] w-[60px] sm:w-[70px] lg:w-[90px] h-[60px] sm:h-[70px] lg:h-[90px] z-10"
                     >
                       <motion.div
-                        animate={{ y: [0, 10, 0], x: [0, 5, 0], rotate: [0, 20, 0] }}
-                        transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
-                        className="w-full h-full relative"
+                        animate={{ y: [5, -5, 5] }}
+                        transition={{ repeat: Infinity, duration: 5, ease: "easeInOut" }}
+                        className="w-full h-full relative will-change-transform"
                       >
-                        <Image src="/hero_assets/hero_ingredient_tomato.png" alt="Fresh Tomato" fill className="object-contain drop-shadow-lg" />
+                        <Image src="/hero_assets/hero_ingredient_tomato.png" alt="Fresh Tomato" fill className="object-contain drop-shadow-lg" sizes="90px" />
                       </motion.div>
                     </motion.div>
 
@@ -236,11 +237,11 @@ export default function HeroSection() {
                       className="absolute bottom-[0%] lg:bottom-[5%] right-[5%] w-[70px] sm:w-[80px] lg:w-[100px] h-[70px] sm:h-[80px] lg:h-[100px] z-30"
                     >
                       <motion.div
-                        animate={{ y: [0, -10, 0], x: [0, -5, 0], rotate: [0, -15, 0] }}
-                        transition={{ repeat: Infinity, duration: 4.5, ease: "easeInOut" }}
-                        className="w-full h-full relative"
+                        animate={{ y: [-5, 5, -5] }}
+                        transition={{ repeat: Infinity, duration: 5.5, ease: "easeInOut" }}
+                        className="w-full h-full relative will-change-transform"
                       >
-                        <Image src="/hero_assets/hero_ingredient_avocado.png" alt="Fresh Avocado" fill className="object-contain drop-shadow-lg" />
+                        <Image src="/hero_assets/hero_ingredient_avocado.png" alt="Fresh Avocado" fill className="object-contain drop-shadow-lg" sizes="100px" />
                       </motion.div>
                     </motion.div>
 
