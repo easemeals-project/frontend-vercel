@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Spin, Modal } from "antd";
 import {
@@ -95,14 +95,8 @@ export default function TimetablePage() {
 
   // Trigger on Mount or Tab Change
   useEffect(() => {
-    generatePlan();
-  }, [selectedTab]);
-
-  // wrapper for calling
-  const generatePlan = () => {
-    // If we have cached plan, maybe use it? For now, regenerate to show "AI" effect.
     generateTimetable();
-  }
+  }, [selectedTab]);
 
   // --- Loading Overlay Render ---
   if (isInitialLoad && isGenerating) {
