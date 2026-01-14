@@ -67,7 +67,7 @@ export default function TimetablePage() {
 
       // 2. Fetch Meals (Simulating AI Selection)
       const res = await fetchSuggestions({ query: query, limit: 21 }); // 7 days * 3 meals
-      const meals = res.data.mealSuggestions || [];
+      const meals = res.data?.mealSuggestions || [];
 
       if (meals.length > 0) {
         // 3. Distribute Randomly (Client-Side Logic)
