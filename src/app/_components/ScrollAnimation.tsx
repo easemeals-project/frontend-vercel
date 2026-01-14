@@ -3,12 +3,11 @@
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 
-interface ScrollAnimationProps {
+interface ScrollAnimationProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
   direction?: "up" | "down" | "left" | "right" | "none";
   delay?: number;
   duration?: number;
-  className?: string;
 }
 
 export default function ScrollAnimation({
@@ -17,6 +16,7 @@ export default function ScrollAnimation({
   delay = 0,
   duration = 0.5,
   className = "",
+  ...props
 }: ScrollAnimationProps) {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-10% 0px" });
@@ -40,7 +40,7 @@ export default function ScrollAnimation({
   };
 
   return (
-    <div ref={ref} className={className}>
+    <div ref={ref} className={className} {...props}>
       <motion.div
         initial="hidden"
         animate={isInView ? "visible" : "hidden"}

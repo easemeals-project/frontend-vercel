@@ -330,7 +330,7 @@ export default function ProfilePage() {
                   </div>
                   <Switch
                     checked={pushNotifications}
-                    onChange={(checked) =>
+                    onChange={(checked: boolean) =>
                       handleNotificationChange("push", checked)
                     }
                     className="bg-app_secondary!"
@@ -350,7 +350,7 @@ export default function ProfilePage() {
                   </div>
                   <Switch
                     checked={emailUpdates}
-                    onChange={(checked) =>
+                    onChange={(checked: boolean) =>
                       handleNotificationChange("email", checked)
                     }
                     className="bg-app_secondary!"
@@ -370,7 +370,7 @@ export default function ProfilePage() {
                   </div>
                   <Switch
                     checked={orderUpdates}
-                    onChange={(checked) =>
+                    onChange={(checked: boolean) =>
                       handleNotificationChange("order", checked)
                     }
                     className="bg-app_secondary!"

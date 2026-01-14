@@ -29,8 +29,8 @@ export default function Header({ user }: HeaderProps) {
   return (
     <header
       className={`w-full top-0 z-50 sticky transition-all duration-300 ${isScrolled
-          ? "bg-white/80 backdrop-blur-md shadow-sm py-3"
-          : "bg-transparent py-5"
+        ? "bg-white/80 backdrop-blur-md shadow-sm py-3"
+        : "bg-transparent py-5"
         }`}
     >
       <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -38,14 +38,15 @@ export default function Header({ user }: HeaderProps) {
           <div className="shrink-0">
             <Link href={conts.paths.home} className="flex items-center space-x-2 group">
               <Image
-                src="/logo.png"
+                src="/enhanced_easemeals_logo.png"
                 alt="EaseMeals Logo"
                 width={40}
                 height={40}
                 className="rounded-xl shadow-sm transform group-hover:rotate-6 transition-transform"
               />
-              <span className={`text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-app_primary to-green-600`}>
-                EaseMeals
+              <span className="text-2xl font-bold tracking-tight">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-emerald-400">Ease</span>
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-amber-400">Meals</span>
               </span>
             </Link>
           </div>
@@ -55,7 +56,7 @@ export default function Header({ user }: HeaderProps) {
               <Link
                 key={link.name}
                 href={link.href}
-                className="font-medium text-gray-600 hover:text-app_primary transition-colors text-sm uppercase tracking-wide"
+                className="font-medium text-gray-600 hover:text-green-600 transition-colors text-sm uppercase tracking-wide"
               >
                 {link.name}
               </Link>
@@ -69,7 +70,7 @@ export default function Header({ user }: HeaderProps) {
                 >
                   Dashboard
                 </Link>
-                <div className="flex items-center gap-2 text-app_primary font-bold bg-green-50 px-4 py-2 rounded-full border border-green-100">
+                <div className="flex items-center gap-2 text-green-600 font-bold bg-green-50 px-4 py-2 rounded-full border border-green-100">
                   <UserOutlined />
                   <span>{user.name}</span>
                 </div>
@@ -78,13 +79,13 @@ export default function Header({ user }: HeaderProps) {
               <div className="flex items-center gap-4">
                 <Link
                   href={conts.paths.signin}
-                  className="font-medium text-gray-700 hover:text-app_primary transition-colors"
+                  className="font-medium text-gray-700 hover:text-green-600 transition-colors"
                 >
                   Sign in
                 </Link>
                 <Link
                   href={conts.paths.signup}
-                  className="inline-flex items-center justify-center px-6 py-2.5 border border-transparent rounded-full shadow-lg shadow-green-900/10 text-sm font-bold text-white bg-app_primary hover:bg-green-800 transition-all transform hover:-translate-y-0.5"
+                  className="inline-flex items-center justify-center px-6 py-2.5 border border-transparent rounded-full shadow-lg shadow-green-900/10 text-sm font-bold text-white bg-[#0a4031] hover:bg-[#062a20] transition-all transform hover:-translate-y-0.5"
                 >
                   Get Started
                 </Link>
@@ -116,14 +117,15 @@ export default function Header({ user }: HeaderProps) {
           <div className="flex justify-between items-center mb-10">
             <div className="flex items-center space-x-2">
               <Image
-                src="/logo.png"
+                src="/enhanced_easemeals_logo.png"
                 alt="EaseMeals Logo"
                 width={36}
                 height={36}
                 className="rounded-lg"
               />
-              <span className="text-xl font-bold text-app_primary">
-                EaseMeals
+              <span className="text-xl font-bold">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-emerald-400">Ease</span>
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-amber-400">Meals</span>
               </span>
             </div>
             <button
@@ -140,7 +142,7 @@ export default function Header({ user }: HeaderProps) {
                 key={uniqid()}
                 href={link.href}
                 onClick={() => setIsSidebarOpen(false)}
-                className="block py-2 text-xl font-bold text-gray-800 hover:text-app_primary transition-colors border-b border-gray-50 pb-4"
+                className="block py-2 text-xl font-bold text-gray-800 hover:text-green-600 transition-colors border-b border-gray-50 pb-4"
               >
                 {link.name}
               </Link>
@@ -151,7 +153,7 @@ export default function Header({ user }: HeaderProps) {
                 <Link
                   href={conts.paths.dashboard}
                   onClick={() => setIsSidebarOpen(false)}
-                  className="flex items-center justify-center w-full px-6 py-4 border border-transparent rounded-full shadow-lg shadow-green-900/10 text-base font-bold text-white bg-app_primary hover:bg-green-800"
+                  className="flex items-center justify-center w-full px-6 py-4 border border-transparent rounded-full shadow-lg shadow-green-900/10 text-base font-bold text-white bg-green-600 hover:bg-green-700"
                 >
                   Go to Dashboard
                 </Link>
@@ -160,14 +162,14 @@ export default function Header({ user }: HeaderProps) {
                   <Link
                     href={conts.paths.signup}
                     onClick={() => setIsSidebarOpen(false)}
-                    className="flex items-center justify-center w-full px-6 py-4 border border-transparent rounded-full shadow-lg shadow-green-900/10 text-base font-bold text-white bg-app_primary hover:bg-green-800"
+                    className="flex items-center justify-center w-full px-6 py-4 border border-transparent rounded-full shadow-lg shadow-green-900/10 text-base font-bold text-white bg-[#0a4031] hover:bg-[#062a20]"
                   >
                     Get Started Free
                   </Link>
                   <Link
                     href={conts.paths.signin}
                     onClick={() => setIsSidebarOpen(false)}
-                    className="block w-full text-center py-4 text-gray-600 font-semibold hover:text-app_primary"
+                    className="block w-full text-center py-4 text-gray-600 font-semibold hover:text-green-600"
                   >
                     Already have an account? Sign in
                   </Link>

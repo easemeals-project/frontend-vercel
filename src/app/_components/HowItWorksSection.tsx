@@ -1,85 +1,113 @@
 "use client";
 
 import Image from "next/image";
-import uniqid from "uniqid";
 import ScrollAnimation from "./ScrollAnimation";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function HowItWorksSection() {
+  const [activeStep, setActiveStep] = useState(0);
+
   const steps = [
     {
-      title: "Enter Your Preferences",
-      description:
-        "Tell us what foods you enjoy, any dietary restrictions, and your budget preferences.",
+      id: 1,
+      title: "We Learn Your Preference",
+      description: "Tell us what you like, your allergies, and your goals. We build a profile that understands your nutritional needs.",
+      image: "/how-it-works/preferences.png",
     },
     {
-      title: "Generate Your Timetable",
-      description:
-        "Our AI creates a personalized weekly meal plan based on your inputs within seconds.",
+      id: 2,
+      title: "We Create a Personalized Timetable",
+      description: "Get a complete weekly meal plan generated instantly. No more decision fatigue—just delicious plans ready to go.",
+      image: "/how-it-works/timetable.png",
     },
     {
-      title: "Customize If Needed",
-      description:
-        "Swap meals or adjust portions to make the plan perfect for your needs.",
-    },
-    {
-      title: "Order Ingredients",
-      description:
-        "Get all your ingredients delivered or export your shopping list to your preferred store.",
+      id: 3,
+      title: "We Automate Delivery",
+      description: "We source fresh ingredients or cooked meals and deliver them to your location on time. Seamless and reliable.",
+      // Using 'order.png' as requested to replace missing 'delivery.png' and 'Hunger Nights' step.
+      image: "/how-it-works/order.png",
     },
   ];
 
   return (
-    <section id="how-it-works" className="w-full bg-app_bg py-20 lg:py-32 overflow-hidden">
+    <section id="how-it-works" className="w-full bg-white py-20 lg:py-32 overflow-hidden relative border-t border-gray-50">
       <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <ScrollAnimation variant="fadeUp">
-          <div className="text-center max-w-3xl mx-auto mb-16">
-            <h2 className="text-4xl font-extrabold text-gray-900 tracking-tight sm:text-5xl mb-4">
+        <ScrollAnimation direction="up">
+          <div className="text-center max-w-3xl mx-auto mb-20">
+            <h2 className="text-4xl lg:text-5xl font-black text-gray-900 tracking-tight mb-6">
               How EaseMeals Works
             </h2>
-            <p className="text-xl text-text2">
-              Create your personalized meal plan in just a few simple steps
+            <p className="text-lg text-gray-500 font-medium">
+              Your journey to stress-free eating in 3 simple steps.
             </p>
           </div>
         </ScrollAnimation>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-          {/* Left Side: Image */}
-          <ScrollAnimation variant="slideLeft" className="relative flex justify-center lg:justify-start">
-            <div className="relative rounded-2xl overflow-hidden shadow-2xl border-4 border-white transform rotate-2 hover:rotate-0 transition-transform duration-500">
-              <Image
-                src="/home/5.png"
-                alt="How EaseMeals works"
-                width={600}
-                height={500}
-                className="object-cover w-full h-auto"
-              />
-              <div className="absolute inset-0 bg-black/10 hover:bg-transparent transition-colors duration-300" />
-            </div>
-          </ScrollAnimation>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center">
 
-          {/* Right Side: Text Content */}
-          <div className="space-y-4">
+          {/* Left Side: Dynamic Image Display - Plain & Clean */}
+          <div className="order-2 lg:order-1 relative flex justify-center lg:justify-end">
+            <div className="relative w-full max-w-[500px] aspect-square bg-white rounded-[3rem] p-8 lg:p-12 shadow-2xl shadow-green-900/5 border border-gray-100">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeStep}
+                  initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                  transition={{ duration: 0.4 }}
+                  className="relative w-full h-full flex items-center justify-center p-4"
+                >
+                  <Image
+                    src={steps[activeStep].image}
+                    alt={steps[activeStep].title}
+                    fill
+                    className="object-contain"
+                  />
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          </div>
+
+          {/* Right Side: Interactive Steps List - Minimalist */}
+          <div className="order-1 lg:order-2 space-y-4">
             {steps.map((step, index) => (
               <ScrollAnimation
-                key={uniqid()}
-                variant="fadeUp"
-                delay={index * 0.15 + 0.2}
-                className="group flex items-start space-x-6 bg-white p-6 rounded-xl hover:shadow-lg transition-all duration-300 border border-transparent hover:border-green-100"
+                key={index}
+                direction="right"
+                delay={index * 0.1}
               >
-                <div className="flex-shrink-0 flex items-center justify-center w-12 h-12 rounded-full bg-green-100 text-green-600 font-bold text-xl group-hover:bg-green-600 group-hover:text-white transition-colors duration-300">
-                  {index + 1}
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-green-700 transition-colors">
-                    {step.title}
-                  </h3>
-                  <p className="text-gray-600 leading-relaxed">
-                    {step.description}
-                  </p>
+                <div
+                  className={`group relative p-6 rounded-2xl cursor-pointer transition-all duration-300 border-l-4 ${activeStep === index
+                    ? "bg-gray-50 border-app_primary pl-8"
+                    : "bg-transparent border-transparent hover:bg-gray-50 hover:pl-8"
+                    }`}
+                  onMouseEnter={() => setActiveStep(index)}
+                  onClick={() => setActiveStep(index)} // For mobile tap
+                >
+                  <div className="flex items-start gap-6">
+                    <div
+                      className={`flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold transition-all duration-300 ${activeStep === index ? "bg-app_primary text-white" : "bg-gray-100 text-gray-400 group-hover:bg-gray-200"
+                        }`}
+                    >
+                      {index + 1}
+                    </div>
+                    <div>
+                      <h3 className={`text-xl font-bold mb-2 transition-colors ${activeStep === index ? "text-gray-900" : "text-gray-400 group-hover:text-gray-900"
+                        }`}>
+                        {step.title}
+                      </h3>
+                      <p className={`leading-relaxed transition-colors ${activeStep === index ? "text-gray-600" : "text-gray-400 group-hover:text-gray-500"
+                        }`}>
+                        {step.description}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </ScrollAnimation>
             ))}
           </div>
+
         </div>
       </div>
     </section>
