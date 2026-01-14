@@ -36,7 +36,7 @@ export default function SignUpForm() {
       setAuthError(error);
       return;
     }
-    router.push(conts.paths.dashboard);
+    router.push(conts.paths.foodPreferences);
   };
 
   // 3. --- Formik Hook ---
@@ -248,11 +248,10 @@ export default function SignUpForm() {
               !formik.values.agreeToTerms ||
               formik.isSubmitting
             }
-            className={`w-full flex justify-center py-3 mt-7 ${
-              formik.isValid && formik.values.agreeToTerms
+            className={`w-full flex justify-center py-3 mt-7 ${formik.isValid && formik.values.agreeToTerms
                 ? "cursor-pointer"
                 : "cursor-not-allowed"
-            } px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-app_primary hover:bg-app_secondar-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-app_primary-600 disabled:opacity-50`}
+              } px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-app_primary hover:bg-app_secondar-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-app_primary-600 disabled:opacity-50`}
           >
             {formik.isSubmitting ? "Signing Up..." : "Sign Up"}
           </button>

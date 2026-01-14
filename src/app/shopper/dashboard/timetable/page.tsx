@@ -30,47 +30,97 @@ const DAYS = [
 
 const MEAL_TYPES = ["Breakfast", "Lunch", "Dinner"];
 
-const SAMPLE_MEALS: Record<string, Record<string, string>> = {
-  Monday: {
-    Breakfast: "Oat and Tiger Nuts Pap",
-    Lunch: "Coconut Rice and Grilled Fish",
-    Dinner: "Wheat and Vegetable Soup",
-  },
-  Tuesday: {
-    Breakfast: "Wheat Meal and Vegetable",
-    Lunch: "Ofada Rice and Vegetable Sauce",
-    Dinner: "Semolina and Efo Riro",
-  },
-  Wednesday: {
-    Breakfast: "Moi Moi and Zobo Drink",
-    Lunch: "Beans and Vegetable Salad",
-    Dinner: "Eba and Okra Soup",
-  },
-  Thursday: {
-    Breakfast: "Boiled Plantain and Fish Sauce",
-    Lunch: "Boiled Yam and Fish Sauce",
-    Dinner: "Unripe Plantain and Vegetable Sauce",
-  },
-  Friday: {
-    Breakfast: "Acha and Vegetable Sauce",
-    Lunch: "Brown Rice Jollof",
-    Dinner: "Amala and Ewedu Soup",
-  },
-  Saturday: {
-    Breakfast: "Unripe Plantain Porridge",
-    Lunch: "Moin Moin and Vegetable Salad",
-    Dinner: "Boiled Sweet Potato and Fish Sauce",
-  },
-  Sunday: {
-    Breakfast: "Oatmeal and Fruit Salad",
-    Lunch: "Unripe Plantain Porridge",
-    Dinner: "Vegetable Yam Porridge",
-  },
-};
+
 
 export default function TimetablePage() {
+  // --- Dynamic State ---
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedTab, setSelectedTab] = useState("Healthy");
+  const [weeklyPlan, setWeeklyPlan] = useState<Record<string, Record<string, string>>>({});
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true); // New User Flow State
+
+  // --- API for Suggestions ---
+  // Note to User: The frontend consumes this API. The "AI" logic (ranking/diet compatibility) happens on the Server/Backend 🧠
+  const { data: suggestionsData, refetch: fetchSuggestions } = useQuery<GetMealSuggestionsResult>(
+    GET_MEAL_SUGGESTIONS,
+    { skip: true } // Don't run automatically
+  );
+
+  // --- Generator Logic ---
+  const generateTimetable = async () => {
+    setIsGenerating(true);
+    try {
+      // 1. Get Preferences
+      const storedPrefs = sessionStorage.getItem("foodPreferences");
+      let query = selectedTab; // Default
+      if (storedPrefs) {
+        const p = JSON.parse(storedPrefs);
+        // Combine preferences into a search string for the API
+        query = `${p.dietaryRestrictions.join(" ")} ${p.favoriteFoods.join(" ")} ${p.budget === '2' ? 'Luxury' : 'Budget'}`;
+      }
+
+      // Simulate a slightly longer delay for the "Logo Loading" effect if it's initial load
+      if (isInitialLoad) {
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+
+      // 2. Fetch Meals (Simulating AI Selection)
+      const res = await fetchSuggestions({ query: query, limit: 21 }); // 7 days * 3 meals
+      const meals = res.data.mealSuggestions || [];
+
+      if (meals.length > 0) {
+        // 3. Distribute Randomly (Client-Side Logic)
+        const newPlan: Record<string, Record<string, string>> = {};
+        let mealIndex = 0;
+
+        DAYS.forEach((day) => {
+          newPlan[day] = {};
+          MEAL_TYPES.forEach((type) => {
+            // Cycle through fetched meals
+            const meal = meals[mealIndex % meals.length];
+            newPlan[day][type] = meal.name;
+            mealIndex++;
+          });
+        });
+        setWeeklyPlan(newPlan);
+      }
+    } catch (e) {
+      console.error("Generation failed", e);
+    } finally {
+      setIsGenerating(false);
+      setIsInitialLoad(false); // Hide overlay
+    }
+  };
+
+  // Trigger on Mount or Tab Change
+  useEffect(() => {
+    generatePlan();
+  }, [selectedTab]);
+
+  // wrapper for calling
+  const generatePlan = () => {
+    // If we have cached plan, maybe use it? For now, regenerate to show "AI" effect.
+    generateTimetable();
+  }
+
+  // --- Loading Overlay Render ---
+  if (isInitialLoad && isGenerating) {
+    return (
+      <div className="fixed inset-0 z-50 bg-app_bg flex flex-col items-center justify-center animate-in fade-in duration-500">
+        <div className="relative w-32 h-32 mb-8 animate-pulse">
+          {/* Using the Logo Image we saw in Auth Layout */}
+          <img
+            src="/logo.png"
+            alt="EaseMeals Loading"
+            className="w-full h-full object-contain drop-shadow-lg"
+          />
+        </div>
+        <h2 className="text-xl font-bold text-text1 mb-2">Generating Your Plan...</h2>
+        <p className="text-text2 text-sm">Curating meals based on your preferences</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-app_bg flex font-sans">
@@ -140,11 +190,10 @@ export default function TimetablePage() {
                 <button
                   key={tab}
                   onClick={() => setSelectedTab(tab)}
-                  className={`pb-3 text-sm font-medium transition-all relative ${
-                    selectedTab === tab
-                      ? "text-app_primary"
-                      : "text-text2 hover:text-text1"
-                  }`}
+                  className={`pb-3 text-sm font-medium transition-all relative ${selectedTab === tab
+                    ? "text-app_primary"
+                    : "text-text2 hover:text-text1"
+                    }`}
                 >
                   {tab}
                   {selectedTab === tab && (
@@ -186,7 +235,11 @@ export default function TimetablePage() {
                             className="p-4 align-top"
                           >
                             <p className="text-xs text-text2 leading-relaxed">
-                              {SAMPLE_MEALS[day]?.[mealType] || "-"}
+                              {isGenerating ? (
+                                <Spin size="small" />
+                              ) : (
+                                weeklyPlan[day]?.[mealType] || "-"
+                              )}
                             </p>
                           </td>
                         ))}

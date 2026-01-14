@@ -46,8 +46,8 @@ export default function VerifyEmailForm() {
         setSubmitting(false);
       } else {
         // Wait for authService.verifySignUp to confirm the session is present
-        // (it polls fetchAuthSession), then push to the dashboard route.
-        router.push(conts.paths.dashboard);
+        // (it polls fetchAuthSession), then push to the food preferences route.
+        router.push(conts.paths.foodPreferences);
       }
     },
   });

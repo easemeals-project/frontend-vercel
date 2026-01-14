@@ -120,8 +120,9 @@ export default function Footer() {
                 height={36}
                 className="rounded-md group-hover:scale-105 transition-transform"
               />
-              <span className="text-lg font-bold text-white tracking-wide">
-                EaseMeals
+              <span className="text-xl font-bold tracking-tight">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-300 to-emerald-200">Ease</span>
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-amber-300">Meals</span>
               </span>
             </Link>
             <p className="text-sm text-gray-300 leading-relaxed">
