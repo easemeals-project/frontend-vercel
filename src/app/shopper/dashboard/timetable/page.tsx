@@ -1,4 +1,5 @@
 "use client";
+// Build trigger: 2026-01-14T12:26:00
 
 import { useState } from "react";
 import Link from "next/link";
@@ -140,11 +141,10 @@ export default function TimetablePage() {
                 <button
                   key={tab}
                   onClick={() => setSelectedTab(tab)}
-                  className={`pb-3 text-sm font-medium transition-all relative ${
-                    selectedTab === tab
+                  className={`pb-3 text-sm font-medium transition-all relative ${selectedTab === tab
                       ? "text-app_primary"
                       : "text-text2 hover:text-text1"
-                  }`}
+                    }`}
                 >
                   {tab}
                   {selectedTab === tab && (
