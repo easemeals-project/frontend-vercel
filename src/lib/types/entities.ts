@@ -12,7 +12,7 @@ export interface Profile {
   email: string;
   phone?: string;
   deliveryAddress?: string;
-  profilePicture?: string;
+  pictureURL?: string;
 }
 
 export type Meal = {

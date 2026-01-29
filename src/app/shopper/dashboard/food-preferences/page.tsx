@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useQuery } from "@apollo/client/react";
+import { useQuery, useMutation } from "@apollo/client/react";
 import { GET_MY_MEAL_PREFERENCES } from "@/graphql/queries";
-import { Spin, Alert, Checkbox, Input, Slider } from "antd";
+import { UPSERT_FOOD_PREFERENCES } from "@/graphql/mutations";
+import { Spin, Alert, Checkbox, Input, Slider, Button, message } from "antd";
 import {
   PlusOutlined,
   CloseOutlined,
@@ -12,7 +13,12 @@ import {
   DownOutlined,
 } from "@ant-design/icons";
 import conts from "@/lib/conts";
-import { GetMyMealPreferencesResult } from "@/lib/types";
+import {
+  GetMyMealPreferencesResult,
+  UpsertFoodPreferencesResult,
+  UpsertFoodPreferencesVariables,
+  FoodPreferencesInput,
+} from "@/lib/types/graphql";
 
 const MIN_FOODS = 3;
 const MAX_FOODS = 10;
@@ -26,9 +32,15 @@ export default function FoodPreferencesPage() {
   const [budget, setBudget] = useState("medium");
   const [showAdditional, setShowAdditional] = useState(false);
 
-  const { data, loading, error } = useQuery<GetMyMealPreferencesResult>(
+
+  const { data, loading, error, refetch } = useQuery<GetMyMealPreferencesResult>(
     GET_MY_MEAL_PREFERENCES
   );
+
+  const [upsertPreferences, { loading: saving }] = useMutation<
+    UpsertFoodPreferencesResult,
+    UpsertFoodPreferencesVariables
+  >(UPSERT_FOOD_PREFERENCES);
 
   useEffect(() => {
     if (data?.myMealPreferences) {
@@ -36,10 +48,12 @@ export default function FoodPreferencesPage() {
       setFavoriteFoods(prefs.favoriteMeals.map((m: any) => m.name));
       setDietaryRestrictions(prefs.dietaryRestrictions);
       setFamilySize(prefs.familySize);
-      // Map budget float/int to string if needed, assuming API returns a number or string
-      // Based on schema inspection, budget is Float. Let's assume 1=low, 2=medium, 3=high or similar mapping.
-      // For now, we'll just default to medium if logic is unclear, or map if possible.
-      // Let's assume the API returns a value we can map.
+      // Map budget (Backend float: 1.0=Low, 2.0=Medium, 3.0=High)
+      // If backend returns different values, adjust here. Assuming 1=Low, 2=Med, 3=High
+      const bVal = prefs.budget;
+      if (bVal && bVal <= 1) setBudget("low");
+      else if (bVal && bVal > 2) setBudget("high");
+      else setBudget("medium");
     }
   }, [data]);
 
@@ -68,18 +82,40 @@ export default function FoodPreferencesPage() {
     }
   };
 
-  const handleGenerateTimetable = () => {
+  const handleSave = async () => {
     if (favoriteFoods.length < MIN_FOODS) {
+      message.warning(`Please add at least ${MIN_FOODS} food items.`);
       return;
     }
-    const preferences = {
-      favoriteFoods,
-      dietaryRestrictions,
-      familySize,
-      budget,
-    };
-    sessionStorage.setItem("foodPreferences", JSON.stringify(preferences));
-    router.push(conts.paths.timetable);
+
+    // Map budget string to number
+    let budgetNum = 2; // medium
+    if (budget === "low") budgetNum = 1;
+    if (budget === "high") budgetNum = 3;
+
+    try {
+      const input: FoodPreferencesInput = {
+        favoriteFoodNames: favoriteFoods,
+        favoriteFoodIds: [], // Not using IDs for now, just names
+        dietaryRestrictions: JSON.stringify(dietaryRestrictions),
+        familySize: Number(familySize),
+        budget: budgetNum,
+      };
+
+      await upsertPreferences({ variables: { input } });
+      message.success("Preferences saved successfully!");
+      // Optionally navigate
+      // router.push(conts.paths.timetable);
+    } catch (err: any) {
+      message.error("Failed to save preferences: " + err.message);
+    }
+  };
+
+  const handleGenerateTimetable = async () => {
+    await handleSave();
+    if (favoriteFoods.length >= MIN_FOODS) {
+      router.push(conts.paths.timetable);
+    }
   };
 
   const dietaryOptions = [
@@ -118,11 +154,10 @@ export default function FoodPreferencesPage() {
 
           <div className="w-full bg-gray-200 rounded-full h-1.5 mb-2">
             <div
-              className={`h-1.5 rounded-full transition-all duration-300 ${
-                favoriteFoods.length >= MIN_FOODS
-                  ? "bg-app_primary"
-                  : "bg-app_primary"
-              }`}
+              className={`h-1.5 rounded-full transition-all duration-300 ${favoriteFoods.length >= MIN_FOODS
+                ? "bg-app_primary"
+                : "bg-app_primary"
+                }`}
               style={{ width: `${progressPercent}%` }}
             />
           </div>
@@ -144,7 +179,7 @@ export default function FoodPreferencesPage() {
             />
             <button
               onClick={handleAddFood}
-              disabled={true} // Disabled for now
+              disabled={favoriteFoods.length >= MAX_FOODS}
               className="bg-app_secondary text-white px-5 flex items-center justify-center hover:opacity-90 disabled:opacity-70 disabled:cursor-not-allowed transition-colors"
             >
               <PlusOutlined className="text-lg" />
@@ -161,8 +196,7 @@ export default function FoodPreferencesPage() {
                 {food}
                 <button
                   onClick={() => handleRemoveFood(index)}
-                  disabled={true} // Disabled for now
-                  className="text-gray-400 hover:text-app_secondary transition-colors flex items-center cursor-not-allowed"
+                  className="text-gray-400 hover:text-app_secondary transition-colors flex items-center"
                 >
                   <CloseOutlined className="text-xs" />
                 </button>
@@ -228,7 +262,11 @@ export default function FoodPreferencesPage() {
                     min={0}
                     max={2}
                     value={budget === "low" ? 0 : budget === "medium" ? 1 : 2}
-                    disabled // Disabled
+                    onChange={(val) => {
+                      if (val === 0) setBudget("low");
+                      else if (val === 1) setBudget("medium");
+                      else setBudget("high");
+                    }}
                     marks={{
                       0: "Low",
                       1: "Medium",
@@ -245,12 +283,12 @@ export default function FoodPreferencesPage() {
         {/* Generate Button */}
         <button
           onClick={handleGenerateTimetable}
-          disabled={favoriteFoods.length < MIN_FOODS}
-          className={`w-full py-3.5 rounded-lg font-bold text-white shadow-md transition-all transform active:scale-[0.98] ${
-            favoriteFoods.length >= MIN_FOODS
-              ? "bg-app_secondary hover:opacity-90 shadow-orange-200"
-              : "bg-gray-400 cursor-not-allowed shadow-none"
-          }`}
+          loading={saving}
+          disabled={favoriteFoods.length < MIN_FOODS || saving}
+          className={`w-full py-3.5 rounded-lg font-bold text-white shadow-md transition-all transform active:scale-[0.98] ${favoriteFoods.length >= MIN_FOODS
+            ? "bg-app_secondary hover:opacity-90 shadow-orange-200"
+            : "bg-gray-400 cursor-not-allowed shadow-none"
+            }`}
         >
           Generate Timetable
         </button>

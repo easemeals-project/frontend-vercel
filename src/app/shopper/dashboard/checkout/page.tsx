@@ -11,6 +11,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import conts from "@/lib/conts";
 import { Address } from "@/lib/types";
+import { useMutation } from "@apollo/client/react";
+import { BROADCAST_TIMETABLE } from "@/graphql/mutations";
+import {
+  BroadcastTimetableResult,
+  BroadcastTimetableVariables,
+  MealPlan
+} from "@/lib/types/graphql";
 
 const serviceOptions = [
   {
@@ -41,6 +48,12 @@ export default function CheckoutPage() {
   const [serviceOption, setServiceOption] = useState("ingredients");
   const [paymentMethod, setPaymentMethod] = useState("card");
   const [isLoading, setIsLoading] = useState(true);
+  const [timetable, setTimetable] = useState<MealPlan | null>(null);
+
+  const [broadcastOrder, { loading: isPlacingOrder }] = useMutation<
+    BroadcastTimetableResult,
+    BroadcastTimetableVariables
+  >(BROADCAST_TIMETABLE);
 
   // Form states
   const [fullName, setFullName] = useState("");
@@ -61,12 +74,47 @@ export default function CheckoutPage() {
         setDeliveryInstructions(defaultAddr.instructions || "");
       }
     }
+
+    const savedTimetable = sessionStorage.getItem("currentTimetable");
+    if (savedTimetable) {
+      setTimetable(JSON.parse(savedTimetable));
+    } else {
+      message.error("No active timetable found. Please generate one first.");
+      router.push(conts.paths.timetable);
+    }
+
     setIsLoading(false);
   }, []);
 
-  const handlePlaceOrder = () => {
-    message.success("Order placed successfully!");
-    router.push(conts.paths.orderConfirmed);
+  const handlePlaceOrder = async () => {
+    if (!timetable) return;
+    if (!deliveryAddress) {
+      message.error("Please enter a delivery address");
+      return;
+    }
+
+    try {
+      // Calculate delivery date (Example: next Monday)
+      const now = new Date();
+      const nextMonday = new Date(now.setDate(now.getDate() + (1 + 7 - now.getDay()) % 7));
+
+      await broadcastOrder({
+        variables: {
+          input: {
+            timetableID: timetable.id,
+            deliveryDate: nextMonday.toISOString(),
+            deliveryAddress: deliveryAddress,
+            notes: deliveryInstructions,
+            expiresInHours: 24
+          }
+        }
+      });
+
+      message.success("Order broadcasted successfully!");
+      router.push(conts.paths.orderConfirmed);
+    } catch (err: any) {
+      message.error("Failed to place order: " + err.message);
+    }
   };
 
   if (isLoading) {
@@ -110,11 +158,10 @@ export default function CheckoutPage() {
                   <div
                     key={option.id}
                     onClick={() => setServiceOption(option.id)}
-                    className={`p-6 rounded-xl border cursor-pointer transition-all relative ${
-                      serviceOption === option.id
+                    className={`p-6 rounded-xl border cursor-pointer transition-all relative ${serviceOption === option.id
                         ? "border-green-500 bg-[#E8F5E9]"
                         : "border-gray-200 hover:border-gray-300"
-                    }`}
+                      }`}
                   >
                     <div className="flex justify-between items-start mb-2">
                       <h3 className="font-bold text-text1">{option.title}</h3>
@@ -207,7 +254,9 @@ export default function CheckoutPage() {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-text2">Total Calories</span>
-                  <span className="font-medium text-text1">14,700 kcal</span>
+                  <span className="font-medium text-text1">
+                    {timetable ? Math.round(timetable.weeklyTotals.totalCals) : 0} kcal
+                  </span>
                 </div>
               </div>
 
@@ -257,7 +306,9 @@ export default function CheckoutPage() {
               <div className="border-t border-gray-100 pt-4 mb-6 space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-text2">Meal Plan Cost</span>
-                  <span className="font-medium text-text1">₦45,500</span>
+                  <span className="font-medium text-text1">
+                    ₦{timetable ? timetable.weeklyTotals.totalPrice.toLocaleString() : "0"}
+                  </span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-text2">Delivery Fee</span>
@@ -265,7 +316,9 @@ export default function CheckoutPage() {
                 </div>
                 <div className="flex justify-between text-lg font-bold mt-4">
                   <span className="text-text1">Total</span>
-                  <span className="text-text1">₦47,000</span>
+                  <span className="text-text1">
+                    ₦{timetable ? (timetable.weeklyTotals.totalPrice + 1500).toLocaleString() : "0"}
+                  </span>
                 </div>
               </div>
 
@@ -274,11 +327,10 @@ export default function CheckoutPage() {
                   Payment Method
                 </label>
                 <div
-                  className={`flex items-center justify-between p-4 border rounded-lg cursor-pointer transition-all ${
-                    paymentMethod === "card"
+                  className={`flex items-center justify-between p-4 border rounded-lg cursor-pointer transition-all ${paymentMethod === "card"
                       ? "border-gray-200"
                       : "border-gray-200"
-                  }`}
+                    }`}
                   onClick={() => setPaymentMethod("card")}
                 >
                   <div className="flex items-center gap-3">
@@ -297,6 +349,7 @@ export default function CheckoutPage() {
                 type="primary"
                 size="large"
                 block
+                loading={isPlacingOrder}
                 onClick={handlePlaceOrder}
                 className="bg-app_secondary! hover:bg-app_secondary/80! border-none h-12 text-lg font-bold rounded-lg"
               >

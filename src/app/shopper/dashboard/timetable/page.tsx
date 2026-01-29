@@ -14,9 +14,16 @@ import {
 import { FaExclamation, FaCheck } from "react-icons/fa6";
 import Sidebar from "../_components/Sidebar";
 import conts from "@/lib/conts";
-import { useQuery } from "@apollo/client/react";
+import { useQuery, useMutation } from "@apollo/client/react";
 import { GET_MEAL_SUGGESTIONS, GET_MEAL_BY_NAME } from "@/graphql/queries";
-import { GetMealSuggestionsResult, GetMealByNameResult } from "@/lib/types";
+import { GENERATE_MEAL_PLAN } from "@/graphql/mutations";
+import {
+  GetMealSuggestionsResult,
+  GetMealByNameResult,
+  GenerateMealPlanResult,
+  GenerateMealPlanVariables,
+  MealPlan
+} from "@/lib/types/graphql";
 
 const DAYS = [
   "Monday",
@@ -36,15 +43,13 @@ export default function TimetablePage() {
   // --- Dynamic State ---
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedTab, setSelectedTab] = useState("Healthy");
-  const [weeklyPlan, setWeeklyPlan] = useState<Record<string, Record<string, string>>>({});
+  const [weeklyPlan, setWeeklyPlan] = useState<MealPlan | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [isInitialLoad, setIsInitialLoad] = useState(true); // New User Flow State
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
-  // --- API for Suggestions ---
-  // Note to User: The frontend consumes this API. The "AI" logic (ranking/diet compatibility) happens on the Server/Backend 🧠
-  const { data: suggestionsData, refetch: fetchSuggestions } = useQuery<GetMealSuggestionsResult>(
-    GET_MEAL_SUGGESTIONS,
-    { skip: true } // Don't run automatically
+  // --- Backend Mutation ---
+  const [generateMutation] = useMutation<GenerateMealPlanResult, GenerateMealPlanVariables>(
+    GENERATE_MEAL_PLAN
   );
 
   // --- Generator Logic ---
@@ -53,43 +58,50 @@ export default function TimetablePage() {
     try {
       // 1. Get Preferences
       const storedPrefs = sessionStorage.getItem("foodPreferences");
-      let query = selectedTab; // Default
+      let favoriteFoods: string[] = [];
+      let dietaryRestrictions: string[] = [];
+      let budget = "HEALTHY";
+
+      // Map selected tab to backend enum if no stored prefs
+      if (selectedTab === "Low Budget") budget = "LOW";
+      else if (selectedTab === "Luxury") budget = "LUXURY";
+      else budget = "HEALTHY";
+
       if (storedPrefs) {
         const p = JSON.parse(storedPrefs);
-        // Combine preferences into a search string for the API
-        query = `${p.dietaryRestrictions.join(" ")} ${p.favoriteFoods.join(" ")} ${p.budget === '2' ? 'Luxury' : 'Budget'}`;
+        favoriteFoods = p.favoriteFoods || [];
+        dietaryRestrictions = p.dietaryRestrictions || [];
+        // Override budget from tab if specific tab selected, otherwise use prefs? 
+        // For now, let tab selection drive the generation "flavor"
       }
 
-      // Simulate a slightly longer delay for the "Logo Loading" effect if it's initial load
+      // Simulate delay for effect
       if (isInitialLoad) {
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise(resolve => setTimeout(resolve, 1500));
       }
 
-      // 2. Fetch Meals (Simulating AI Selection)
-      const res = await fetchSuggestions({ query: query, limit: 21 }); // 7 days * 3 meals
-      const meals = res.data?.mealSuggestions || [];
+      // 2. Call Backend
+      const res = await generateMutation({
+        variables: {
+          input: {
+            selectedFoods: favoriteFoods,
+            dietaryConstraints: dietaryRestrictions.map(d => d.toUpperCase().replace("-", "_")), // e.g. "Gluten-free" -> "GLUTEN_FREE"
+            budgetPreference: budget
+          }
+        }
+      });
 
-      if (meals.length > 0) {
-        // 3. Distribute Randomly (Client-Side Logic)
-        const newPlan: Record<string, Record<string, string>> = {};
-        let mealIndex = 0;
-
-        DAYS.forEach((day) => {
-          newPlan[day] = {};
-          MEAL_TYPES.forEach((type) => {
-            // Cycle through fetched meals
-            const meal = meals[mealIndex % meals.length];
-            newPlan[day][type] = meal.name;
-            mealIndex++;
-          });
-        });
-        setWeeklyPlan(newPlan);
+      if (res.data?.generateMealPlan) {
+        setWeeklyPlan(res.data.generateMealPlan);
+        // Store for Checkout
+        sessionStorage.setItem("currentTimetable", JSON.stringify(res.data.generateMealPlan));
       }
+
     } catch (e) {
       console.error("Generation failed", e);
     } finally {
       setIsGenerating(false);
-      setIsInitialLoad(false); // Hide overlay
+      setIsInitialLoad(false);
     }
   };
 
@@ -158,7 +170,9 @@ export default function TimetablePage() {
                 <h2 className="text-sm font-semibold text-text1 mb-1">
                   Weekly Budget
                 </h2>
-                <p className="text-3xl font-bold text-text1">₦45,500</p>
+                <p className="text-3xl font-bold text-text1">
+                  {weeklyPlan ? `₦${weeklyPlan.weeklyTotals.totalPrice.toLocaleString()}` : "..."}
+                </p>
               </div>
               <div className="flex items-center gap-3">
                 <Link
@@ -232,7 +246,9 @@ export default function TimetablePage() {
                               {isGenerating ? (
                                 <Spin size="small" />
                               ) : (
-                                weeklyPlan[day]?.[mealType] || "-"
+                                weeklyPlan
+                                  ? (weeklyPlan as any)[day.toLowerCase()]?.[mealType.toLowerCase()]?.join(", ") || "-"
+                                  : "-"
                               )}
                             </p>
                           </td>
@@ -252,26 +268,34 @@ export default function TimetablePage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
                 <div>
                   <p className="text-xs text-text2 mb-1">Daily Average</p>
-                  <p className="text-xl font-bold text-text1">2,100 kcal</p>
+                  <p className="text-xl font-bold text-text1">
+                    {weeklyPlan ? Math.round(weeklyPlan.weeklyTotals.totalCals / 7) : 0} kcal
+                  </p>
                 </div>
                 <div>
                   <p className="text-xs text-text2 mb-1">Protein</p>
                   <div className="flex items-center gap-2">
-                    <p className="text-xl font-bold text-text1">95g</p>
+                    <p className="text-xl font-bold text-text1">
+                      {weeklyPlan ? Math.round(weeklyPlan.weeklyTotals.proteinCals) : 0}g
+                    </p>
                     <FaCheck className="text-app_secondary text-sm" />
                   </div>
                 </div>
                 <div>
                   <p className="text-xs text-text2 mb-1">Carbs</p>
                   <div className="flex items-center gap-2">
-                    <p className="text-xl font-bold text-text1">240g</p>
+                    <p className="text-xl font-bold text-text1">
+                      {weeklyPlan ? Math.round(weeklyPlan.weeklyTotals.carbCals) : 0}g
+                    </p>
                     <FaExclamation className="text-app_secondary text-sm" />
                   </div>
                 </div>
                 <div>
                   <p className="text-xs text-text2 mb-1">Fat</p>
                   <div className="flex items-center gap-2">
-                    <p className="text-xl font-bold text-text1">65g</p>
+                    <p className="text-xl font-bold text-text1">
+                      {weeklyPlan ? Math.round(weeklyPlan.weeklyTotals.fatCals) : 0}g
+                    </p>
                     <FaCheck className="text-app_secondary text-sm" />
                   </div>
                 </div>

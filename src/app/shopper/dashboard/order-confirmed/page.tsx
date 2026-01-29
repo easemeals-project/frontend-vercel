@@ -11,9 +11,26 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import conts from "@/lib/conts";
+import { useState, useEffect } from "react";
 
 export default function OrderConfirmationPage() {
   const router = useRouter();
+  const [timetable, setTimetable] = useState<any>(null); // Using any for simplicity here to avoid full type imports if not needed, or import MealPlan
+  const [deliveryInfo, setDeliveryInfo] = useState<any>(null);
+
+  useEffect(() => {
+    const savedTimetable = sessionStorage.getItem("currentTimetable");
+    const savedAddresses = localStorage.getItem("userAddresses"); // Assuming we saved the used address here or we can just mock the user info for now if not explicitly passed
+
+    if (savedTimetable) {
+      setTimetable(JSON.parse(savedTimetable));
+    }
+
+    if (savedAddresses) {
+      const parsed = JSON.parse(savedAddresses);
+      if (parsed.length > 0) setDeliveryInfo(parsed[0]);
+    }
+  }, []);
 
   return (
     <div className="min-h-screen bg-app_bg font-sans">
@@ -44,7 +61,7 @@ export default function OrderConfirmationPage() {
             Your order has been confirmed!
           </h2>
           <p className="text-text2 mb-8">
-            Order #38492 was placed successfully. You'll receive an email
+            Order #{Math.floor(Math.random() * 100000)} was placed successfully. You will receive an email
             confirmation shortly.
           </p>
 
@@ -71,22 +88,22 @@ export default function OrderConfirmationPage() {
               <div className="space-y-6">
                 <div>
                   <p className="text-xs text-text2 mb-1">Full Name</p>
-                  <p className="font-medium text-text1 text-base">Sarah Johnson</p>
+                  <p className="font-medium text-text1 text-base">{deliveryInfo?.fullName || "Guest User"}</p>
                 </div>
                 <div>
                   <p className="text-xs text-text2 mb-1">Phone Number</p>
-                  <p className="font-medium text-text1 text-base">+234 812 345 6789</p>
+                  <p className="font-medium text-text1 text-base">{deliveryInfo?.phoneNumber || "-"}</p>
                 </div>
                 <div>
                   <p className="text-xs text-text2 mb-1">Delivery Address</p>
                   <p className="font-medium text-text1 text-base">
-                    42 Lagos Avenue, Lekki Phase 1, Lagos, Nigeria
+                    {deliveryInfo?.address || "No address provided"}
                   </p>
                 </div>
                 <div>
                   <p className="text-xs text-text2 mb-1">Delivery Instructions</p>
                   <p className="font-medium text-text1 text-base">
-                    Please call when you arrive at the gate
+                    {deliveryInfo?.instructions || "None"}
                   </p>
                 </div>
               </div>
@@ -130,7 +147,9 @@ export default function OrderConfirmationPage() {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-text2">Total Calories</span>
-                  <span className="font-medium text-text1">14,700 kcal</span>
+                  <span className="font-medium text-text1">
+                    {timetable ? Math.round(timetable.weeklyTotals.totalCals) : 0} kcal
+                  </span>
                 </div>
               </div>
 
@@ -146,41 +165,20 @@ export default function OrderConfirmationPage() {
                         Monday Breakfast
                       </p>
                       <p className="text-xs text-text2">
-                        Oat and Tiger Nuts Pap
+                        {timetable?.monday?.breakfast?.[0] || "..."}
                       </p>
                     </div>
                   </div>
-                  <div className="flex gap-3">
-                    <div className="w-8 h-8 rounded bg-[#FFCCBC] flex items-center justify-center text-[#FF7043] text-xs font-bold">
-                      L
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-text1">
-                        Wednesday Lunch
-                      </p>
-                      <p className="text-xs text-text2">
-                        Beans and Vegetable Salad
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex gap-3">
-                    <div className="w-8 h-8 rounded bg-[#FFCCBC] flex items-center justify-center text-[#FF7043] text-xs font-bold">
-                      D
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-text1">
-                        Friday Dinner
-                      </p>
-                      <p className="text-xs text-text2">Amala and Ewedu Soup</p>
-                    </div>
-                  </div>
+                  {/* Just showing one example dynamically to keep it clean */}
                 </div>
               </div>
 
               <div className="border-t border-gray-100 pt-4 mb-6 space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-text2">Meal Plan Cost</span>
-                  <span className="font-medium text-text1">₦45,500</span>
+                  <span className="font-medium text-text1">
+                    ₦{timetable ? timetable.weeklyTotals.totalPrice.toLocaleString() : "0"}
+                  </span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-text2">Delivery Fee</span>
@@ -188,7 +186,9 @@ export default function OrderConfirmationPage() {
                 </div>
                 <div className="flex justify-between text-lg font-bold mt-4">
                   <span className="text-text1">Total</span>
-                  <span className="text-text1">₦47,000</span>
+                  <span className="text-text1">
+                    ₦{timetable ? (timetable.weeklyTotals.totalPrice + 1500).toLocaleString() : "0"}
+                  </span>
                 </div>
               </div>
 

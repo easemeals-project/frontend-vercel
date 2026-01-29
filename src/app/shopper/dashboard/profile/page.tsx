@@ -216,9 +216,9 @@ export default function ProfilePage() {
             <Card className="shadow-md">
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
                 <div className="relative">
-                  {profileData?.myProfile?.profilePicture ? (
+                  {profileData?.myProfile?.pictureURL ? (
                     <img
-                      src={profileData.myProfile.profilePicture}
+                      src={profileData.myProfile.pictureURL}
                       alt="Profile"
                       className="w-24 h-24 rounded-full object-cover"
                     />

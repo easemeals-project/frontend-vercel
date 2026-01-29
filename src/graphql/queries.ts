@@ -33,7 +33,7 @@ export const GET_MY_PROFILE = gql`
       email
       phone
       deliveryAddress
-      profilePicture
+      pictureURL
     }
   }
 `;
