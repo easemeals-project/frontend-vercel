@@ -283,7 +283,6 @@ export default function FoodPreferencesPage() {
         {/* Generate Button */}
         <button
           onClick={handleGenerateTimetable}
-          loading={saving}
           disabled={favoriteFoods.length < MIN_FOODS || saving}
           className={`w-full py-3.5 rounded-lg font-bold text-white shadow-md transition-all transform active:scale-[0.98] ${favoriteFoods.length >= MIN_FOODS
             ? "bg-app_secondary hover:opacity-90 shadow-orange-200"
