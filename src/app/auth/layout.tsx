@@ -11,9 +11,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className="relative min-h-screen w-full bg-white overflow-hidden flex flex-col items-center justify-center py-10 px-4">
+    <div className="relative min-h-screen w-full bg-white flex flex-col items-center justify-center py-10 px-4">
       {/* --- Background Effects (Matching Hero Section) --- */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <motion.div
           animate={{ scale: [1, 1.1, 1], rotate: [0, 5, 0] }}
           transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
