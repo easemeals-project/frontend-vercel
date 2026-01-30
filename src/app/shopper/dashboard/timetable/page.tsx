@@ -176,11 +176,18 @@ export default function TimetablePage() {
               </div>
               <div className="flex items-center gap-3">
                 <Link
+                  href={conts.paths.foodPreferences}
+                  className="px-4 py-3 rounded-lg font-semibold text-app_primary text-sm border border-app_primary hover:bg-green-50 transition-colors flex items-center gap-2"
+                >
+                  <ReloadOutlined className="text-base" />
+                  Regenerate
+                </Link>
+                <Link
                   href={conts.paths.timetable + "/edit"}
-                  className="px-6 py-3 rounded-lg font-semibold text-app_secondary text-sm border border-app_secondary hover:bg-orange-50 transition-colors flex items-center gap-2"
+                  className="px-4 py-3 rounded-lg font-semibold text-app_secondary text-sm border border-app_secondary hover:bg-orange-50 transition-colors flex items-center gap-2"
                 >
                   <EditOutlined className="text-base" />
-                  Edit Timetable
+                  Edit
                 </Link>
                 <Link
                   href={conts.paths.checkout}

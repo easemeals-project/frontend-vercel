@@ -27,29 +27,29 @@ export default function RoleSelectionPage() {
     titleMobile: string;
     description: string;
   }> = [
-    {
-      value: UserRole.shopper,
-      title: "Shopper",
-      titleMobile: "Shopper",
-      description: "I want to buy meals",
-    },
-    {
-      value: UserRole.vendor,
-      title: "Vendor",
-      titleMobile: "Vendor",
-      description: "I want to sell meals",
-    },
-    {
-      value: UserRole.chef,
-      title: "Private Chef",
-      titleMobile: "Chef",
-      description: "I want to cook meals",
-    },
-  ];
+      {
+        value: UserRole.shopper,
+        title: "Shopper",
+        titleMobile: "Shopper",
+        description: "I want to buy meals",
+      },
+      {
+        value: UserRole.vendor,
+        title: "Vendor",
+        titleMobile: "Vendor",
+        description: "I want to sell meals",
+      },
+      {
+        value: UserRole.chef,
+        title: "Private Chef",
+        titleMobile: "Chef",
+        description: "I want to cook meals",
+      },
+    ];
 
   return (
     <>
-      <div className="w-full flex flex-col gap-y-8 max-w-4xl">
+      <div className="w-full flex flex-col items-center gap-y-8 max-w-4xl">
         {/* Header */}
         <div className="text-center mb-6">
           <h1 className="text-3xl font-bold mb-2">
@@ -63,7 +63,7 @@ export default function RoleSelectionPage() {
         </div>
 
         {/* Main Card */}
-        <Card className="shadow-lg bg-white border border-gray-200 rounded-lg">
+        <div className="w-full bg-white/80 backdrop-blur-xl shadow-2xl rounded-3xl p-8 border border-white/50">
           {/* Step Information */}
           <div className="flex items-start justify-between mb-6 pb-6 border-b border-gray-200">
             <div className="flex-1">
@@ -95,23 +95,21 @@ export default function RoleSelectionPage() {
                 <div
                   key={role.value}
                   onClick={() => setSelectedRole(role.value)}
-                  className={`relative p-6 border-2 rounded-lg cursor-pointer transition-all bg-white ${
-                    isSelected
-                      ? "border-app_primary bg-app_primary/12!"
-                      : "border-gray-300 hover:border-gray-400"
-                  }`}
+                  className={`relative p-6 border-2 rounded-2xl cursor-pointer transition-all ${isSelected
+                      ? "border-app_primary bg-green-50"
+                      : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-md"
+                    }`}
                 >
                   {/* Radio Button */}
                   <div className="flex items-start gap-3">
                     <div
-                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 ${
-                        isSelected
-                          ? "border-blue-500 bg-blue-500"
-                          : "border-gray-400 bg-white"
-                      }`}
+                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 transition-colors ${isSelected
+                          ? "border-app_primary bg-app_primary"
+                          : "border-gray-300 bg-transparent"
+                        }`}
                     >
                       {isSelected && (
-                        <div className="w-2.5 h-2.5 rounded-full bg-white"></div>
+                        <div className="w-2 rounded-full bg-white"></div>
                       )}
                     </div>
 
@@ -130,23 +128,23 @@ export default function RoleSelectionPage() {
           </div>
 
           {/* Navigation Buttons */}
-          <div className="flex justify-between border-hray-100 pt-6 border-t border-gray-200">
+          <div className="flex justify-between pt-6 border-t border-gray-200">
             <button
               onClick={() => router.back()}
-              className="px-6 py-2.5 border border-gray-300 rounded-lg text-text1 hover:bg-gray-200 transition-colors flex items-center gap-2"
+              className="px-6 py-2.5 border border-gray-300 rounded-lg text-text1 hover:bg-gray-50 transition-colors flex items-center gap-2"
             >
               <ArrowLeftOutlined />
               Back
             </button>
             <button
               onClick={handleNext}
-              className="px-6 py-2.5 cursor-pointer rounded-lg text-white bg-app_primary hover:bg-green-600 transition-colors flex items-center gap-2"
+              className="px-6 py-2.5 cursor-pointer rounded-lg text-white bg-app_primary hover:bg-green-700 transition-colors shadow-lg shadow-green-200 flex items-center gap-2"
             >
               Next
               <ArrowRightOutlined />
             </button>
           </div>
-        </Card>
+        </div>
       </div>
     </>
   );

@@ -27,7 +27,7 @@ export default function RootLayout({
       </div>
 
       {/* --- Content --- */}
-      <div className="relative z-10 w-full max-w-md flex flex-col items-center gap-4">
+      <div className="relative z-10 w-full flex flex-col items-center gap-4">
         {/* Logo */}
         <Link href={conts.paths.home} className="group">
           <motion.div
