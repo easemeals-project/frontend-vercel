@@ -5,7 +5,7 @@ export default function InitForgotPass() {
   return (
     <div className="flex flex-col items-center justify-center p-6 lg:p-12 w-full">
       <div className="w-full flex flex-col gap-y-7 max-w-lg">
-        <div className="w-full max-w-lg rounded-3xl bg-white/80 backdrop-blur-xl shadow-2xl border border-white/50 sm:p-10">
+        <div className="w-full max-w-md rounded-3xl bg-white/80 backdrop-blur-xl shadow-2xl border border-white/50 p-6">
           <div className="text-center">
             <h1 className="text-2xl font-bold text-gray-900">
               Forgot your password?

@@ -37,7 +37,7 @@ export default function RootLayout({
             className="relative"
           >
             <Image
-              src="/enhanced_easemeals_logo.png"
+              src="/easemeals-logo.png"
               width={80}
               height={80}
               alt="EaseMeals Logo"

@@ -109,7 +109,7 @@ export default function SignInForm() {
   };
 
   return (
-    <div className="bg-white/80 backdrop-blur-xl shadow-2xl rounded-3xl p-8 border border-white/50">
+    <div className="bg-white/80 backdrop-blur-xl shadow-2xl rounded-3xl p-6 border border-white/50">
       <form onSubmit={formik.handleSubmit} className="space-y-4">
         {authError && (
           <div className="rounded-md border border-red-400 bg-red-100 px-4 py-3 text-red-700">
