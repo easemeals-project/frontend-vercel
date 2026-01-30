@@ -5,7 +5,6 @@ import Link from "next/link";
 import { EyeOutlined, EyeInvisibleOutlined } from "@ant-design/icons"; // Using antd icons as requested
 import { FcGoogle } from "react-icons/fc";
 import { SignInSchema } from "@/lib/types/auth";
-import { Card } from "antd";
 import conts from "@/lib/conts";
 import { authService } from "@/core/services/auth";
 import { useEffect, useState } from "react";
@@ -110,7 +109,7 @@ export default function SignInForm() {
   };
 
   return (
-    <Card>
+    <div className="bg-white/80 backdrop-blur-xl shadow-2xl rounded-3xl p-8 border border-white/50">
       <form onSubmit={formik.handleSubmit} className="space-y-4">
         {authError && (
           <div className="rounded-md border border-red-400 bg-red-100 px-4 py-3 text-red-700">
@@ -203,9 +202,8 @@ export default function SignInForm() {
           <button
             type="submit"
             disabled={formik.isSubmitting}
-            className={`w-full flex justify-center py-3 mt-7 ${
-              formik.isValid ? "cursor-pointer" : "cursor-not-allowed"
-            } px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-app_primary hover:bg-app_secondar-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-app_primary-600 disabled:opacity-50`}
+            className={`w-full flex justify-center py-3 mt-7 ${formik.isValid ? "cursor-pointer" : "cursor-not-allowed"
+              } px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-app_primary hover:bg-app_secondar-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-app_primary-600 disabled:opacity-50`}
           >
             {formik.isSubmitting ? "Signing In..." : "Sign In"}
           </button>
@@ -236,6 +234,6 @@ export default function SignInForm() {
           </>
         )}
       </form>
-    </Card>
+    </div>
   );
 }

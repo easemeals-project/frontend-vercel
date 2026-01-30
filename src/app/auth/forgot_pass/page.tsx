@@ -1,11 +1,11 @@
 import { ForgotPasswordForm } from "./_components/form";
-import { Card } from "antd";
+
 
 export default function InitForgotPass() {
   return (
     <div className="flex flex-col items-center justify-center p-6 lg:p-12 w-full">
       <div className="w-full flex flex-col gap-y-7 max-w-lg">
-        <Card className="w-full max-w-lg rounded-lg bg-white shadow-lg sm:p-10">
+        <div className="w-full max-w-lg rounded-3xl bg-white/80 backdrop-blur-xl shadow-2xl border border-white/50 sm:p-10">
           <div className="text-center">
             <h1 className="text-2xl font-bold text-gray-900">
               Forgot your password?
@@ -20,7 +20,7 @@ export default function InitForgotPass() {
           <div className="mt-8">
             <ForgotPasswordForm />
           </div>
-        </Card>
+        </div>
       </div>
     </div>
   );

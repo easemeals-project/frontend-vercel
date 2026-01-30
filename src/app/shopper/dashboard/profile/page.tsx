@@ -8,7 +8,7 @@ import {
   ReloadOutlined,
   CameraOutlined,
 } from "@ant-design/icons";
-import { Card, Input, Switch, Button, Form, message } from "antd";
+import { Input, Switch, Button, Form, message } from "antd";
 import Sidebar from "../_components/Sidebar";
 import { useQuery, useMutation } from "@apollo/client/react";
 import { GET_MY_PROFILE, GET_NOTIFICATIONS } from "@/graphql/queries";
@@ -213,7 +213,7 @@ export default function ProfilePage() {
         <main className="flex-1 overflow-y-auto p-4 lg:p-8">
           <div className="flex flex-col max-w-4xl mx-auto gap-6">
             {/* User Profile Summary  */}
-            <Card className="shadow-md">
+            <div className="bg-white rounded-3xl shadow-xl p-8 border border-gray-100/50">
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
                 <div className="relative">
                   {profileData?.myProfile?.pictureURL ? (
@@ -277,10 +277,10 @@ export default function ProfilePage() {
                   </div>
                 </div>
               </div>
-            </Card>
+            </div>
 
             {/* Personal Information */}
-            <Card className="shadow-md">
+            <div className="bg-white rounded-3xl shadow-xl p-8 border border-gray-100/50">
               <h2 className="text-xl font-bold text-text1 mb-4">
                 Personal Information
               </h2>
@@ -310,10 +310,10 @@ export default function ProfilePage() {
                   Save Changes
                 </Button>
               </Form>
-            </Card>
+            </div>
 
             {/* Preferences */}
-            <Card className="shadow-md">
+            <div className="bg-white rounded-3xl shadow-xl p-8 border border-gray-100/50">
               <h2 className="text-xl font-bold text-text1 mb-4">Preferences</h2>
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
@@ -377,10 +377,10 @@ export default function ProfilePage() {
                   />
                 </div>
               </div>
-            </Card>
+            </div>
 
             {/* Quick Actions */}
-            <Card className="shadow-md">
+            <div className="bg-white rounded-3xl shadow-xl p-8 border border-gray-100/50">
               <h2 className="text-xl font-bold text-text1 mb-4">
                 Quick Actions
               </h2>
@@ -423,7 +423,7 @@ export default function ProfilePage() {
                   </div>
                 </button>
               </div>
-            </Card>
+            </div>
           </div>
         </main>
       </div>

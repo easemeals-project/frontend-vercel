@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useFormik } from "formik";
 import { EyeOutlined, EyeInvisibleOutlined } from "@ant-design/icons"; // Using antd icons as requested
 import { FcGoogle } from "react-icons/fc";
-import { Card } from "antd";
 import { SignUpSchema } from "@/lib/types/auth";
 import { InferType } from "yup";
 import { authService } from "@/core/services/auth";
@@ -83,7 +82,7 @@ export default function SignUpForm() {
   };
 
   return (
-    <Card>
+    <div className="bg-white/80 backdrop-blur-xl shadow-2xl rounded-3xl p-8 border border-white/50">
       <form onSubmit={formik.handleSubmit} className="space-y-4">
         {authError && (
           <div className="rounded-md border border-red-400 bg-red-100 px-4 py-3 text-red-700">
@@ -249,8 +248,8 @@ export default function SignUpForm() {
               formik.isSubmitting
             }
             className={`w-full flex justify-center py-3 mt-7 ${formik.isValid && formik.values.agreeToTerms
-                ? "cursor-pointer"
-                : "cursor-not-allowed"
+              ? "cursor-pointer"
+              : "cursor-not-allowed"
               } px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-app_primary hover:bg-app_secondar-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-app_primary-600 disabled:opacity-50`}
           >
             {formik.isSubmitting ? "Signing Up..." : "Sign Up"}
@@ -282,6 +281,6 @@ export default function SignUpForm() {
           </>
         )}
       </form>
-    </Card>
+    </div>
   );
 }
