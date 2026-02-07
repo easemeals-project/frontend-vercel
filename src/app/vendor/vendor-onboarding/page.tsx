@@ -3,6 +3,8 @@
 import React, { useState } from "react";
 import { ArrowRightOutlined, LeftOutlined, CheckOutlined } from "@ant-design/icons";
 import { Button } from "antd";
+import { useRouter } from "next/navigation";
+import conts from "@/lib/conts";
 import Step1PersonalDetails from "./_components/Step1PersonalDetails";
 import Step2FoodItems from "./_components/Step2FoodItems";
 import Step3BusinessDetails from "./_components/Step3BusinessDetails";
@@ -71,6 +73,8 @@ export default function VendorOnboardingPage() {
     setCurrentStep(stepId);
   };
 
+  const router = useRouter();
+
   const handleSubmit = () => {
     console.log("Submitting Vendor Application...", {
       formData,
@@ -81,7 +85,13 @@ export default function VendorOnboardingPage() {
       complianceMethod,
       affidavitFile
     });
-    // Add submission logic here
+    // In a real app, we would send this data to the backend here.
+    // For now, we simulate a successful submission and redirect.
+
+    // Optionally set a flag that onboarding is complete
+    localStorage.setItem("vendorOnboardingCompleted", "true");
+
+    router.push(conts.paths.vendorDashboard);
   };
 
   // --- Render Step Content ---
@@ -127,7 +137,7 @@ export default function VendorOnboardingPage() {
         );
       case 7:
         return (
-          <Step7Review 
+          <Step7Review
             formData={formData}
             employmentStatus={employmentStatus}
             documents={documents}
@@ -143,46 +153,49 @@ export default function VendorOnboardingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center py-10 px-4 font-sans text-text1">
+    <div className="relative min-h-screen bg-white overflow-hidden flex flex-col items-center py-10 px-4 font-sans text-gray-800">
+
+      {/* Background Blobs (Matching HeroSection) */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-[-20%] right-[-10%] w-[500px] lg:w-[700px] h-[500px] lg:h-[700px] rounded-full blur-[80px] lg:blur-[100px] opacity-10 bg-gradient-to-br from-[#0a4031] to-emerald-600 animate-pulse" />
+        <div className="absolute bottom-[-10%] left-[-10%] w-[400px] lg:w-[600px] h-[400px] lg:h-[600px] rounded-full blur-[80px] lg:blur-[100px] opacity-10 bg-[#0a4031] animate-pulse" />
+      </div>
+
       {/* Header */}
-      <div className="text-center mb-10">
-        <h1 className="text-3xl font-bold mb-2">
-          <span className="text-app_primary">Ease</span>
-          <span className="text-app_secondary">Meal </span>
-          <span className="text-app_primary">Vendor Onboarding</span>
+      <div className="relative z-10 text-center mb-10 mt-10">
+        <h1 className="text-4xl md:text-5xl font-black mb-4 tracking-tight text-[#0a4031]">
+          Vendor <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#0a4031] to-emerald-600">Onboarding</span>
         </h1>
-        <p className="text-text2 text-sm">
-          Complete the following steps to set up your vendor account
+        <p className="text-lg text-gray-500 max-w-lg mx-auto leading-relaxed">
+          Join our network of premium vendors. Complete the steps below to start selling on EaseMeals.
         </p>
       </div>
 
       {/* Progress Bar */}
-      <div className="max-w-2xl w-full flex items-center justify-between mb-10 px-4">
+      <div className="relative z-10 max-w-3xl w-full flex items-center justify-between mb-12 px-4">
         {STEPS.map((step, index) => {
           const isCompleted = currentStep > step.id;
           const isActive = currentStep === step.id;
 
           return (
             <React.Fragment key={step.id}>
-              <div
-                className={`flex items-center justify-center w-8 h-8 rounded-full text-xs font-bold shrink-0 transition-colors ${
-                  isActive
-                    ? "bg-white border text-app_primary border-app_primary" // Active step style updated to match image (Green text/border, white bg)? No, usually active is specific.
-                    // Image shows: Step 1 & 2 are Green circles with White ticks (Completed).
-                    // Step 3 is White circle with Green border and Green number (Active).
-                    // Next steps are White circles with Grey border/text.
+              <div className="flex flex-col items-center">
+                <div
+                  className={`flex items-center justify-center w-8 h-8 rounded-full text-xs font-bold shrink-0 transition-all duration-300 ${isActive
+                    ? "bg-[#0a4031] text-white shadow-lg scale-110" // Active: Filled Deep Green
                     : isCompleted
-                    ? "bg-app_primary text-white"
-                    : "bg-white border text-gray-300 border-gray-300"
-                } ${isActive ? "!border-app_primary !text-app_primary" : ""}`}
-              >
-                {isCompleted ? <CheckOutlined /> : step.id}
+                      ? "bg-[#0a4031] text-white" // Completed: Filled Deep Green with tick
+                      : "bg-white border md:border-2 border-gray-200 text-gray-300" // Inactive: White with gray border
+                    }`}
+                >
+                  {isCompleted ? <CheckOutlined /> : step.id}
+                </div>
               </div>
+
               {index < STEPS.length - 1 && (
                 <div
-                  className={`flex-1 h-px mx-2 ${
-                    currentStep > step.id ? "bg-app_primary" : "bg-gray-200"
-                  }`}
+                  className={`flex-1 h-0.5 mx-2 rounded-full transition-colors duration-500 ${currentStep > step.id ? "bg-[#0a4031]" : "bg-gray-200"
+                    }`}
                 />
               )}
             </React.Fragment>
@@ -191,15 +204,15 @@ export default function VendorOnboardingPage() {
       </div>
 
       {/* Main Content Card */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 py-8 max-w-2xl w-full mb-8">
+      <div className="relative z-10 bg-white shadow-xl rounded-2xl border border-gray-100 py-10 px-8 max-w-3xl w-full mb-8">
         {renderStepContent()}
       </div>
 
       {/* Navigation Buttons */}
-      <div className="max-w-2xl w-full flex justify-between items-center">
+      <div className="relative z-10 max-w-3xl w-full flex justify-between items-center">
         <Button
           onClick={handleBack}
-          className="h-10 px-6 rounded-lg border-gray-200 text-gray-500 hover:text-text1 hover:border-gray-300 bg-transparent flex items-center gap-2 font-medium"
+          className="h-10 px-6 rounded-md border border-gray-300 text-gray-600 hover:text-[#0a4031] hover:border-[#0a4031] bg-white flex items-center gap-2 font-medium transition-all"
           disabled={currentStep === 1}
         >
           <LeftOutlined className="text-xs" />
@@ -208,10 +221,10 @@ export default function VendorOnboardingPage() {
         <Button
           onClick={currentStep === STEPS.length ? handleSubmit : handleNext}
           type="primary"
-          className="h-10 px-6 rounded-lg bg-app_primary! hover:bg-app_primary/90! border-none flex items-center gap-2 font-medium"
+          className="h-10 px-6 rounded-md bg-[#0a4031] hover:!bg-[#083327] border-none flex items-center gap-2 font-medium shadow-md transition-all"
         >
           {currentStep === STEPS.length ? "Submit" : "Next"}
-          {currentStep !== STEPS.length && <ArrowRightOutlined className="text-xs" />}
+          <ArrowRightOutlined className="text-xs" />
         </Button>
       </div>
     </div>

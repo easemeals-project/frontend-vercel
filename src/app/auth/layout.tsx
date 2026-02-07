@@ -27,7 +27,7 @@ export default function RootLayout({
       </div>
 
       {/* --- Content --- */}
-      <div className="relative z-10 w-full flex flex-col items-center gap-4">
+      <div className="relative z-10 w-full flex flex-col items-center gap-2">
         {/* Logo */}
         <Link href={conts.paths.home} className="group">
           <motion.div
@@ -38,8 +38,8 @@ export default function RootLayout({
           >
             <Image
               src="/easemeals-logo.png"
-              width={80}
-              height={80}
+              width={120}
+              height={120}
               alt="EaseMeals Logo"
               priority
               className="object-contain drop-shadow-lg"

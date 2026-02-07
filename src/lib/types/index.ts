@@ -22,3 +22,4 @@ export * from "./auth";
 export * from "./ui";
 export * from "./entities";
 export * from "./graphql";
+export * from "./profile";

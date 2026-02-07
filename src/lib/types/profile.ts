@@ -1,9 +1,10 @@
 export interface Address {
   id: string;
-  fullName: string;
-  phoneNumber: string;
-  address: string;
-  instructions?: string;
+  label?: string | null;
+  fullAddress: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  isDefault: boolean;
 }
 
 export interface Profile {
@@ -11,6 +12,9 @@ export interface Profile {
   name: string;
   email: string;
   phone?: string;
-  deliveryAddress?: string;
-  profilePicture?: string;
+  deliveryAddress?: string; // Deprecated
+  pictureURL?: string;
+  memberSince?: string;
+  totalOrders?: number;
+  addresses: Address[];
 }

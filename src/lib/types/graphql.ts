@@ -1,4 +1,5 @@
-import type { Profile, Meal, Faq } from "./entities";
+import type { Profile, Address } from "./profile";
+import type { Meal, Faq, Order, Vendor } from "./entities";
 
 export type GetMyProfileResult = { myProfile: Profile };
 
@@ -19,7 +20,7 @@ export type GetMyMealPreferencesResult = {
   };
 };
 
-export type GetMealSuggestionsResult = { mealSuggestions: Meal[] };
+export type GetMealSuggestionsResult = { searchFoods: Meal[] };
 
 export type GetMealByNameResult = { getMealByName: Meal | null };
 
@@ -110,7 +111,6 @@ export type DailyMeals = {
 };
 
 export type MealPlan = {
-  id: number;
   monday: DailyMeals;
   tuesday: DailyMeals;
   wednesday: DailyMeals;
@@ -153,4 +153,57 @@ export type BroadcastTimetableResult = {
     isActive: boolean;
     expiresAt: string;
   };
+};
+
+export type AddressInput = {
+  label?: string;
+  fullAddress: string;
+  latitude?: number;
+  longitude?: number;
+  isDefault?: boolean;
+};
+
+export type AddAddressVariables = {
+  input: AddressInput;
+};
+
+export type AddAddressResult = {
+  addAddress: Address;
+};
+
+export type UpdateAddressVariables = {
+  id: string;
+  input: AddressInput;
+};
+
+export type UpdateAddressResult = {
+  updateAddress: Address;
+};
+
+export type DeleteAddressVariables = {
+  id: string;
+};
+
+export type DeleteAddressResult = {
+  deleteAddress: boolean;
+};
+
+export type SetDefaultAddressVariables = {
+  id: string;
+};
+
+export type SetDefaultAddressResult = {
+  setDefaultAddress: boolean;
+};
+
+export type GetMyOrdersResult = {
+  myOrders: Order[];
+};
+
+export type GetMyOrderResult = {
+  myOrder: Order;
+};
+
+export type GetVendorsResult = {
+  vendors: Vendor[];
 };

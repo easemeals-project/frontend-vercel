@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Card } from "antd";
+import { Card, Spin, message } from "antd";
 import {
   MenuOutlined,
   DownloadOutlined,
@@ -11,52 +11,39 @@ import {
   ArrowDownOutlined,
 } from "@ant-design/icons";
 import Sidebar from "../_components/Sidebar";
-
-const transactions = [
-  {
-    id: 1,
-    type: "debit",
-    name: "Weekly Meal Plan Payment",
-    date: "2024-01-15",
-    amount: 47000,
-    status: "Completed",
-  },
-  {
-    id: 2,
-    type: "credit",
-    name: "Wallet Top-up",
-    date: "2024-01-14",
-    amount: 50000,
-    status: "Completed",
-  },
-  {
-    id: 3,
-    type: "credit",
-    name: "Cashback Reward",
-    date: "2024-01-13",
-    amount: 2350,
-    status: "Completed",
-  },
-  {
-    id: 4,
-    type: "debit",
-    name: "Meal Delivery",
-    date: "2024-01-12",
-    amount: 8500,
-    status: "Completed",
-  },
-];
+import { useQuery } from "@apollo/client/react";
+import { GET_MY_WALLET } from "@/graphql/queries";
 
 export default function WalletPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("All");
 
+  const { data, loading, error, refetch } = useQuery<any>(GET_MY_WALLET, {
+    pollInterval: 30000, // Poll every 30s
+  });
+
+  if (loading && !data) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Spin size="large" />
+      </div>
+    );
+  }
+
+  if (error) {
+    message.error("Failed to load wallet data");
+    console.error(error);
+  }
+
+  const wallet = data?.myWallet || { balance: 0, transactions: [] };
+  const transactions = wallet.transactions || [];
+
   const filteredTransactions =
     activeTab === "All"
       ? transactions
-      : transactions.filter((t) =>
-          activeTab === "Credit" ? t.type === "credit" : t.type === "debit"
-        );
+      : transactions.filter((t: any) =>
+        activeTab === "Credit" ? t.type === "CREDIT" : t.type === "DEBIT"
+      );
 
   return (
     <div className="min-h-screen bg-app_bg flex font-sans">
@@ -83,7 +70,10 @@ export default function WalletPage() {
             <button className="text-text2 hover:text-text1 transition-colors">
               <DownloadOutlined className="text-xl" />
             </button>
-            <button className="text-text2 hover:text-text1 transition-colors">
+            <button
+              className="text-text2 hover:text-text1 transition-colors"
+              onClick={() => refetch()}
+            >
               <ReloadOutlined className="text-xl" />
             </button>
           </div>
@@ -95,8 +85,13 @@ export default function WalletPage() {
             {/* Available Balance Card */}
             <div className="bg-[#FF7043] rounded-xl p-8 text-white shadow-lg">
               <p className="text-sm opacity-90 mb-2">Available Balance</p>
-              <h2 className="text-5xl font-bold mb-8">₦25,000</h2>
-              <button className="w-full sm:w-1/2 bg-[#FF8A65] hover:bg-[#FFAB91] text-white py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors">
+              <h2 className="text-5xl font-bold mb-8">
+                {wallet.currency || "NGN"} {wallet.balance?.toLocaleString()}
+              </h2>
+              <button
+                className="w-full sm:w-1/2 bg-[#FF8A65] hover:bg-[#FFAB91] text-white py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors"
+                onClick={() => message.info("Top-up feature coming soon!")}
+              >
                 <PlusOutlined />
                 Add Money
               </button>
@@ -106,13 +101,13 @@ export default function WalletPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                 <p className="text-sm text-text2 mb-2">Total Spent</p>
-                <p className="text-2xl font-bold text-text1 mb-1">₦145,500</p>
-                <p className="text-xs text-text2">Last 30 days: ₦47,000</p>
+                <p className="text-2xl font-bold text-text1 mb-1">₦0</p>
+                <p className="text-xs text-text2">Last 30 days: ₦0</p>
               </div>
               <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                 <p className="text-sm text-text2 mb-2">Total Cashback</p>
-                <p className="text-2xl font-bold text-text1 mb-1">₦8,750</p>
-                <p className="text-xs text-text2">Earned from 23 orders</p>
+                <p className="text-2xl font-bold text-text1 mb-1">₦0</p>
+                <p className="text-xs text-text2">Earned from 0 orders</p>
               </div>
               <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                 <p className="text-sm text-text2 mb-2">Pending</p>
@@ -132,11 +127,10 @@ export default function WalletPage() {
                     <button
                       key={tab}
                       onClick={() => setActiveTab(tab)}
-                      className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${
-                        activeTab === tab
-                          ? "bg-[#FF7043] text-white shadow-sm"
-                          : "bg-gray-100 text-text2 hover:text-text1"
-                      }`}
+                      className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${activeTab === tab
+                        ? "bg-[#FF7043] text-white shadow-sm"
+                        : "bg-gray-100 text-text2 hover:text-text1"
+                        }`}
                     >
                       {tab}
                     </button>
@@ -145,51 +139,56 @@ export default function WalletPage() {
               </div>
 
               <div className="space-y-4">
-                {filteredTransactions.map((transaction) => (
-                  <div
-                    key={transaction.id}
-                    className="flex items-center justify-between p-4 border border-gray-100 rounded-xl hover:bg-gray-50 transition-colors"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div
-                        className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                          transaction.type === "credit"
+                {filteredTransactions.length === 0 ? (
+                  <p className="text-center text-text2 py-8">No transactions found</p>
+                ) : (
+                  filteredTransactions.map((transaction: any) => (
+                    <div
+                      key={transaction.id}
+                      className="flex items-center justify-between p-4 border border-gray-100 rounded-xl hover:bg-gray-50 transition-colors"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div
+                          className={`w-12 h-12 rounded-full flex items-center justify-center ${transaction.type === "CREDIT"
                             ? "bg-green-50 text-green-500"
                             : "bg-red-50 text-red-500"
-                        }`}
-                      >
-                        {transaction.type === "credit" ? (
-                          <ArrowDownOutlined className="text-xl" />
-                        ) : (
-                          <ArrowUpOutlined className="text-xl" />
-                        )}
+                            }`}
+                        >
+                          {transaction.type === "CREDIT" ? (
+                            <ArrowDownOutlined className="text-xl" />
+                          ) : (
+                            <ArrowUpOutlined className="text-xl" />
+                          )}
+                        </div>
+                        <div>
+                          <p className="font-semibold text-text1">
+                            {transaction.description || "Transaction"}
+                          </p>
+                          <p className="text-xs text-text2 mt-0.5">
+                            {new Date(transaction.createdAt).toLocaleDateString()}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-semibold text-text1">
-                          {transaction.name}
-                        </p>
-                        <p className="text-xs text-text2 mt-0.5">
-                          {transaction.date}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p
-                        className={`font-bold ${
-                          transaction.type === "credit"
+                      <div className="text-right">
+                        <p
+                          className={`font-bold ${transaction.type === "CREDIT"
                             ? "text-green-500"
                             : "text-red-500"
-                        }`}
-                      >
-                        {transaction.type === "credit" ? "+" : "-"}₦
-                        {transaction.amount.toLocaleString()}
-                      </p>
-                      <p className="text-xs text-text2 mt-0.5">
-                        {transaction.status}
-                      </p>
+                            }`}
+                        >
+                          {transaction.type === "CREDIT" ? "+" : "-"}
+                          {wallet.currency}
+                          {transaction.amount.toLocaleString()}
+                        </p>
+                        <p className={`text-xs mt-0.5 ${transaction.status === "COMPLETED" ? "text-green-600" :
+                          transaction.status === "PENDING" ? "text-orange-500" : "text-red-500"
+                          }`}>
+                          {transaction.status}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </div>
           </div>

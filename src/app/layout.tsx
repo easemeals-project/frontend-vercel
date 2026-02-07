@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   title: "EaseMeals",
   description: "Your personal meal planner",
   icons: {
-    icon: "/logo.png",
+    icon: "/easemeals-logo.png",
   },
 };
 
@@ -27,7 +27,7 @@ export default async function RootLayout({
 
   return (
     <html lang="en">
-      <body className={`${inter.variable} ${outfit.variable} antialiased min-h-screen font-sans`}> 
+      <body className={`${inter.variable} ${outfit.variable} antialiased min-h-screen font-sans`}>
         <>
           <ConfigureAmplifyClientSide />
           <ApolloWrapper>{children}</ApolloWrapper>

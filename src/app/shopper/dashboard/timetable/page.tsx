@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Spin, Modal } from "antd";
 import {
@@ -15,14 +16,15 @@ import { FaExclamation, FaCheck } from "react-icons/fa6";
 import Sidebar from "../_components/Sidebar";
 import conts from "@/lib/conts";
 import { useQuery, useMutation } from "@apollo/client/react";
-import { GET_MEAL_SUGGESTIONS, GET_MEAL_BY_NAME } from "@/graphql/queries";
+import { GET_MEAL_SUGGESTIONS, GET_MEAL_BY_NAME, GET_MY_MEAL_PREFERENCES } from "@/graphql/queries";
 import { GENERATE_MEAL_PLAN } from "@/graphql/mutations";
 import {
   GetMealSuggestionsResult,
   GetMealByNameResult,
   GenerateMealPlanResult,
   GenerateMealPlanVariables,
-  MealPlan
+  MealPlan,
+  GetMyMealPreferencesResult
 } from "@/lib/types/graphql";
 
 const DAYS = [
@@ -42,10 +44,16 @@ const MEAL_TYPES = ["Breakfast", "Lunch", "Dinner"];
 export default function TimetablePage() {
   // --- Dynamic State ---
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [selectedTab, setSelectedTab] = useState("Healthy");
+  const [selectedBudget, setSelectedBudget] = useState<string>("HEALTHY");
   const [weeklyPlan, setWeeklyPlan] = useState<MealPlan | null>(null);
+  const router = useRouter();
   const [isGenerating, setIsGenerating] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+
+  // Fetch prefs if needed
+  const { data: prefsData } = useQuery<GetMyMealPreferencesResult>(GET_MY_MEAL_PREFERENCES, {
+    skip: typeof window !== 'undefined' && !!sessionStorage.getItem("foodPreferences")
+  });
 
   // --- Backend Mutation ---
   const [generateMutation] = useMutation<GenerateMealPlanResult, GenerateMealPlanVariables>(
@@ -62,17 +70,29 @@ export default function TimetablePage() {
       let dietaryRestrictions: string[] = [];
       let budget = "HEALTHY";
 
-      // Map selected tab to backend enum if no stored prefs
-      if (selectedTab === "Low Budget") budget = "LOW";
-      else if (selectedTab === "Luxury") budget = "LUXURY";
-      else budget = "HEALTHY";
-
       if (storedPrefs) {
         const p = JSON.parse(storedPrefs);
         favoriteFoods = p.favoriteFoods || [];
         dietaryRestrictions = p.dietaryRestrictions || [];
-        // Override budget from tab if specific tab selected, otherwise use prefs? 
-        // For now, let tab selection drive the generation "flavor"
+        // Use stored budget if available, ensure it's a string
+        if (p.budget) {
+          budget = String(p.budget).toUpperCase();
+        }
+      } else if (prefsData?.myMealPreferences) {
+        // Fallback to backend data
+        const p = prefsData.myMealPreferences;
+        favoriteFoods = p.favoriteMeals.map((m: any) => m.name);
+        dietaryRestrictions = p.dietaryRestrictions;
+        if (p.budget) {
+          budget = String(p.budget).toUpperCase();
+        }
+      }
+
+      // If no stored budget, map selected tab to backend enum
+      if (!storedPrefs && !prefsData?.myMealPreferences) {
+        if (selectedBudget === "Low Budget") budget = "LOW";
+        else if (selectedBudget === "Luxury") budget = "LUXURY";
+        else budget = "HEALTHY";
       }
 
       // Simulate delay for effect
@@ -93,8 +113,9 @@ export default function TimetablePage() {
 
       if (res.data?.generateMealPlan) {
         setWeeklyPlan(res.data.generateMealPlan);
-        // Store for Checkout
         sessionStorage.setItem("currentTimetable", JSON.stringify(res.data.generateMealPlan));
+        localStorage.setItem("currentTimetable", JSON.stringify(res.data.generateMealPlan));
+        localStorage.setItem("onboarding_complete", "true");
       }
 
     } catch (e) {
@@ -108,7 +129,7 @@ export default function TimetablePage() {
   // Trigger on Mount or Tab Change
   useEffect(() => {
     generateTimetable();
-  }, [selectedTab]);
+  }, [selectedBudget]);
 
   // --- Loading Overlay Render ---
   if (isInitialLoad && isGenerating) {
@@ -117,7 +138,7 @@ export default function TimetablePage() {
         <div className="relative w-32 h-32 mb-8 animate-pulse">
           {/* Using the Logo Image we saw in Auth Layout */}
           <img
-            src="/logo.png"
+            src="/easemeals-logo.png"
             alt="EaseMeals Loading"
             className="w-full h-full object-contain drop-shadow-lg"
           />
@@ -204,14 +225,14 @@ export default function TimetablePage() {
               {["Low Budget", "Healthy", "Luxury"].map((tab) => (
                 <button
                   key={tab}
-                  onClick={() => setSelectedTab(tab)}
-                  className={`pb-3 text-sm font-medium transition-all relative ${selectedTab === tab
+                  onClick={() => setSelectedBudget(tab)}
+                  className={`pb-3 text-sm font-medium transition-all relative ${selectedBudget === tab
                     ? "text-app_primary"
                     : "text-text2 hover:text-text1"
                     }`}
                 >
                   {tab}
-                  {selectedTab === tab && (
+                  {selectedBudget === tab && (
                     <span className="absolute bottom-0 left-0 w-full h-0.5 bg-app_primary rounded-t-full" />
                   )}
                 </button>
@@ -310,7 +331,7 @@ export default function TimetablePage() {
             </div>
 
             {/* Recommended Meals Section */}
-            <RecommendedMeals tab={selectedTab} />
+            <RecommendedMeals tab={selectedBudget} />
           </div>
         </main>
       </div>
@@ -329,7 +350,7 @@ function RecommendedMeals({ tab }: { tab: string }) {
   );
   const [selectedMealName, setSelectedMealName] = useState<string | null>(null);
 
-  const meals = data?.mealSuggestions || [];
+  const meals = data?.searchFoods || [];
 
   if (meals.length === 0) return null;
 

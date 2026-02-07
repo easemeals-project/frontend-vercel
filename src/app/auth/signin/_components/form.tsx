@@ -51,7 +51,15 @@ export default function SignInForm() {
       setAuthError(error);
       return;
     }
-    router.push(conts.paths.dashboard);
+
+    // Check if user has meal plan
+    const hasMealPlan = localStorage.getItem("currentTimetable") !== null;
+    if (hasMealPlan) {
+      router.push(conts.paths.dashboard);
+    } else {
+      // New user - go to timetable to create first meal plan
+      router.push(conts.paths.timetable);
+    }
   };
 
   // 3. --- Formik Hook ---
@@ -67,26 +75,34 @@ export default function SignInForm() {
 
       if (result.error) {
         setAuthError(result.error);
+        if (result.error.includes("confirm")) {
+          // If user is not confirmed, redirect to verify email
+          router.push(
+            `${conts.paths.verify_email}?email=${values.email}`
+          );
+        }
         setTimeout(() => {
           setAuthError(null);
         }, 5000);
-      } else if (result.redirectLink) {
-        if (!result.redirectLink.includes("verify-email")) {
-          try {
-            const attributes = await fetchUserAttributes();
-            const name = attributes.name;
-            const role = attributes["custom:role"];
+      } else {
+        // --- Smart Redirect Logic ---
 
-            if (name && role) {
-              await registerUser({
-                variables: { name, role },
-              });
-            }
-          } catch (e) {
-            console.error("Failed to register user in DB", e);
-          }
+        // 1. Check if user is a vendor
+        // We now get the role directly from the auth service response
+        if (result.role === "vendor") {
+          router.push(conts.paths.vendorDashboard);
+          return;
         }
-        router.push(result.redirectLink);
+
+        // 2. Shopper Logic: Check if they have a meal plan
+        const hasMealPlan = localStorage.getItem("currentTimetable") !== null;
+        if (hasMealPlan) {
+          router.push(conts.paths.dashboard);
+        } else {
+          // If no meal plan, go to timetable generation (acting as onboarding)
+          // Use paths.timetable if that's where creation happens, or dashboard if it handles it
+          router.push(conts.paths.timetable);
+        }
       }
       setSubmitting(false);
     },

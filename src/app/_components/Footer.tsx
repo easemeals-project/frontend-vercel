@@ -114,7 +114,7 @@ export default function Footer() {
           <div>
             <Link href={conts.paths.home} className="flex items-center space-x-2 mb-4 group">
               <Image
-                src="/enhanced_easemeals_logo.png"
+                src="/easemeals-logo.png"
                 alt="EaseMeals Logo"
                 width={36}
                 height={36}

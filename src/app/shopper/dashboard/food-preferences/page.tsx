@@ -18,10 +18,13 @@ import {
   UpsertFoodPreferencesResult,
   UpsertFoodPreferencesVariables,
   FoodPreferencesInput,
+  GetMealSuggestionsResult,
 } from "@/lib/types/graphql";
 
 const MIN_FOODS = 3;
 const MAX_FOODS = 10;
+import { AutoComplete } from "antd";
+import { GET_MEAL_SUGGESTIONS } from "@/graphql/queries"; // Import query
 
 export default function FoodPreferencesPage() {
   const router = useRouter();
@@ -31,6 +34,19 @@ export default function FoodPreferencesPage() {
   const [familySize, setFamilySize] = useState(1);
   const [budget, setBudget] = useState("medium");
   const [showAdditional, setShowAdditional] = useState(false);
+  const [options, setOptions] = useState<{ value: string }[]>([]);
+
+  // Fetch suggestions for autocomplete (DISABLED - no database suggestions available)
+  const { data: suggestionsData } = useQuery<GetMealSuggestionsResult>(GET_MEAL_SUGGESTIONS, {
+    variables: { query: foodInput, limit: 5 },
+    skip: true, // Disabled - manually enter food names instead
+  });
+
+  useEffect(() => {
+    if (suggestionsData?.searchFoods) {
+      setOptions(suggestionsData.searchFoods.map((m: any) => ({ value: m.name })));
+    }
+  }, [suggestionsData]);
 
 
   const { data, loading, error, refetch } = useQuery<GetMyMealPreferencesResult>(
@@ -61,10 +77,14 @@ export default function FoodPreferencesPage() {
   const progress = Math.min((favoriteFoods.length / MIN_FOODS) * 100, 100);
   const progressPercent = (favoriteFoods.length / MAX_FOODS) * 100;
 
-  const handleAddFood = () => {
-    if (foodInput.trim() && favoriteFoods.length < MAX_FOODS) {
-      setFavoriteFoods([...favoriteFoods, foodInput.trim()]);
+  const handleAddFood = (val?: string) => {
+    const foodToAdd = val || foodInput;
+    if (foodToAdd.trim() && favoriteFoods.length < MAX_FOODS) {
+      if (!favoriteFoods.includes(foodToAdd.trim())) {
+        setFavoriteFoods([...favoriteFoods, foodToAdd.trim()]);
+      }
       setFoodInput("");
+      setOptions([]);
     }
   };
 
@@ -113,6 +133,20 @@ export default function FoodPreferencesPage() {
 
   const handleGenerateTimetable = async () => {
     await handleSave();
+    // Check if new preferences are different from stored ones?
+    // Always update session storage just in case for immediate generation
+    // Map budget to backend enum values
+    let budgetEnum = "HEALTHY";
+    if (budget === "low") budgetEnum = "LOW";
+    else if (budget === "high") budgetEnum = "LUXURY";
+
+    sessionStorage.setItem("foodPreferences", JSON.stringify({
+      favoriteFoods,
+      dietaryRestrictions,
+      familySize,
+      budget: budgetEnum
+    }));
+
     if (favoriteFoods.length >= MIN_FOODS) {
       router.push(conts.paths.timetable);
     }
@@ -169,16 +203,22 @@ export default function FoodPreferencesPage() {
         {/* Favorite Foods Input */}
         <div className="mb-6">
           <div className="flex mb-4 shadow-sm rounded-lg overflow-hidden">
-            <input
-              type="text"
-              placeholder="Enter your favorite foods..."
+            <AutoComplete
               value={foodInput}
-              onChange={(e) => setFoodInput(e.target.value)}
+              options={options}
+              onChange={setFoodInput}
+              onSelect={(val) => handleAddFood(val)}
+              className="flex-1"
               onKeyDown={(e) => e.key === "Enter" && handleAddFood()}
-              className="flex-1 px-4 py-3 text-sm text-text1 placeholder-gray-400 outline-none border-none"
-            />
+            >
+              <Input
+                placeholder="Enter or search your favorite foods..."
+                className="h-full px-4 py-3 text-sm text-text1 placeholder-gray-400 outline-none border-none"
+                style={{ border: "none", boxShadow: "none" }} // Override Antd Input styles
+              />
+            </AutoComplete>
             <button
-              onClick={handleAddFood}
+              onClick={() => handleAddFood()}
               disabled={favoriteFoods.length >= MAX_FOODS}
               className="bg-app_secondary text-white px-5 flex items-center justify-center hover:opacity-90 disabled:opacity-70 disabled:cursor-not-allowed transition-colors"
             >
@@ -231,6 +271,7 @@ export default function FoodPreferencesPage() {
                     <Checkbox
                       key={option}
                       checked={dietaryRestrictions.includes(option)}
+                      onChange={(e) => handleDietaryChange(option, e.target.checked)}
                       className="text-sm text-text1"
                     >
                       {option}

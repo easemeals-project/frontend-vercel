@@ -16,6 +16,10 @@ const nextConfig: NextConfig = {
     "rc-switch",
     "rc-input",
   ],
+  webpack: (config) => {
+    config.cache = false;
+    return config;
+  },
 };
 
 export default nextConfig;

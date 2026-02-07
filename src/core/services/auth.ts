@@ -111,15 +111,32 @@ class AuthService {
           username: params.email,
         });
         redirectLink = `${conts.paths.verify_email}?email=${params.email}`;
+        return { redirectLink };
+      }
+
+      if (isSignedIn) {
+        // Fetch session to get user attributes/role immediately
+        const session = await fetchAuthSession();
+        const role = session.tokens?.idToken?.payload["custom:role"] as UserRole;
+
+        // Return role so the caller can decide where to redirect
+        return { redirectLink, role };
       }
     } catch (error) {
       return { error: getErrorMessage(error) };
     }
     return { redirectLink };
   };
-  signout = async (params: string) => {
+
+  signout = async (router?: AppRouterInstance) => {
     try {
       await signOut();
+      localStorage.clear(); // Clear local storage including role
+      if (router) {
+        router.push(conts.paths.home);
+      } else {
+        window.location.href = conts.paths.home;
+      }
     } catch (error) {
       return getErrorMessage(error);
     }

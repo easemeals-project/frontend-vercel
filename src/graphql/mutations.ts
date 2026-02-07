@@ -58,7 +58,6 @@ export const UPLOAD_PROFILE_PICTURE = gql`
 export const GENERATE_MEAL_PLAN = gql`
   mutation GenerateMealPlan($input: MealPlanInput!) {
     generateMealPlan(input: $input) {
-      id
       monday {
         breakfast
         lunch
@@ -116,3 +115,40 @@ export const BROADCAST_TIMETABLE = gql`
 `;
 
 
+export const ADD_ADDRESS = gql`
+  mutation AddAddress($input: AddressInput!) {
+    addAddress(input: $input) {
+      id
+      label
+      fullAddress
+      latitude
+      longitude
+      isDefault
+    }
+  }
+`;
+
+export const UPDATE_ADDRESS = gql`
+  mutation UpdateAddress($id: String!, $input: AddressInput!) {
+    updateAddress(id: $id, input: $input) {
+      id
+      label
+      fullAddress
+      latitude
+      longitude
+      isDefault
+    }
+  }
+`;
+
+export const DELETE_ADDRESS = gql`
+  mutation DeleteAddress($id: String!) {
+    deleteAddress(id: $id)
+  }
+`;
+
+export const SET_DEFAULT_ADDRESS = gql`
+  mutation SetDefaultAddress($id: String!) {
+    setDefaultAddress(id: $id)
+  }
+`;

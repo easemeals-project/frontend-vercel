@@ -68,12 +68,12 @@ export default function Step2FoodItems({
             {foodItems.map((item) => (
               <div
                 key={item}
-                className="inline-flex items-center gap-2 bg-app_primary/15 text-app_primary/60 px-4 py-2 rounded-full border-app_primary/50 border-2 text-sm font-medium"
+                className="inline-flex items-center gap-2 bg-green-50 text-[#0a4031] px-4 py-2 rounded-full border border-[#0a4031]/30 text-sm font-bold"
               >
                 {item}
                 <button
                   onClick={() => handleRemoveItem(item)}
-                  className="text-app_primary/60 hover:text-app_primary/30 cursor-pointer transition-colors font-extrabold ml-1"
+                  className="text-[#0a4031] hover:text-red-500 cursor-pointer transition-colors font-bold ml-1"
                 >
                   ✕
                 </button>

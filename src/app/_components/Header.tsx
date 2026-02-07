@@ -2,15 +2,18 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { MenuOutlined, CloseOutlined, UserOutlined } from "@ant-design/icons";
+import { MenuOutlined, CloseOutlined, UserOutlined, LogoutOutlined } from "@ant-design/icons";
 import Image from "next/image";
 import conts from "@/lib/conts";
 import uniqid from "uniqid";
 import { HeaderProps } from "@/lib/types";
+import { authService } from "@/core/services/auth";
+import { useRouter } from "next/navigation";
 
 export default function Header({ user }: HeaderProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -19,6 +22,11 @@ export default function Header({ user }: HeaderProps) {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  const handleSignOut = async () => {
+    await authService.signout(router);
+    setIsSidebarOpen(false);
+  };
 
   const navLinks = [
     { name: "Features", href: "#why-choose-us" },
@@ -38,7 +46,7 @@ export default function Header({ user }: HeaderProps) {
           <div className="shrink-0">
             <Link href={conts.paths.home} className="flex items-center space-x-2 group">
               <Image
-                src="/enhanced_easemeals_logo.png"
+                src="/easemeals-logo.png"
                 alt="EaseMeals Logo"
                 width={40}
                 height={40}
@@ -65,7 +73,7 @@ export default function Header({ user }: HeaderProps) {
             {user ? (
               <div className="flex items-center gap-4">
                 <Link
-                  href={conts.paths.dashboard}
+                  href={user.role === "vendor" ? conts.paths.vendorDashboard : conts.paths.dashboard}
                   className="font-medium text-gray-700 hover:text-green-600 transition-colors"
                 >
                   Dashboard
@@ -74,6 +82,13 @@ export default function Header({ user }: HeaderProps) {
                   <UserOutlined />
                   <span>{user.name}</span>
                 </div>
+                <button
+                  onClick={handleSignOut}
+                  className="text-gray-400 hover:text-red-500 transition-colors p-2"
+                  title="Sign Out"
+                >
+                  <LogoutOutlined className="text-xl" />
+                </button>
               </div>
             ) : (
               <div className="flex items-center gap-4">
@@ -117,7 +132,7 @@ export default function Header({ user }: HeaderProps) {
           <div className="flex justify-between items-center mb-10">
             <div className="flex items-center space-x-2">
               <Image
-                src="/enhanced_easemeals_logo.png"
+                src="/easemeals-logo.png"
                 alt="EaseMeals Logo"
                 width={36}
                 height={36}
@@ -150,13 +165,21 @@ export default function Header({ user }: HeaderProps) {
 
             <div className="mt-auto pt-8">
               {user ? (
-                <Link
-                  href={conts.paths.dashboard}
-                  onClick={() => setIsSidebarOpen(false)}
-                  className="flex items-center justify-center w-full px-6 py-4 border border-transparent rounded-full shadow-lg shadow-green-900/10 text-base font-bold text-white bg-green-600 hover:bg-green-700"
-                >
-                  Go to Dashboard
-                </Link>
+                <div className="flex flex-col gap-4">
+                  <Link
+                    href={user.role === "vendor" ? conts.paths.vendorDashboard : conts.paths.dashboard}
+                    onClick={() => setIsSidebarOpen(false)}
+                    className="flex items-center justify-center w-full px-6 py-4 border border-transparent rounded-full shadow-lg shadow-green-900/10 text-base font-bold text-white bg-green-600 hover:bg-green-700"
+                  >
+                    Go to Dashboard
+                  </Link>
+                  <button
+                    onClick={handleSignOut}
+                    className="flex items-center justify-center w-full px-6 py-4 border border-gray-200 rounded-full text-base font-bold text-gray-600 hover:bg-gray-50 hover:text-red-500"
+                  >
+                    <LogoutOutlined className="mr-2" /> Sign Out
+                  </button>
+                </div>
               ) : (
                 <div className="flex flex-col gap-4">
                   <Link

@@ -57,6 +57,7 @@ export default function SignUpForm() {
           setAuthError(null);
         }, 5000);
       } else {
+        localStorage.setItem("userRole", role); // Store role for verification redirect
         router.push(`${conts.paths.verify_email}?email=${values.email}`);
       }
       setSubmitting(false);

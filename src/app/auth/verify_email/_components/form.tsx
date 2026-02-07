@@ -46,8 +46,14 @@ export default function VerifyEmailForm() {
         setSubmitting(false);
       } else {
         // Wait for authService.verifySignUp to confirm the session is present
-        // (it polls fetchAuthSession), then push to the food preferences route.
-        router.push(conts.paths.foodPreferences);
+        // (it polls fetchAuthSession), then push to the appropriate route.
+        const role = localStorage.getItem("userRole"); // Assuming role is stored in localStorage during signup/login
+
+        if (role === "vendor") {
+          router.push(conts.paths.vendorOnboarding);
+        } else {
+          router.push(conts.paths.foodPreferences);
+        }
       }
     },
   });

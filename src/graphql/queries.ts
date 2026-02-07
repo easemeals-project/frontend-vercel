@@ -13,7 +13,7 @@ export const GET_ME = gql`
 
 export const GET_MEAL_SUGGESTIONS = gql`
   query GetMealSuggestions($query: String!, $limit: Int) {
-    mealSuggestions(query: $query, limit: $limit) {
+    searchFoods(query: $query, limit: $limit) {
       id
       name
       description
@@ -34,6 +34,14 @@ export const GET_MY_PROFILE = gql`
       phone
       deliveryAddress
       pictureURL
+      addresses {
+        id
+        label
+        fullAddress
+        latitude
+        longitude
+        isDefault
+      }
     }
   }
 `;
@@ -86,6 +94,91 @@ export const GET_MEAL_BY_NAME = gql`
       image
       ingredients
       instructions
+    }
+  }
+`;
+
+export const GET_MY_ORDERS = gql`
+  query GetMyOrders {
+    myOrders {
+      id
+      orderNumber
+      status
+      totalPrice
+      deliveryDate
+      createdAt
+    }
+  }
+`;
+
+export const GET_MY_ORDER = gql`
+  query GetMyOrder($id: Int!) {
+    myOrder(id: $id) {
+      id
+      orderNumber
+      status
+      totalPrice
+      deliveryDate
+      deliveryAddress
+      createdAt
+      updatedAt
+      shippedAt
+      deliveredAt
+      orderItems {
+        id
+        quantity
+        price
+        meal {
+          name
+          image
+        }
+      }
+    }
+  }
+`;
+
+export const GET_VENDORS = gql`
+  query GetVendors {
+    vendors {
+      id
+      businessName
+      cuisine: description
+      rating: monthlyIncome
+      description
+      pictureURL
+      latitude
+      longitude
+      hours {
+        dayOfWeek
+        isOpen
+        openTime
+        closeTime
+      }
+      foods {
+        id
+        name
+        price
+      }
+    }
+  }
+`;
+
+export const GET_MY_WALLET = gql`
+  query GetMyWallet {
+    myWallet {
+      id
+      balance
+      currency
+      isActive
+      transactions(limit: 20) {
+        id
+        amount
+        type
+        status
+        description
+        ref: reference
+        createdAt
+      }
     }
   }
 `;
