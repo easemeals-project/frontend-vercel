@@ -22,7 +22,99 @@ export type GetMyMealPreferencesResult = {
 
 export type GetMealSuggestionsResult = { searchFoods: Meal[] };
 
-export type GetMealByNameResult = { getMealByName: Meal | null };
+export type GetMealByNameResult = { getFoodByName: Meal | null };
+
+export type RAGMealSlot = { name: string; price: number } | null;
+export type RAGMealComposition = {
+  base: RAGMealSlot;
+  protein: RAGMealSlot;
+  soup: RAGMealSlot;
+  sides: RAGMealSlot[];
+  totalCost: number;
+};
+
+export type WeeklyMealPlanInput = {
+  monday?: DailyMealPlanInput;
+  tuesday?: DailyMealPlanInput;
+  wednesday?: DailyMealPlanInput;
+  thursday?: DailyMealPlanInput;
+  friday?: DailyMealPlanInput;
+  saturday?: DailyMealPlanInput;
+  sunday?: DailyMealPlanInput;
+  weeklyCost?: number;
+  budgetTier?: string;
+  name?: string;
+};
+
+export type DailyMealPlanInput = {
+  breakfast?: MealCompositionInput;
+  lunch?: MealCompositionInput;
+  dinner?: MealCompositionInput;
+};
+
+export type MealCompositionInput = {
+  base?: MealSlotInput;
+  protein?: MealSlotInput;
+  sides?: MealSlotInput[];
+  soup?: MealSlotInput;
+};
+
+export type MealSlotInput = {
+  id: string;
+  quantity: number;
+  name?: string;
+  price?: number;
+  category?: string;
+};
+
+export type SaveWeeklyMealPlanResult = {
+  saveWeeklyMealPlan: {
+    id: number;
+    name: string;
+    totalPrice: number;
+    createdAt: string;
+  };
+};
+
+export type RecalculateMealPlanResult = {
+  recalculateMealPlan: WeeklyMealPlan;
+};
+export type RAGDailyMealPlan = {
+  breakfast: RAGMealComposition;
+  lunch: RAGMealComposition;
+  dinner: RAGMealComposition;
+  dailyCost: number;
+};
+export type WeeklyMealPlan = {
+  monday: RAGDailyMealPlan;
+  tuesday: RAGDailyMealPlan;
+  wednesday: RAGDailyMealPlan;
+  thursday: RAGDailyMealPlan;
+  friday: RAGDailyMealPlan;
+  saturday: RAGDailyMealPlan;
+  sunday: RAGDailyMealPlan;
+  weeklyCost: number;
+  budgetTier: string;
+};
+export type GenerateRAGMealPlanVariables = {
+  input: {
+    selectedFoods: string[];
+    budgetType: string;
+    weeklyBudget: number;
+    dietaryRestrictions?: string[];
+  };
+};
+export type GenerateRAGMealPlanResult = {
+  generateRAGMealPlan: WeeklyMealPlan;
+};
+
+export type SaveWeeklyMealPlanVariables = {
+  input: WeeklyMealPlanInput;
+};
+
+export type RecalculateMealPlanVariables = {
+  plan: WeeklyMealPlanInput;
+};
 
 export type GetFaqsResult = { faqs: Faq[] };
 

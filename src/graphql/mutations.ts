@@ -104,51 +104,164 @@ export const GENERATE_MEAL_PLAN = gql`
   }
 `;
 
-export const BROADCAST_TIMETABLE = gql`
-  mutation BroadcastTimetable($input: BroadcastTimetableInput!) {
-    broadcastTimetable(input: $input) {
-      id
-      isActive
-      expiresAt
+export const GENERATE_RAG_MEAL_PLAN = gql`
+  mutation GenerateRAGMealPlan($input: RAGMealPlanInput!) {
+    generateRAGMealPlan(input: $input) {
+      monday {
+        breakfast { base { name price } protein { name price } soup { name price } sides { name price } totalCost }
+        lunch { base { name price } protein { name price } soup { name price } sides { name price } totalCost }
+        dinner { base { name price } protein { name price } soup { name price } sides { name price } totalCost }
+        dailyCost
+      }
+      tuesday {
+        breakfast { base { name price } protein { name price } soup { name price } sides { name price } totalCost }
+        lunch { base { name price } protein { name price } soup { name price } sides { name price } totalCost }
+        dinner { base { name price } protein { name price } soup { name price } sides { name price } totalCost }
+        dailyCost
+      }
+      wednesday {
+        breakfast { base { name price } protein { name price } soup { name price } sides { name price } totalCost }
+        lunch { base { name price } protein { name price } soup { name price } sides { name price } totalCost }
+        dinner { base { name price } protein { name price } soup { name price } sides { name price } totalCost }
+        dailyCost
+      }
+      thursday {
+        breakfast { base { name price } protein { name price } soup { name price } sides { name price } totalCost }
+        lunch { base { name price } protein { name price } soup { name price } sides { name price } totalCost }
+        dinner { base { name price } protein { name price } soup { name price } sides { name price } totalCost }
+        dailyCost
+      }
+      friday {
+        breakfast { base { name price } protein { name price } soup { name price } sides { name price } totalCost }
+        lunch { base { name price } protein { name price } soup { name price } sides { name price } totalCost }
+        dinner { base { name price } protein { name price } soup { name price } sides { name price } totalCost }
+        dailyCost
+      }
+      saturday {
+        breakfast { base { name price } protein { name price } soup { name price } sides { name price } totalCost }
+        lunch { base { name price } protein { name price } soup { name price } sides { name price } totalCost }
+        dinner { base { name price } protein { name price } soup { name price } sides { name price } totalCost }
+        dailyCost
+      }
+      sunday {
+        breakfast { base { name price } protein { name price } soup { name price } sides { name price } totalCost }
+        lunch { base { name price } protein { name price } soup { name price } sides { name price } totalCost }
+        dinner { base { name price } protein { name price } soup { name price } sides { name price } totalCost }
+        dailyCost
+      }
+      weeklyCost
+      budgetTier
     }
   }
+`;
+
+export const BROADCAST_TIMETABLE = gql`
+  mutation BroadcastTimetable($input: BroadcastTimetableInput!) {
+  broadcastTimetable(input: $input) {
+    id
+    isActive
+    expiresAt
+  }
+}
 `;
 
 
 export const ADD_ADDRESS = gql`
   mutation AddAddress($input: AddressInput!) {
-    addAddress(input: $input) {
-      id
-      label
-      fullAddress
-      latitude
-      longitude
-      isDefault
-    }
+  addAddress(input: $input) {
+    id
+    label
+    fullAddress
+    latitude
+    longitude
+    isDefault
   }
+}
 `;
 
 export const UPDATE_ADDRESS = gql`
   mutation UpdateAddress($id: String!, $input: AddressInput!) {
-    updateAddress(id: $id, input: $input) {
-      id
-      label
-      fullAddress
-      latitude
-      longitude
-      isDefault
-    }
+  updateAddress(id: $id, input: $input) {
+    id
+    label
+    fullAddress
+    latitude
+    longitude
+    isDefault
   }
+}
 `;
 
 export const DELETE_ADDRESS = gql`
   mutation DeleteAddress($id: String!) {
-    deleteAddress(id: $id)
-  }
+  deleteAddress(id: $id)
+}
 `;
 
 export const SET_DEFAULT_ADDRESS = gql`
   mutation SetDefaultAddress($id: String!) {
-    setDefaultAddress(id: $id)
+  setDefaultAddress(id: $id)
+}
+`;
+
+export const SAVE_WEEKLY_MEAL_PLAN = gql`
+  mutation SaveWeeklyMealPlan($input: WeeklyMealPlanInput!) {
+    saveWeeklyMealPlan(input: $input) {
+      id
+      name
+      totalPrice
+      createdAt
+    }
+  }
+`;
+
+export const RECALCULATE_MEAL_PLAN = gql`
+  mutation RecalculateMealPlan($plan: WeeklyMealPlanInput!) {
+    recalculateMealPlan(plan: $plan) {
+      monday {
+        breakfast { base { name price id } protein { name price id } soup { name price id } sides { name price id } totalCost }
+        lunch { base { name price id } protein { name price id } soup { name price id } sides { name price id } totalCost }
+        dinner { base { name price id } protein { name price id } soup { name price id } sides { name price id } totalCost }
+        dailyCost
+      }
+      tuesday {
+        breakfast { base { name price id } protein { name price id } soup { name price id } sides { name price id } totalCost }
+        lunch { base { name price id } protein { name price id } soup { name price id } sides { name price id } totalCost }
+        dinner { base { name price id } protein { name price id } soup { name price id } sides { name price id } totalCost }
+        dailyCost
+      }
+      wednesday {
+        breakfast { base { name price id } protein { name price id } soup { name price id } sides { name price id } totalCost }
+        lunch { base { name price id } protein { name price id } soup { name price id } sides { name price id } totalCost }
+        dinner { base { name price id } protein { name price id } soup { name price id } sides { name price id } totalCost }
+        dailyCost
+      }
+      thursday {
+        breakfast { base { name price id } protein { name price id } soup { name price id } sides { name price id } totalCost }
+        lunch { base { name price id } protein { name price id } soup { name price id } sides { name price id } totalCost }
+        dinner { base { name price id } protein { name price id } soup { name price id } sides { name price id } totalCost }
+        dailyCost
+      }
+      friday {
+        breakfast { base { name price id } protein { name price id } soup { name price id } sides { name price id } totalCost }
+        lunch { base { name price id } protein { name price id } soup { name price id } sides { name price id } totalCost }
+        dinner { base { name price id } protein { name price id } soup { name price id } sides { name price id } totalCost }
+        dailyCost
+      }
+      saturday {
+        breakfast { base { name price id } protein { name price id } soup { name price id } sides { name price id } totalCost }
+        lunch { base { name price id } protein { name price id } soup { name price id } sides { name price id } totalCost }
+        dinner { base { name price id } protein { name price id } soup { name price id } sides { name price id } totalCost }
+        dailyCost
+      }
+      sunday {
+        breakfast { base { name price id } protein { name price id } soup { name price id } sides { name price id } totalCost }
+        lunch { base { name price id } protein { name price id } soup { name price id } sides { name price id } totalCost }
+        dinner { base { name price id } protein { name price id } soup { name price id } sides { name price id } totalCost }
+        dailyCost
+      }
+      weeklyCost
+      budgetTier
+    }
   }
 `;

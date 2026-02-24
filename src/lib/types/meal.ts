@@ -4,7 +4,7 @@ export type Meal = {
   description?: string;
   calories?: number;
   protein?: number;
-  carbs?: number;
+  carbohydrate?: number;
   fat?: number;
   image?: string;
   ingredients?: string[];

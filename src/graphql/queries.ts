@@ -16,10 +16,9 @@ export const GET_MEAL_SUGGESTIONS = gql`
     searchFoods(query: $query, limit: $limit) {
       id
       name
-      description
-      calories
+      price
       protein
-      carbs
+      carbohydrate
       fat
     }
   }
@@ -83,17 +82,12 @@ export const GET_FAQS = gql`
 
 export const GET_MEAL_BY_NAME = gql`
   query GetMealByName($name: String!) {
-    getMealByName(name: $name) {
+    getFoodByName(name: $name) {
       id
       name
-      description
-      calories
       protein
-      carbs
+      carbohydrate
       fat
-      image
-      ingredients
-      instructions
     }
   }
 `;

@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { useQuery, useMutation } from "@apollo/client/react";
-import { GET_MY_MEAL_PREFERENCES } from "@/graphql/queries";
+import { useQuery, useMutation, useLazyQuery } from "@apollo/client/react";
+import { GET_MY_MEAL_PREFERENCES, GET_MEAL_SUGGESTIONS } from "@/graphql/queries";
 import { UPSERT_FOOD_PREFERENCES } from "@/graphql/mutations";
-import { Spin, Alert, Checkbox, Input, Slider, Button, message } from "antd";
+import { Checkbox, Input, Slider, message, AutoComplete } from "antd";
 import {
   PlusOutlined,
   CloseOutlined,
@@ -23,8 +23,15 @@ import {
 
 const MIN_FOODS = 3;
 const MAX_FOODS = 10;
-import { AutoComplete } from "antd";
-import { GET_MEAL_SUGGESTIONS } from "@/graphql/queries"; // Import query
+
+// Simple debounce function
+function debounce<T extends (...args: any[]) => any>(func: T, wait: number) {
+  let timeout: NodeJS.Timeout;
+  return (...args: Parameters<T>) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  };
+}
 
 export default function FoodPreferencesPage() {
   const router = useRouter();
@@ -36,11 +43,26 @@ export default function FoodPreferencesPage() {
   const [showAdditional, setShowAdditional] = useState(false);
   const [options, setOptions] = useState<{ value: string }[]>([]);
 
-  // Fetch suggestions for autocomplete (DISABLED - no database suggestions available)
-  const { data: suggestionsData } = useQuery<GetMealSuggestionsResult>(GET_MEAL_SUGGESTIONS, {
-    variables: { query: foodInput, limit: 5 },
-    skip: true, // Disabled - manually enter food names instead
+  // Fetch suggestions for autocomplete
+  const [searchFoods, { data: suggestionsData }] = useLazyQuery<GetMealSuggestionsResult>(GET_MEAL_SUGGESTIONS, {
+    fetchPolicy: "network-only",
   });
+
+  const debouncedSearch = useCallback(
+    debounce((value: string) => {
+      if (value && value.length > 2) {
+        searchFoods({ variables: { query: value, limit: 5 } });
+      } else {
+        setOptions([]);
+      }
+    }, 500),
+    [searchFoods]
+  );
+
+  const handleSearch = (value: string) => {
+    setFoodInput(value);
+    debouncedSearch(value);
+  };
 
   useEffect(() => {
     if (suggestionsData?.searchFoods) {
@@ -65,7 +87,6 @@ export default function FoodPreferencesPage() {
       setDietaryRestrictions(prefs.dietaryRestrictions);
       setFamilySize(prefs.familySize);
       // Map budget (Backend float: 1.0=Low, 2.0=Medium, 3.0=High)
-      // If backend returns different values, adjust here. Assuming 1=Low, 2=Med, 3=High
       const bVal = prefs.budget;
       if (bVal && bVal <= 1) setBudget("low");
       else if (bVal && bVal > 2) setBudget("high");
@@ -74,8 +95,7 @@ export default function FoodPreferencesPage() {
   }, [data]);
 
   // Calculate progress (capped at 100%)
-  const progress = Math.min((favoriteFoods.length / MIN_FOODS) * 100, 100);
-  const progressPercent = (favoriteFoods.length / MAX_FOODS) * 100;
+  const progressPercent = Math.min((favoriteFoods.length / MAX_FOODS) * 100, 100);
 
   const handleAddFood = (val?: string) => {
     const foodToAdd = val || foodInput;
@@ -124,8 +144,6 @@ export default function FoodPreferencesPage() {
 
       await upsertPreferences({ variables: { input } });
       message.success("Preferences saved successfully!");
-      // Optionally navigate
-      // router.push(conts.paths.timetable);
     } catch (err: any) {
       message.error("Failed to save preferences: " + err.message);
     }
@@ -133,9 +151,7 @@ export default function FoodPreferencesPage() {
 
   const handleGenerateTimetable = async () => {
     await handleSave();
-    // Check if new preferences are different from stored ones?
-    // Always update session storage just in case for immediate generation
-    // Map budget to backend enum values
+
     let budgetEnum = "HEALTHY";
     if (budget === "low") budgetEnum = "LOW";
     else if (budget === "high") budgetEnum = "LUXURY";
@@ -160,9 +176,21 @@ export default function FoodPreferencesPage() {
     "Nut-free",
   ];
 
-  // if (loading) {
-  //    return <div className="min-h-screen flex items-center justify-center"><Spin size="large" /></div>;
-  // }
+  // Price tags logic
+  const getPriceTag = (value: string) => {
+    switch (value) {
+      case "low":
+        return { label: "Low", range: "< ₦2,000", color: "text-green-600" };
+      case "medium":
+        return { label: "Medium", range: "₦2,000 - ₦5,000", color: "text-blue-600" };
+      case "high":
+        return { label: "High", range: "> ₦5,000", color: "text-purple-600" };
+      default:
+        return { label: "Medium", range: "₦2,000 - ₦5,000", color: "text-blue-600" };
+    }
+  };
+
+  const currentPriceTag = getPriceTag(budget);
 
   return (
     <div className="min-h-screen bg-app_bg flex flex-col items-center pt-20 px-4 pb-10">
@@ -206,7 +234,7 @@ export default function FoodPreferencesPage() {
             <AutoComplete
               value={foodInput}
               options={options}
-              onChange={setFoodInput}
+              onSearch={handleSearch}
               onSelect={(val) => handleAddFood(val)}
               className="flex-1"
               onKeyDown={(e) => e.key === "Enter" && handleAddFood()}
@@ -214,7 +242,7 @@ export default function FoodPreferencesPage() {
               <Input
                 placeholder="Enter or search your favorite foods..."
                 className="h-full px-4 py-3 text-sm text-text1 placeholder-gray-400 outline-none border-none"
-                style={{ border: "none", boxShadow: "none" }} // Override Antd Input styles
+                style={{ border: "none", boxShadow: "none" }}
               />
             </AutoComplete>
             <button
@@ -289,15 +317,22 @@ export default function FoodPreferencesPage() {
                   type="number"
                   min={1}
                   value={familySize}
+                  onChange={(e) => setFamilySize(Number(e.target.value))}
                   className="w-full h-10 rounded-md border-gray-200"
                 />
               </div>
 
               {/* Budget */}
               <div>
-                <label className="block text-xs font-semibold text-text2 mb-2">
-                  Budget
-                </label>
+                <div className="flex justify-between items-center mb-2">
+                  <label className="text-xs font-semibold text-text2">
+                    Budget
+                  </label>
+                  <span className={`text-xs font-bold ${currentPriceTag.color}`}>
+                    {currentPriceTag.label}: {currentPriceTag.range}
+                  </span>
+                </div>
+
                 <div className="px-1">
                   <Slider
                     min={0}

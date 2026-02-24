@@ -11,20 +11,23 @@ import {
   ShoppingCartOutlined,
   FormOutlined,
   EditOutlined,
+  SaveOutlined,
 } from "@ant-design/icons";
 import { FaExclamation, FaCheck } from "react-icons/fa6";
 import Sidebar from "../_components/Sidebar";
 import conts from "@/lib/conts";
 import { useQuery, useMutation } from "@apollo/client/react";
 import { GET_MEAL_SUGGESTIONS, GET_MEAL_BY_NAME, GET_MY_MEAL_PREFERENCES } from "@/graphql/queries";
-import { GENERATE_MEAL_PLAN } from "@/graphql/mutations";
+import { GENERATE_RAG_MEAL_PLAN, SAVE_WEEKLY_MEAL_PLAN } from "@/graphql/mutations";
 import {
   GetMealSuggestionsResult,
   GetMealByNameResult,
-  GenerateMealPlanResult,
-  GenerateMealPlanVariables,
-  MealPlan,
-  GetMyMealPreferencesResult
+  GenerateRAGMealPlanResult,
+  GenerateRAGMealPlanVariables,
+  WeeklyMealPlan,
+  GetMyMealPreferencesResult,
+  SaveWeeklyMealPlanResult,
+  SaveWeeklyMealPlanVariables,
 } from "@/lib/types/graphql";
 
 const DAYS = [
@@ -39,13 +42,11 @@ const DAYS = [
 
 const MEAL_TYPES = ["Breakfast", "Lunch", "Dinner"];
 
-
-
 export default function TimetablePage() {
   // --- Dynamic State ---
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedBudget, setSelectedBudget] = useState<string>("HEALTHY");
-  const [weeklyPlan, setWeeklyPlan] = useState<MealPlan | null>(null);
+  const [weeklyPlan, setWeeklyPlan] = useState<WeeklyMealPlan | null>(null);
   const router = useRouter();
   const [isGenerating, setIsGenerating] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
@@ -56,8 +57,11 @@ export default function TimetablePage() {
   });
 
   // --- Backend Mutation ---
-  const [generateMutation] = useMutation<GenerateMealPlanResult, GenerateMealPlanVariables>(
-    GENERATE_MEAL_PLAN
+  const [generateMutation] = useMutation<GenerateRAGMealPlanResult, GenerateRAGMealPlanVariables>(
+    GENERATE_RAG_MEAL_PLAN
+  );
+  const [saveMutation, { loading: isSaving }] = useMutation<SaveWeeklyMealPlanResult, SaveWeeklyMealPlanVariables>(
+    SAVE_WEEKLY_MEAL_PLAN
   );
 
   // --- Generator Logic ---
@@ -68,53 +72,47 @@ export default function TimetablePage() {
       const storedPrefs = sessionStorage.getItem("foodPreferences");
       let favoriteFoods: string[] = [];
       let dietaryRestrictions: string[] = [];
-      let budget = "HEALTHY";
+      let budgetTier = "STANDARD";
+      let weeklyBudget = 100000;
 
       if (storedPrefs) {
         const p = JSON.parse(storedPrefs);
         favoriteFoods = p.favoriteFoods || [];
         dietaryRestrictions = p.dietaryRestrictions || [];
-        // Use stored budget if available, ensure it's a string
-        if (p.budget) {
-          budget = String(p.budget).toUpperCase();
-        }
+        if (p.budgetType) budgetTier = p.budgetType.toUpperCase();
+        if (p.weeklyBudget) weeklyBudget = p.weeklyBudget;
       } else if (prefsData?.myMealPreferences) {
-        // Fallback to backend data
         const p = prefsData.myMealPreferences;
         favoriteFoods = p.favoriteMeals.map((m: any) => m.name);
         dietaryRestrictions = p.dietaryRestrictions;
-        if (p.budget) {
-          budget = String(p.budget).toUpperCase();
-        }
+        // Simple mapping if backend still uses numeric budget
+        if (p.budget > 150000) budgetTier = "LUXURY";
+        else if (p.budget < 50000) budgetTier = "LOW";
+        else budgetTier = "STANDARD";
+        weeklyBudget = p.budget || 100000;
       }
 
       // If no stored budget, map selected tab to backend enum
-      if (!storedPrefs && !prefsData?.myMealPreferences) {
-        if (selectedBudget === "Low Budget") budget = "LOW";
-        else if (selectedBudget === "Luxury") budget = "LUXURY";
-        else budget = "HEALTHY";
-      }
-
-      // Simulate delay for effect
-      if (isInitialLoad) {
-        await new Promise(resolve => setTimeout(resolve, 1500));
-      }
+      if (selectedBudget === "Low Budget") budgetTier = "LOW";
+      else if (selectedBudget === "Luxury") budgetTier = "LUXURY";
+      else budgetTier = "STANDARD";
 
       // 2. Call Backend
       const res = await generateMutation({
         variables: {
           input: {
-            selectedFoods: favoriteFoods,
-            dietaryConstraints: dietaryRestrictions.map(d => d.toUpperCase().replace("-", "_")), // e.g. "Gluten-free" -> "GLUTEN_FREE"
-            budgetPreference: budget
+            selectedFoods: favoriteFoods.slice(0, 6), // RAG expects exactly 6
+            dietaryRestrictions: dietaryRestrictions.map(d => d.toUpperCase().replace("-", "_")),
+            budgetType: budgetTier,
+            weeklyBudget: weeklyBudget
           }
         }
       });
 
-      if (res.data?.generateMealPlan) {
-        setWeeklyPlan(res.data.generateMealPlan);
-        sessionStorage.setItem("currentTimetable", JSON.stringify(res.data.generateMealPlan));
-        localStorage.setItem("currentTimetable", JSON.stringify(res.data.generateMealPlan));
+      if (res.data?.generateRAGMealPlan) {
+        setWeeklyPlan(res.data.generateRAGMealPlan);
+        sessionStorage.setItem("currentTimetable", JSON.stringify(res.data.generateRAGMealPlan));
+        localStorage.setItem("currentTimetable", JSON.stringify(res.data.generateRAGMealPlan));
         localStorage.setItem("onboarding_complete", "true");
       }
 
@@ -123,6 +121,60 @@ export default function TimetablePage() {
     } finally {
       setIsGenerating(false);
       setIsInitialLoad(false);
+    }
+  };
+
+  const handleSavePlan = async () => {
+    if (!weeklyPlan) return;
+
+    try {
+      // Convert current plan to input format
+      const input: any = {};
+      DAYS.forEach(day => {
+        const d = day.toLowerCase();
+        const daily = (weeklyPlan as any)[d];
+        input[d] = {
+          breakfast: {
+            base: daily.breakfast.base ? { id: daily.breakfast.base.id || daily.breakfast.base.name, quantity: 1 } : null,
+            protein: daily.breakfast.protein ? { id: daily.breakfast.protein.id || daily.breakfast.protein.name, quantity: 1 } : null,
+            soup: daily.breakfast.soup ? { id: daily.breakfast.soup.id || daily.breakfast.soup.name, quantity: 1 } : null,
+            sides: daily.breakfast.sides?.map((s: any) => ({ id: s.id || s.name, quantity: 1 })) || []
+          },
+          lunch: {
+            base: daily.lunch.base ? { id: daily.lunch.base.id || daily.lunch.base.name, quantity: 1 } : null,
+            protein: daily.lunch.protein ? { id: daily.lunch.protein.id || daily.lunch.protein.name, quantity: 1 } : null,
+            soup: daily.lunch.soup ? { id: daily.lunch.soup.id || daily.lunch.soup.name, quantity: 1 } : null,
+            sides: daily.lunch.sides?.map((s: any) => ({ id: s.id || s.name, quantity: 1 })) || []
+          },
+          dinner: {
+            base: daily.dinner.base ? { id: daily.dinner.base.id || daily.dinner.base.name, quantity: 1 } : null,
+            protein: daily.dinner.protein ? { id: daily.dinner.protein.id || daily.dinner.protein.name, quantity: 1 } : null,
+            soup: daily.dinner.soup ? { id: daily.dinner.soup.id || daily.dinner.soup.name, quantity: 1 } : null,
+            sides: daily.dinner.sides?.map((s: any) => ({ id: s.id || s.name, quantity: 1 })) || []
+          }
+        };
+      });
+
+      input.weeklyCost = weeklyPlan.weeklyCost;
+      input.budgetTier = weeklyPlan.budgetTier;
+      input.name = "Weekly Meal Plan " + new Date().toLocaleDateString();
+
+      const res = await saveMutation({
+        variables: { input }
+      });
+
+      if (res.data?.saveWeeklyMealPlan) {
+        Modal.success({
+          title: 'Plan Saved!',
+          content: 'Your meal plan has been permanently saved to your account.',
+        });
+      }
+    } catch (e) {
+      console.error("Save failed", e);
+      Modal.error({
+        title: 'Save Failed',
+        content: 'There was an error saving your meal plan. Please try again.',
+      });
     }
   };
 
@@ -192,7 +244,7 @@ export default function TimetablePage() {
                   Weekly Budget
                 </h2>
                 <p className="text-3xl font-bold text-text1">
-                  {weeklyPlan ? `₦${weeklyPlan.weeklyTotals.totalPrice.toLocaleString()}` : "..."}
+                  {weeklyPlan ? `₦${weeklyPlan.weeklyCost.toLocaleString()}` : "..."}
                 </p>
               </div>
               <div className="flex items-center gap-3">
@@ -203,6 +255,14 @@ export default function TimetablePage() {
                   <ReloadOutlined className="text-base" />
                   Regenerate
                 </Link>
+                <button
+                  onClick={handleSavePlan}
+                  disabled={isSaving || !weeklyPlan}
+                  className="px-4 py-3 rounded-lg font-semibold text-white bg-app_primary hover:bg-[#2E7D32] transition-colors flex items-center gap-2 disabled:opacity-50"
+                >
+                  <SaveOutlined className="text-base" />
+                  {isSaving ? "Saving..." : "Save Plan"}
+                </button>
                 <Link
                   href={conts.paths.timetable + "/edit"}
                   className="px-4 py-3 rounded-lg font-semibold text-app_secondary text-sm border border-app_secondary hover:bg-orange-50 transition-colors flex items-center gap-2"
@@ -265,22 +325,32 @@ export default function TimetablePage() {
                         <td className="p-4 align-top text-xs font-bold text-text2 uppercase tracking-wide bg-gray-100">
                           {mealType}
                         </td>
-                        {DAYS.map((day) => (
-                          <td
-                            key={`${day}-${mealType}`}
-                            className="p-4 align-top"
-                          >
-                            <p className="text-xs text-text2 leading-relaxed">
-                              {isGenerating ? (
-                                <Spin size="small" />
-                              ) : (
-                                weeklyPlan
-                                  ? (weeklyPlan as any)[day.toLowerCase()]?.[mealType.toLowerCase()]?.join(", ") || "-"
-                                  : "-"
-                              )}
-                            </p>
-                          </td>
-                        ))}
+                        {DAYS.map((day) => {
+                          const dailyPlan = (weeklyPlan as any)?.[day.toLowerCase()];
+                          const meal = (dailyPlan as any)?.[mealType.toLowerCase()];
+
+                          const items = [];
+                          if (meal?.base) items.push(meal.base.name);
+                          if (meal?.protein) items.push(meal.protein.name);
+                          if (meal?.soup) items.push(meal.soup.name);
+                          if (meal?.sides?.length) items.push(...meal.sides.map((s: any) => s.name));
+                          const displayText = items.filter(Boolean).join(", ");
+
+                          return (
+                            <td
+                              key={`${day}-${mealType}`}
+                              className="p-4 align-top"
+                            >
+                              <p className="text-xs text-text2 leading-relaxed">
+                                {isGenerating ? (
+                                  <Spin size="small" />
+                                ) : (
+                                  displayText || "-"
+                                )}
+                              </p>
+                            </td>
+                          );
+                        })}
                       </tr>
                     ))}
                   </tbody>
@@ -288,41 +358,23 @@ export default function TimetablePage() {
               </div>
             </div>
 
-            {/* Nutrition Summary */}
+            {/* Nutrition Summary (Simplified for RAG) */}
             <div className="bg-white rounded-xl p-6 shadow-sm">
               <h3 className="text-base font-bold text-text1 mb-6">
                 Nutrition Summary
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
                 <div>
-                  <p className="text-xs text-text2 mb-1">Daily Average</p>
+                  <p className="text-xs text-text2 mb-1">Daily Average Cost</p>
                   <p className="text-xl font-bold text-text1">
-                    {weeklyPlan ? Math.round(weeklyPlan.weeklyTotals.totalCals / 7) : 0} kcal
+                    {weeklyPlan ? `₦${Math.round(weeklyPlan.weeklyCost / 7).toLocaleString()}` : "₦0"}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs text-text2 mb-1">Protein</p>
+                  <p className="text-xs text-text2 mb-1">Budget Status</p>
                   <div className="flex items-center gap-2">
                     <p className="text-xl font-bold text-text1">
-                      {weeklyPlan ? Math.round(weeklyPlan.weeklyTotals.proteinCals) : 0}g
-                    </p>
-                    <FaCheck className="text-app_secondary text-sm" />
-                  </div>
-                </div>
-                <div>
-                  <p className="text-xs text-text2 mb-1">Carbs</p>
-                  <div className="flex items-center gap-2">
-                    <p className="text-xl font-bold text-text1">
-                      {weeklyPlan ? Math.round(weeklyPlan.weeklyTotals.carbCals) : 0}g
-                    </p>
-                    <FaExclamation className="text-app_secondary text-sm" />
-                  </div>
-                </div>
-                <div>
-                  <p className="text-xs text-text2 mb-1">Fat</p>
-                  <div className="flex items-center gap-2">
-                    <p className="text-xl font-bold text-text1">
-                      {weeklyPlan ? Math.round(weeklyPlan.weeklyTotals.fatCals) : 0}g
+                      {weeklyPlan?.budgetTier || "Standard"}
                     </p>
                     <FaCheck className="text-app_secondary text-sm" />
                   </div>
@@ -408,7 +460,7 @@ function MealDetailsModal({
     }
   );
 
-  const meal = data?.getMealByName;
+  const meal = data?.getFoodByName;
 
   return (
     <Modal open={true} onCancel={onClose} footer={null} title={name}>
@@ -420,17 +472,18 @@ function MealDetailsModal({
         <p className="text-red-500">Error loading meal details</p>
       ) : meal ? (
         <div className="space-y-4">
-          <p className="text-gray-600">{meal.description}</p>
-
+          {meal.description && <p className="text-gray-600">{meal.description}</p>}
           <div className="flex gap-4 text-sm">
-            <div className="bg-orange-50 text-app_secondary px-3 py-1 rounded-full font-medium">
-              {meal.calories} kcal
-            </div>
+            {meal.calories && (
+              <div className="bg-orange-50 text-app_secondary px-3 py-1 rounded-full font-medium">
+                {meal.calories} kcal
+              </div>
+            )}
             <div className="bg-green-50 text-green-700 px-3 py-1 rounded-full font-medium">
               {meal.protein}g Protein
             </div>
             <div className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full font-medium">
-              {meal.carbs}g Carbs
+              {(meal as any).carbohydrate || (meal as any).carbs}g Carbs
             </div>
             <div className="bg-yellow-50 text-yellow-700 px-3 py-1 rounded-full font-medium">
               {meal.fat}g Fat
