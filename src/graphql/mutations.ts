@@ -108,45 +108,45 @@ export const GENERATE_RAG_MEAL_PLAN = gql`
   mutation GenerateRAGMealPlan($input: RAGMealPlanInput!) {
     generateRAGMealPlan(input: $input) {
       monday {
-        breakfast { base { name price } protein { name price } soup { name price } sides { name price } totalCost }
-        lunch { base { name price } protein { name price } soup { name price } sides { name price } totalCost }
-        dinner { base { name price } protein { name price } soup { name price } sides { name price } totalCost }
+        breakfast { base { id name price category quantity } protein { id name price category quantity } soup { id name price category quantity } sides { id name price category quantity } totalCost }
+        lunch { base { id name price category quantity } protein { id name price category quantity } soup { id name price category quantity } sides { id name price category quantity } totalCost }
+        dinner { base { id name price category quantity } protein { id name price category quantity } soup { id name price category quantity } sides { id name price category quantity } totalCost }
         dailyCost
       }
       tuesday {
-        breakfast { base { name price } protein { name price } soup { name price } sides { name price } totalCost }
-        lunch { base { name price } protein { name price } soup { name price } sides { name price } totalCost }
-        dinner { base { name price } protein { name price } soup { name price } sides { name price } totalCost }
+        breakfast { base { id name price category quantity } protein { id name price category quantity } soup { id name price category quantity } sides { id name price category quantity } totalCost }
+        lunch { base { id name price category quantity } protein { id name price category quantity } soup { id name price category quantity } sides { id name price category quantity } totalCost }
+        dinner { base { id name price category quantity } protein { id name price category quantity } soup { id name price category quantity } sides { id name price category quantity } totalCost }
         dailyCost
       }
       wednesday {
-        breakfast { base { name price } protein { name price } soup { name price } sides { name price } totalCost }
-        lunch { base { name price } protein { name price } soup { name price } sides { name price } totalCost }
-        dinner { base { name price } protein { name price } soup { name price } sides { name price } totalCost }
+        breakfast { base { id name price category quantity } protein { id name price category quantity } soup { id name price category quantity } sides { id name price category quantity } totalCost }
+        lunch { base { id name price category quantity } protein { id name price category quantity } soup { id name price category quantity } sides { id name price category quantity } totalCost }
+        dinner { base { id name price category quantity } protein { id name price category quantity } soup { id name price category quantity } sides { id name price category quantity } totalCost }
         dailyCost
       }
       thursday {
-        breakfast { base { name price } protein { name price } soup { name price } sides { name price } totalCost }
-        lunch { base { name price } protein { name price } soup { name price } sides { name price } totalCost }
-        dinner { base { name price } protein { name price } soup { name price } sides { name price } totalCost }
+        breakfast { base { id name price category quantity } protein { id name price category quantity } soup { id name price category quantity } sides { id name price category quantity } totalCost }
+        lunch { base { id name price category quantity } protein { id name price category quantity } soup { id name price category quantity } sides { id name price category quantity } totalCost }
+        dinner { base { id name price category quantity } protein { id name price category quantity } soup { id name price category quantity } sides { id name price category quantity } totalCost }
         dailyCost
       }
       friday {
-        breakfast { base { name price } protein { name price } soup { name price } sides { name price } totalCost }
-        lunch { base { name price } protein { name price } soup { name price } sides { name price } totalCost }
-        dinner { base { name price } protein { name price } soup { name price } sides { name price } totalCost }
+        breakfast { base { id name price category quantity } protein { id name price category quantity } soup { id name price category quantity } sides { id name price category quantity } totalCost }
+        lunch { base { id name price category quantity } protein { id name price category quantity } soup { id name price category quantity } sides { id name price category quantity } totalCost }
+        dinner { base { id name price category quantity } protein { id name price category quantity } soup { id name price category quantity } sides { id name price category quantity } totalCost }
         dailyCost
       }
       saturday {
-        breakfast { base { name price } protein { name price } soup { name price } sides { name price } totalCost }
-        lunch { base { name price } protein { name price } soup { name price } sides { name price } totalCost }
-        dinner { base { name price } protein { name price } soup { name price } sides { name price } totalCost }
+        breakfast { base { id name price category quantity } protein { id name price category quantity } soup { id name price category quantity } sides { id name price category quantity } totalCost }
+        lunch { base { id name price category quantity } protein { id name price category quantity } soup { id name price category quantity } sides { id name price category quantity } totalCost }
+        dinner { base { id name price category quantity } protein { id name price category quantity } soup { id name price category quantity } sides { id name price category quantity } totalCost }
         dailyCost
       }
       sunday {
-        breakfast { base { name price } protein { name price } soup { name price } sides { name price } totalCost }
-        lunch { base { name price } protein { name price } soup { name price } sides { name price } totalCost }
-        dinner { base { name price } protein { name price } soup { name price } sides { name price } totalCost }
+        breakfast { base { id name price category quantity } protein { id name price category quantity } soup { id name price category quantity } sides { id name price category quantity } totalCost }
+        lunch { base { id name price category quantity } protein { id name price category quantity } soup { id name price category quantity } sides { id name price category quantity } totalCost }
+        dinner { base { id name price category quantity } protein { id name price category quantity } soup { id name price category quantity } sides { id name price category quantity } totalCost }
         dailyCost
       }
       weeklyCost
@@ -219,49 +219,79 @@ export const RECALCULATE_MEAL_PLAN = gql`
   mutation RecalculateMealPlan($plan: WeeklyMealPlanInput!) {
     recalculateMealPlan(plan: $plan) {
       monday {
-        breakfast { base { name price id } protein { name price id } soup { name price id } sides { name price id } totalCost }
-        lunch { base { name price id } protein { name price id } soup { name price id } sides { name price id } totalCost }
-        dinner { base { name price id } protein { name price id } soup { name price id } sides { name price id } totalCost }
+        breakfast { base { name price id category quantity } protein { name price id category quantity } soup { name price id category quantity } sides { name price id category quantity } totalCost }
+        lunch { base { name price id category quantity } protein { name price id category quantity } soup { name price id category quantity } sides { name price id category quantity } totalCost }
+        dinner { base { name price id category quantity } protein { name price id category quantity } soup { name price id category quantity } sides { name price id category quantity } totalCost }
         dailyCost
       }
       tuesday {
-        breakfast { base { name price id } protein { name price id } soup { name price id } sides { name price id } totalCost }
-        lunch { base { name price id } protein { name price id } soup { name price id } sides { name price id } totalCost }
-        dinner { base { name price id } protein { name price id } soup { name price id } sides { name price id } totalCost }
+        breakfast { base { name price id category quantity } protein { name price id category quantity } soup { name price id category quantity } sides { name price id category quantity } totalCost }
+        lunch { base { name price id category quantity } protein { name price id category quantity } soup { name price id category quantity } sides { name price id category quantity } totalCost }
+        dinner { base { name price id category quantity } protein { name price id category quantity } soup { name price id category quantity } sides { name price id category quantity } totalCost }
         dailyCost
       }
       wednesday {
-        breakfast { base { name price id } protein { name price id } soup { name price id } sides { name price id } totalCost }
-        lunch { base { name price id } protein { name price id } soup { name price id } sides { name price id } totalCost }
-        dinner { base { name price id } protein { name price id } soup { name price id } sides { name price id } totalCost }
+        breakfast { base { name price id category quantity } protein { name price id category quantity } soup { name price id category quantity } sides { name price id category quantity } totalCost }
+        lunch { base { name price id category quantity } protein { name price id category quantity } soup { name price id category quantity } sides { name price id category quantity } totalCost }
+        dinner { base { name price id category quantity } protein { name price id category quantity } soup { name price id category quantity } sides { name price id category quantity } totalCost }
         dailyCost
       }
       thursday {
-        breakfast { base { name price id } protein { name price id } soup { name price id } sides { name price id } totalCost }
-        lunch { base { name price id } protein { name price id } soup { name price id } sides { name price id } totalCost }
-        dinner { base { name price id } protein { name price id } soup { name price id } sides { name price id } totalCost }
+        breakfast { base { name price id category quantity } protein { name price id category quantity } soup { name price id category quantity } sides { name price id category quantity } totalCost }
+        lunch { base { name price id category quantity } protein { name price id category quantity } soup { name price id category quantity } sides { name price id category quantity } totalCost }
+        dinner { base { name price id category quantity } protein { name price id category quantity } soup { name price id category quantity } sides { name price id category quantity } totalCost }
         dailyCost
       }
       friday {
-        breakfast { base { name price id } protein { name price id } soup { name price id } sides { name price id } totalCost }
-        lunch { base { name price id } protein { name price id } soup { name price id } sides { name price id } totalCost }
-        dinner { base { name price id } protein { name price id } soup { name price id } sides { name price id } totalCost }
+        breakfast { base { name price id category quantity } protein { name price id category quantity } soup { name price id category quantity } sides { name price id category quantity } totalCost }
+        lunch { base { name price id category quantity } protein { name price id category quantity } soup { name price id category quantity } sides { name price id category quantity } totalCost }
+        dinner { base { name price id category quantity } protein { name price id category quantity } soup { name price id category quantity } sides { name price id category quantity } totalCost }
         dailyCost
       }
       saturday {
-        breakfast { base { name price id } protein { name price id } soup { name price id } sides { name price id } totalCost }
-        lunch { base { name price id } protein { name price id } soup { name price id } sides { name price id } totalCost }
-        dinner { base { name price id } protein { name price id } soup { name price id } sides { name price id } totalCost }
+        breakfast { base { name price id category quantity } protein { name price id category quantity } soup { name price id category quantity } sides { name price id category quantity } totalCost }
+        lunch { base { name price id category quantity } protein { name price id category quantity } soup { name price id category quantity } sides { name price id category quantity } totalCost }
+        dinner { base { name price id category quantity } protein { name price id category quantity } soup { name price id category quantity } sides { name price id category quantity } totalCost }
         dailyCost
       }
       sunday {
-        breakfast { base { name price id } protein { name price id } soup { name price id } sides { name price id } totalCost }
-        lunch { base { name price id } protein { name price id } soup { name price id } sides { name price id } totalCost }
-        dinner { base { name price id } protein { name price id } soup { name price id } sides { name price id } totalCost }
+        breakfast { base { name price id category quantity } protein { name price id category quantity } soup { name price id category quantity } sides { name price id category quantity } totalCost }
+        lunch { base { name price id category quantity } protein { name price id category quantity } soup { name price id category quantity } sides { name price id category quantity } totalCost }
+        dinner { base { name price id category quantity } protein { name price id category quantity } soup { name price id category quantity } sides { name price id category quantity } totalCost }
         dailyCost
       }
       weeklyCost
       budgetTier
+    }
+  }
+`;
+
+export const TOP_UP_WALLET = gql`
+  mutation TopUpWallet($amount: Float!, $reference: String) {
+    topUpWallet(amount: $amount, reference: $reference) {
+      wallet {
+        id
+        balance
+        currency
+      }
+      transaction {
+        id
+        amount
+        reference
+        status
+      }
+    }
+  }
+`;
+
+export const PAY_WITH_WALLET = gql`
+  mutation PayWithWallet($amount: Float!, $orderId: Int!) {
+    payWithWallet(amount: $amount, orderId: $orderId) {
+      id
+      amount
+      type
+      status
+      reference
     }
   }
 `;

@@ -24,7 +24,7 @@ export type GetMealSuggestionsResult = { searchFoods: Meal[] };
 
 export type GetMealByNameResult = { getFoodByName: Meal | null };
 
-export type RAGMealSlot = { name: string; price: number } | null;
+export type RAGMealSlot = { id: string; name: string; price: number; category: string; quantity: number } | null;
 export type RAGMealComposition = {
   base: RAGMealSlot;
   protein: RAGMealSlot;
@@ -106,6 +106,10 @@ export type GenerateRAGMealPlanVariables = {
 };
 export type GenerateRAGMealPlanResult = {
   generateRAGMealPlan: WeeklyMealPlan;
+};
+
+export type GetLatestMealPlanResult = {
+  latestMealPlan: WeeklyMealPlan | null;
 };
 
 export type SaveWeeklyMealPlanVariables = {

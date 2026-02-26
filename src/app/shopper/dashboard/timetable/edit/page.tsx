@@ -12,9 +12,12 @@ import {
   DeleteOutlined,
   CheckCircleOutlined,
   ShoppingCartOutlined,
-  DashboardOutlined
+  DashboardOutlined,
+  DownloadOutlined
 } from "@ant-design/icons";
-import { Spin, Modal, AutoComplete, Input, Badge, Button, Empty } from "antd";
+import { Spin, Modal, AutoComplete, Input, Badge, Button, Empty, message } from "antd";
+import html2canvas from "html2canvas";
+import { jsPDF } from "jspdf";
 import { useMutation, useLazyQuery } from "@apollo/client/react";
 import { gql } from "@apollo/client";
 import conts from "@/lib/conts";
@@ -110,6 +113,11 @@ export default function EditTimetablePage() {
         variables: { input }
       });
       if (res.data?.saveWeeklyMealPlan) {
+        // Update local caches
+        const planStr = JSON.stringify(weeklyPlan);
+        localStorage.setItem("currentTimetable", planStr);
+        sessionStorage.setItem("currentTimetable", planStr);
+
         Modal.confirm({
           title: 'Changes Saved Successfully!',
           icon: <CheckCircleOutlined style={{ color: '#52c41a' }} />,
@@ -123,6 +131,55 @@ export default function EditTimetablePage() {
     } catch (e) {
       console.error("Save failed", e);
       Modal.error({ title: 'Save Failed', content: 'Could not save your changes. Please check your network and try again.' });
+    }
+  };
+
+  const handleDownload = async () => {
+    console.log("Download triggered (Edit)");
+    const timetableElement = document.getElementById("timetable-capture");
+    if (!timetableElement) {
+      console.error("Timetable element not found");
+      Modal.error({
+        title: "Download Failed",
+        content: "Could not find the timetable element. ID: timetable-capture"
+      });
+      return;
+    }
+
+    try {
+      message.loading({ content: "Generating Draft PDF...", key: "downloading" });
+
+      const canvas = await html2canvas(timetableElement, {
+        scale: 2,
+        useCORS: true,
+        logging: true,
+        backgroundColor: "#ffffff",
+        windowWidth: timetableElement.scrollWidth,
+        windowHeight: timetableElement.scrollHeight
+      });
+
+      console.log("Canvas generated successfully (Edit)");
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF({
+        orientation: "landscape",
+        unit: "mm",
+        format: "a4",
+      });
+
+      const imgWidth = 297;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+      pdf.save(`EaseMeals-Draft-Plan-${new Date().toISOString().split('T')[0]}.pdf`);
+
+      message.success({ content: "Draft timetable downloaded!", key: "downloading" });
+    } catch (error: any) {
+      console.error("PDF generation failed", error);
+      message.error({ content: "Download failed", key: "downloading" });
+      Modal.error({
+        title: "Download Failed",
+        content: `Error: ${error.message || "Unknown error during PDF generation"}`
+      });
     }
   };
 
@@ -178,18 +235,35 @@ export default function EditTimetablePage() {
               <p className="text-xs text-text2 font-medium uppercase tracking-widest opacity-70">Customize Your Delicacies</p>
             </div>
           </div>
-          <div className="hidden sm:flex items-center gap-6">
-            <div className="text-right">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={handleDownload}
+              className="text-text2 hover:text-text1 transition-colors p-2 rounded-full hover:bg-gray-100"
+              title="Download Draft"
+            >
+              <DownloadOutlined className="text-xl" />
+            </button>
+            <div className="hidden sm:flex flex-col items-end">
               <p className="text-[10px] text-text2 uppercase font-bold tracking-tighter">Current Total</p>
-              <p className="text-xl font-black text-app_primary leading-none">₦{weeklyPlan.weeklyCost.toLocaleString()}</p>
+              <p className="text-lg font-black text-app_primary leading-none">₦{weeklyPlan.weeklyCost.toLocaleString()}</p>
             </div>
-            <Badge status={weeklyPlan.budgetTier.toUpperCase() === 'LOW' ? 'warning' : 'success'} text={<span className="font-bold text-text2">{weeklyPlan.budgetTier}</span>} />
+            <Badge
+              status={weeklyPlan.budgetTier.toUpperCase() === 'LOW' ? 'warning' : 'success'}
+              text={<span className="font-bold text-text2 hidden md:inline">{weeklyPlan.budgetTier}</span>}
+            />
           </div>
         </div>
       </header>
 
       {/* Main Content Areas */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-12">
+      <main id="timetable-capture" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-12 bg-app_bg">
+        <div className="flex justify-between items-center mb-4">
+          <img src="/easemeals-logo.png" alt="EaseMeals" className="h-8 object-contain" />
+          <div className="text-right">
+            <h3 className="text-lg font-bold text-text1 uppercase tracking-widest">Plan Edit Summary</h3>
+            <p className="text-[10px] text-text2 italic font-bold">₦{weeklyPlan.weeklyCost.toLocaleString()} • {weeklyPlan.budgetTier}</p>
+          </div>
+        </div>
         {DAYS.map((day) => (
           <section key={day} className="space-y-6">
             <div className="flex items-center gap-4">

@@ -176,3 +176,34 @@ export const GET_MY_WALLET = gql`
     }
   }
 `;
+
+export const GET_LATEST_MEAL_PLAN = gql`
+  query GetLatestMealPlan {
+    latestMealPlan {
+      monday { ...DailyFields }
+      tuesday { ...DailyFields }
+      wednesday { ...DailyFields }
+      thursday { ...DailyFields }
+      friday { ...DailyFields }
+      saturday { ...DailyFields }
+      sunday { ...DailyFields }
+      weeklyCost
+      budgetTier
+    }
+  }
+
+  fragment DailyFields on DailyMealPlan {
+    breakfast { ...CompFields }
+    lunch { ...CompFields }
+    dinner { ...CompFields }
+    dailyCost
+  }
+
+  fragment CompFields on MealComposition {
+    base { id name price category quantity }
+    protein { id name price category quantity }
+    soup { id name price category quantity }
+    sides { id name price category quantity }
+    totalCost
+  }
+`;

@@ -2,7 +2,7 @@ import { features } from "process";
 
 export default {
   paths: {
-    server: process.env.NEXT_PUBLIC_APPSYNC_URL || "http://localhost:8080/query",
+    server: process.env.NEXT_PUBLIC_APPSYNC_URL || "",
     signup: "/auth/signup",
     signin: "/auth/signin",
     forgotPass: "/auth/forgot_pass",

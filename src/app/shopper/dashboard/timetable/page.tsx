@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Spin, Modal } from "antd";
+import { Spin, Modal, message } from "antd";
 import {
   MenuOutlined,
   DownloadOutlined,
@@ -14,10 +14,12 @@ import {
   SaveOutlined,
 } from "@ant-design/icons";
 import { FaExclamation, FaCheck } from "react-icons/fa6";
+import html2canvas from "html2canvas";
+import { jsPDF } from "jspdf";
 import Sidebar from "../_components/Sidebar";
 import conts from "@/lib/conts";
 import { useQuery, useMutation } from "@apollo/client/react";
-import { GET_MEAL_SUGGESTIONS, GET_MEAL_BY_NAME, GET_MY_MEAL_PREFERENCES } from "@/graphql/queries";
+import { GET_MEAL_SUGGESTIONS, GET_MEAL_BY_NAME, GET_MY_MEAL_PREFERENCES, GET_LATEST_MEAL_PLAN } from "@/graphql/queries";
 import { GENERATE_RAG_MEAL_PLAN, SAVE_WEEKLY_MEAL_PLAN } from "@/graphql/mutations";
 import {
   GetMealSuggestionsResult,
@@ -28,6 +30,7 @@ import {
   GetMyMealPreferencesResult,
   SaveWeeklyMealPlanResult,
   SaveWeeklyMealPlanVariables,
+  GetLatestMealPlanResult,
 } from "@/lib/types/graphql";
 
 const DAYS = [
@@ -55,6 +58,9 @@ export default function TimetablePage() {
   const { data: prefsData } = useQuery<GetMyMealPreferencesResult>(GET_MY_MEAL_PREFERENCES, {
     skip: typeof window !== 'undefined' && !!sessionStorage.getItem("foodPreferences")
   });
+
+  // Fetch latest saved plan
+  const { data: savedPlanData, loading: isLoadingSaved } = useQuery<GetLatestMealPlanResult>(GET_LATEST_MEAL_PLAN);
 
   // --- Backend Mutation ---
   const [generateMutation] = useMutation<GenerateRAGMealPlanResult, GenerateRAGMealPlanVariables>(
@@ -124,6 +130,57 @@ export default function TimetablePage() {
     }
   };
 
+
+  const handleDownload = async () => {
+    console.log("Download triggered");
+    const timetableElement = document.getElementById("timetable-capture");
+
+    if (!timetableElement) {
+      console.error("Timetable element not found");
+      Modal.error({
+        title: "Download Failed",
+        content: "Could not find the timetable element. ID: timetable-capture"
+      });
+      return;
+    }
+
+    try {
+      message.loading({ content: "Generating PDF...", key: "downloading" });
+
+      const canvas = await html2canvas(timetableElement, {
+        scale: 2, // Higher resolution
+        useCORS: true,
+        logging: true, // Enable logging to see what html2canvas is doing
+        backgroundColor: "#ffffff",
+        windowWidth: timetableElement.scrollWidth,
+        windowHeight: timetableElement.scrollHeight
+      });
+
+      console.log("Canvas generated successfully");
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF({
+        orientation: "landscape",
+        unit: "mm",
+        format: "a4",
+      });
+
+      const imgWidth = 297; // A4 landscape width
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+      pdf.save(`EaseMeals-Timetable-${new Date().toISOString().split('T')[0]}.pdf`);
+
+      message.success({ content: "Timetable downloaded successfully!", key: "downloading" });
+    } catch (error: any) {
+      console.error("PDF generation failed", error);
+      message.error({ content: "Download failed", key: "downloading" });
+      Modal.error({
+        title: "Download Failed",
+        content: `Error: ${error.message || "Unknown error during PDF generation"}`
+      });
+    }
+  };
+
   const handleSavePlan = async () => {
     if (!weeklyPlan) return;
 
@@ -180,7 +237,37 @@ export default function TimetablePage() {
 
   // Trigger on Mount or Tab Change
   useEffect(() => {
-    generateTimetable();
+    const init = async () => {
+      // 1. Check local cache (for continuity during same session)
+      const cached = localStorage.getItem("currentTimetable") || sessionStorage.getItem("currentTimetable");
+      if (cached) {
+        setWeeklyPlan(JSON.parse(cached));
+        setIsInitialLoad(false);
+        return;
+      }
+
+      // 2. Check backend if no cache
+      if (!isLoadingSaved && savedPlanData?.latestMealPlan) {
+        setWeeklyPlan(savedPlanData.latestMealPlan);
+        localStorage.setItem("currentTimetable", JSON.stringify(savedPlanData.latestMealPlan));
+        setIsInitialLoad(false);
+        return;
+      }
+
+      // 3. Fallback to generation if no saved plan and not loading
+      if (!isLoadingSaved && !savedPlanData?.latestMealPlan) {
+        generateTimetable();
+      }
+    };
+
+    init();
+  }, [savedPlanData, isLoadingSaved]);
+
+  // Handle explicit tab changes (Reset cache and regenerate)
+  useEffect(() => {
+    if (!isInitialLoad) {
+      generateTimetable();
+    }
   }, [selectedBudget]);
 
   // --- Loading Overlay Render ---
@@ -225,7 +312,11 @@ export default function TimetablePage() {
           </h1>
 
           <div className="flex items-center gap-4">
-            <button className="text-text2 hover:text-text1 transition-colors">
+            <button
+              onClick={handleDownload}
+              className="text-text2 hover:text-text1 transition-colors"
+              title="Download Timetable"
+            >
               <DownloadOutlined className="text-xl" />
             </button>
             <button className="text-text2 hover:text-text1 transition-colors">
@@ -300,7 +391,14 @@ export default function TimetablePage() {
             </div>
 
             {/* Meal Plan Table */}
-            <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
+            <div id="timetable-capture" className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100 p-4">
+              <div className="mb-4 flex justify-between items-center">
+                <img src="/easemeals-logo.png" alt="EaseMeals" className="h-8 object-contain" />
+                <div className="text-right">
+                  <h3 className="text-lg font-bold text-text1">Weekly Meal Plan</h3>
+                  <p className="text-xs text-text2 italic">{selectedBudget} Tier</p>
+                </div>
+              </div>
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[800px]">
                   <thead>
