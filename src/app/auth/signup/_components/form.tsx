@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useFormik } from "formik";
 import { EyeOutlined, EyeInvisibleOutlined } from "@ant-design/icons"; // Using antd icons as requested
 import { FcGoogle } from "react-icons/fc";
+import { FaFacebook, FaApple } from "react-icons/fa";
 import { SignUpSchema } from "@/lib/types/auth";
 import { InferType } from "yup";
 import { authService } from "@/core/services/auth";
@@ -27,15 +28,14 @@ export default function SignUpForm() {
     }
   }, []);
 
-  const handleSocials = async (providers: "Google" | "Facebook") => {
+  const handleSocials = async (provider: "Google" | "Facebook" | "Apple") => {
     setAuthError(null);
-    const error = await authService.socialSignIn(providers);
+    const error = await authService.socialSignIn(provider);
     // show background error
     if (error) {
       setAuthError(error);
       return;
     }
-    router.push(conts.paths.foodPreferences);
   };
 
   // 3. --- Formik Hook ---
@@ -70,8 +70,8 @@ export default function SignUpForm() {
     field: "email" | "password" | "fullName" | "confirmPassword"
   ) => {
     const baseClasses =
-      "block w-full border-2 bg-transparent px-3 py-2 outline-0 transition-colors rounded-md";
-    const defaultBorder = "border-gray-300";
+      "block w-full border-2 bg-transparent px-3 py-2 outline-0 transition-colors rounded-md text-text1 font-semibold";
+    const defaultBorder = "border-gray-400";
     const errorBorder = "border-red-500";
     const focusBorder = "focus:border-orange-500";
     const ring = "focus:ring-0"; // Remove the default blue ring
@@ -94,7 +94,7 @@ export default function SignUpForm() {
         <div className="relative">
           <label
             htmlFor="fullName"
-            className="block text-sm font-medium text-text2 mb-2"
+            className="block text-sm font-bold text-text1 mb-2"
           >
             Full Name
           </label>
@@ -119,7 +119,7 @@ export default function SignUpForm() {
         <div className="relative">
           <label
             htmlFor="email"
-            className="block text-sm font-medium text-text2 mb-2"
+            className="block text-sm font-bold text-text1 mb-2"
           >
             Email address
           </label>
@@ -144,7 +144,7 @@ export default function SignUpForm() {
           <div className="flex items-center justify-between mb-2">
             <label
               htmlFor="password"
-              className="block text-sm font-medium text-text2"
+              className="block text-sm font-bold text-text1"
             >
               Password
             </label>
@@ -185,7 +185,7 @@ export default function SignUpForm() {
           <div className="flex items-center justify-between mb-2">
             <label
               htmlFor="confirmPassword"
-              className="block text-sm font-medium text-text2"
+              className="block text-sm font-bold text-text1"
             >
               Confirm Password
             </label>
@@ -269,14 +269,33 @@ export default function SignUpForm() {
             </div>
 
             {/* Google Sign In Button */}
-            <div>
+            {/* Social Buttons Group */}
+            <div className="space-y-3">
               <button
                 type="button"
                 onClick={() => handleSocials("Google")}
-                className="w-full cursor-pointer flex justify-center items-center py-3 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                className="w-full cursor-pointer flex justify-center items-center py-3 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
               >
                 <FcGoogle className="mr-4 scale-150" />
                 Sign up with Google
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleSocials("Facebook")}
+                className="w-full cursor-pointer flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-[#1877F2] hover:bg-[#166fe5] transition-colors"
+              >
+                <FaFacebook className="mr-4 scale-150" />
+                Sign up with Facebook
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleSocials("Apple")}
+                className="w-full cursor-pointer flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-black hover:bg-gray-900 transition-colors"
+              >
+                <FaApple className="mr-4 scale-150 mb-1" />
+                Sign up with Apple
               </button>
             </div>
           </>

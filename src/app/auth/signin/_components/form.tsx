@@ -4,6 +4,7 @@ import { useFormik } from "formik";
 import Link from "next/link";
 import { EyeOutlined, EyeInvisibleOutlined } from "@ant-design/icons"; // Using antd icons as requested
 import { FcGoogle } from "react-icons/fc";
+import { FaFacebook, FaApple } from "react-icons/fa";
 import { SignInSchema } from "@/lib/types/auth";
 import conts from "@/lib/conts";
 import { authService } from "@/core/services/auth";
@@ -43,22 +44,13 @@ export default function SignInForm() {
     }
   }, []);
 
-  const handleSocials = async (providers: "Google" | "Facebook") => {
+  const handleSocials = async (provider: "Google" | "Facebook" | "Apple") => {
     setAuthError(null);
-    const error = await authService.socialSignIn(providers);
+    const error = await authService.socialSignIn(provider);
     // show background error
     if (error) {
       setAuthError(error);
       return;
-    }
-
-    // Check if user has meal plan
-    const hasMealPlan = localStorage.getItem("currentTimetable") !== null;
-    if (hasMealPlan) {
-      router.push(conts.paths.dashboard);
-    } else {
-      // New user - go to timetable to create first meal plan
-      router.push(conts.paths.timetable);
     }
   };
 
@@ -112,8 +104,8 @@ export default function SignInForm() {
   // This will make it easier to manage the underline style
   const getInputClasses = (field: "email" | "password") => {
     const baseClasses =
-      "block w-full border-2 bg-transparent px-3 py-2 outline-0 transition-colors rounded-md";
-    const defaultBorder = "border-gray-300";
+      "block w-full border-2 bg-transparent px-3 py-2 outline-0 transition-colors rounded-md text-text1 font-semibold";
+    const defaultBorder = "border-gray-400";
     const errorBorder = "border-red-500";
     const focusBorder = "focus:border-orange-500";
     const ring = "focus:ring-0"; // Remove the default blue ring
@@ -142,7 +134,7 @@ export default function SignInForm() {
         <div className="relative">
           <label
             htmlFor="email"
-            className="block text-sm font-medium text-text2 mb-2"
+            className="block text-sm font-bold text-text1 mb-2"
           >
             Email address
           </label>
@@ -167,7 +159,7 @@ export default function SignInForm() {
           <div className="flex items-center justify-between mb-2">
             <label
               htmlFor="password"
-              className="block text-sm font-medium text-text2"
+              className="block text-sm font-bold text-text1"
             >
               Password
             </label>
@@ -237,14 +229,33 @@ export default function SignInForm() {
             </div>
 
             {/* Google Sign In Button */}
-            <div>
+            {/* Social Buttons Group */}
+            <div className="space-y-3">
               <button
                 type="button"
-                onClick={() => handleSocials("Google")} // This would be the handler
-                className="w-full cursor-pointer flex justify-center items-center py-3 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                onClick={() => handleSocials("Google")}
+                className="w-full cursor-pointer flex justify-center items-center py-3 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
               >
                 <FcGoogle className="mr-4 scale-150" />
                 Sign in with Google
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleSocials("Facebook")}
+                className="w-full cursor-pointer flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-[#1877F2] hover:bg-[#166fe5] transition-colors"
+              >
+                <FaFacebook className="mr-4 scale-150" />
+                Sign in with Facebook
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleSocials("Apple")}
+                className="w-full cursor-pointer flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-black hover:bg-gray-900 transition-colors"
+              >
+                <FaApple className="mr-4 scale-150 mb-1" />
+                Sign in with Apple
               </button>
             </div>
           </>

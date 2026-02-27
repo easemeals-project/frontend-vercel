@@ -15,7 +15,7 @@ export const amplifyConfig = {
             process.env.NEXT_PUBLIC_REDIRECT_SIGN_OUT as string,
           ],
           responseType: "code",
-          providers: ["Google"],
+          providers: ["Google", "Facebook", "Apple"],
         },
       },
     },

@@ -311,15 +311,18 @@ export default function TimetablePage() {
             Weekly Meal Plan
           </h1>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <button
               onClick={handleDownload}
-              className="text-text2 hover:text-text1 transition-colors"
+              className="p-2.5 rounded-full bg-gray-50 text-text2 hover:text-app_primary hover:bg-green-50 transition-all active:scale-95 shadow-sm"
               title="Download Timetable"
             >
               <DownloadOutlined className="text-xl" />
             </button>
-            <button className="text-text2 hover:text-text1 transition-colors">
+            <button
+              className="p-2.5 rounded-full bg-gray-50 text-text2 hover:text-app_primary hover:bg-green-50 transition-all active:scale-95 shadow-sm"
+              title="Refresh Timetable"
+            >
               <ReloadOutlined className="text-xl" />
             </button>
           </div>
@@ -338,10 +341,10 @@ export default function TimetablePage() {
                   {weeklyPlan ? `₦${weeklyPlan.weeklyCost.toLocaleString()}` : "..."}
                 </p>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="grid grid-cols-2 md:flex md:flex-row items-center gap-3 w-full md:w-auto">
                 <Link
                   href={conts.paths.foodPreferences}
-                  className="px-4 py-3 rounded-lg font-semibold text-app_primary text-sm border border-app_primary hover:bg-green-50 transition-colors flex items-center gap-2"
+                  className="px-4 py-3 rounded-full font-bold text-app_primary text-sm border-2 border-app_primary hover:bg-green-50 transition-all active:scale-95 flex items-center justify-center gap-2 shadow-sm"
                 >
                   <ReloadOutlined className="text-base" />
                   Regenerate
@@ -349,21 +352,21 @@ export default function TimetablePage() {
                 <button
                   onClick={handleSavePlan}
                   disabled={isSaving || !weeklyPlan}
-                  className="px-4 py-3 rounded-lg font-semibold text-white bg-app_primary hover:bg-[#2E7D32] transition-colors flex items-center gap-2 disabled:opacity-50"
+                  className="px-4 py-3 rounded-full font-bold text-white bg-app_primary hover:bg-[#2E7D32] transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 shadow-md shadow-green-100"
                 >
                   <SaveOutlined className="text-base" />
                   {isSaving ? "Saving..." : "Save Plan"}
                 </button>
                 <Link
                   href={conts.paths.timetable + "/edit"}
-                  className="px-4 py-3 rounded-lg font-semibold text-app_secondary text-sm border border-app_secondary hover:bg-orange-50 transition-colors flex items-center gap-2"
+                  className="px-4 py-3 rounded-full font-bold text-app_secondary text-sm border-2 border-app_secondary hover:bg-orange-50 transition-all active:scale-95 flex items-center justify-center gap-2 shadow-sm"
                 >
                   <EditOutlined className="text-base" />
                   Edit
                 </Link>
                 <Link
                   href={conts.paths.checkout}
-                  className="bg-app_secondary hover:bg-[#F4511E] text-white text-sm px-6 py-3 rounded-lg font-semibold flex items-center gap-2 transition-colors shadow-sm"
+                  className="bg-app_secondary hover:bg-[#F4511E] text-white text-sm px-6 py-3 rounded-full font-bold flex items-center justify-center gap-2 transition-all active:scale-95 shadow-md shadow-orange-100"
                 >
                   <ShoppingCartOutlined className="text-base" />
                   Checkout
@@ -372,19 +375,19 @@ export default function TimetablePage() {
             </div>
 
             {/* Tabs */}
-            <div className="flex gap-8 border-b border-gray-200 px-2">
+            <div className="flex gap-8 border-b border-gray-200 px-2 overflow-x-auto custom-scrollbar whitespace-nowrap">
               {["Low Budget", "Healthy", "Luxury"].map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setSelectedBudget(tab)}
-                  className={`pb-3 text-sm font-medium transition-all relative ${selectedBudget === tab
+                  className={`pb-4 px-2 text-sm font-bold transition-all relative ${selectedBudget === tab
                     ? "text-app_primary"
                     : "text-text2 hover:text-text1"
                     }`}
                 >
                   {tab}
                   {selectedBudget === tab && (
-                    <span className="absolute bottom-0 left-0 w-full h-0.5 bg-app_primary rounded-t-full" />
+                    <span className="absolute bottom-0 left-0 w-full h-1 bg-app_primary rounded-t-full shadow-[0_-2px_4px_rgba(0,128,0,0.2)]" />
                   )}
                 </button>
               ))}
@@ -392,22 +395,27 @@ export default function TimetablePage() {
 
             {/* Meal Plan Table */}
             <div id="timetable-capture" className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100 p-4">
-              <div className="mb-4 flex justify-between items-center">
+              <div className="mb-4 flex flex-col sm:flex-row justify-between items-center gap-2">
                 <img src="/easemeals-logo.png" alt="EaseMeals" className="h-8 object-contain" />
-                <div className="text-right">
+                <div className="text-center sm:text-right">
                   <h3 className="text-lg font-bold text-text1">Weekly Meal Plan</h3>
-                  <p className="text-xs text-text2 italic">{selectedBudget} Tier</p>
+                  <div className="flex items-center justify-center sm:justify-end gap-2 text-xs text-text2 italic">
+                    <span>{selectedBudget} Tier</span>
+                    <span className="lg:hidden flex items-center gap-1 text-app_primary animate-pulse">
+                      <ShoppingCartOutlined className="rotate-90" /> Swipe to view
+                    </span>
+                  </div>
                 </div>
               </div>
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto custom-scrollbar">
                 <table className="w-full min-w-[800px]">
-                  <thead>
-                    <tr className="bg-gray-100 border-b border-gray-100">
-                      <th className="p-4 text-left text-xs font-bold text-text1 uppercase tracking-wider w-24" />
+                  <thead className="sticky top-0 z-10">
+                    <tr className="bg-gray-100 border-b border-gray-100 shadow-sm">
+                      <th className="p-4 text-left text-xs font-bold text-text1 uppercase tracking-wider w-24 bg-gray-100 sticky left-0 z-20" />
                       {DAYS.map((day) => (
                         <th
                           key={day}
-                          className="p-4 text-center text-sm font-semibold text-text1 min-w-[140px]"
+                          className="p-4 text-center text-sm font-bold text-text1 min-w-[140px] bg-gray-100"
                         >
                           {day}
                         </th>
@@ -420,7 +428,7 @@ export default function TimetablePage() {
                         key={mealType}
                         className="hover:bg-gray-50/50 transition-colors divide-x divide-gray-100"
                       >
-                        <td className="p-4 align-top text-xs font-bold text-text2 uppercase tracking-wide bg-gray-100">
+                        <td className="p-4 align-top text-xs font-black text-text1 uppercase tracking-wide bg-gray-100/90 backdrop-blur sticky left-0 z-10 border-r border-gray-200">
                           {mealType}
                         </td>
                         {DAYS.map((day) => {
@@ -456,25 +464,25 @@ export default function TimetablePage() {
               </div>
             </div>
 
-            {/* Nutrition Summary (Simplified for RAG) */}
+            {/* Nutrition Summary */}
             <div className="bg-white rounded-xl p-6 shadow-sm">
               <h3 className="text-base font-bold text-text1 mb-6">
                 Nutrition Summary
               </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-                <div>
-                  <p className="text-xs text-text2 mb-1">Daily Average Cost</p>
-                  <p className="text-xl font-bold text-text1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-orange-50 border border-orange-100 p-4 rounded-2xl flex flex-col justify-center">
+                  <p className="text-[10px] font-black uppercase tracking-wider text-orange-600 mb-1">Weekly Average Cost</p>
+                  <p className="text-2xl font-black text-text1">
                     {weeklyPlan ? `₦${Math.round(weeklyPlan.weeklyCost / 7).toLocaleString()}` : "₦0"}
                   </p>
                 </div>
-                <div>
-                  <p className="text-xs text-text2 mb-1">Budget Status</p>
+                <div className="bg-green-50 border border-green-100 p-4 rounded-2xl flex flex-col justify-center">
+                  <p className="text-[10px] font-black uppercase tracking-wider text-green-700 mb-1">Budget Status</p>
                   <div className="flex items-center gap-2">
-                    <p className="text-xl font-bold text-text1">
+                    <p className="text-2xl font-black text-text1 uppercase">
                       {weeklyPlan?.budgetTier || "Standard"}
                     </p>
-                    <FaCheck className="text-app_secondary text-sm" />
+                    <FaCheck className="text-app_primary text-lg" />
                   </div>
                 </div>
               </div>
@@ -507,25 +515,25 @@ function RecommendedMeals({ tab }: { tab: string }) {
   return (
     <>
       <div className="bg-white rounded-xl p-6 shadow-sm">
-        <h3 className="text-base font-bold text-text1 mb-4">
+        <h3 className="text-base font-bold text-text1 mb-4 px-1">
           Recommended {tab} Meals
         </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="flex sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-4 overflow-x-auto sm:overflow-x-visible pb-4 sm:pb-0 custom-scrollbar px-1 -mx-1">
           {meals.map((meal: any) => (
             <div
               key={meal.id}
-              className="border border-gray-100 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
+              className="flex-shrink-0 w-[240px] sm:w-auto border border-gray-100 rounded-2xl p-4 hover:shadow-md transition-shadow cursor-pointer bg-white"
               onClick={() => setSelectedMealName(meal.name)}
             >
-              <h4 className="font-semibold text-text1 mb-2">{meal.name}</h4>
-              <p className="text-xs text-text2 line-clamp-2 mb-3">
+              <h4 className="font-bold text-text1 text-sm mb-2 line-clamp-1">{meal.name}</h4>
+              <p className="text-xs text-text2 font-medium line-clamp-2 mb-3">
                 {meal.description}
               </p>
-              <div className="flex gap-2 text-xs text-text2">
-                <span className="bg-orange-50 text-app_secondary px-2 py-1 rounded">
+              <div className="flex gap-2 text-[10px] font-bold">
+                <span className="bg-orange-50 text-app_secondary px-2 py-1 rounded-full">
                   {meal.calories} kcal
                 </span>
-                <span className="bg-green-50 text-green-700 px-2 py-1 rounded">
+                <span className="bg-green-50 text-app_primary px-2 py-1 rounded-full">
                   {meal.protein}g protein
                 </span>
               </div>

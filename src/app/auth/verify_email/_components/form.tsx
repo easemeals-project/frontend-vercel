@@ -17,11 +17,22 @@ export default function VerifyEmailForm() {
   const [authError, setAuthError] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
 
-  // Get email from URL
+  // Get email and code from URL
   useEffect(() => {
     const emailFromUrl = searchParams.get("email");
+    const codeFromUrl = searchParams.get("code");
+
     if (emailFromUrl) {
       setEmail(emailFromUrl);
+
+      // If code is present, auto-populate and submit
+      if (codeFromUrl && codeFromUrl.length === 6) {
+        formik.setFieldValue("confirmationCode", codeFromUrl);
+        // We trigger submit in the next tick to ensure state is updated
+        setTimeout(() => {
+          formik.submitForm();
+        }, 500);
+      }
     } else {
       router.push(conts.paths.signup); // No email, send them back
     }

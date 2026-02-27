@@ -1,6 +1,11 @@
+"use client";
+
 import { Card } from "antd";
 import { Suspense } from "react";
-import { ResetPasswordForm } from "./_components/form";
+import dynamic from "next/dynamic";
+const ResetPasswordForm = dynamic(() => import("./_components/form").then(mod => mod.ResetPasswordForm), {
+  ssr: false,
+});
 
 export default function ResetPassword() {
   return (

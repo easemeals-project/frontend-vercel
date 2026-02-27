@@ -43,6 +43,6 @@ export default {
     reset: "Your password has been changed! Please Signin.",
   },
   features: {
-    socialsAuth: false,
+    socialsAuth: true,
   },
 };

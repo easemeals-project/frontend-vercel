@@ -57,7 +57,7 @@ export default function HeroSection() {
   }, []);
 
   return (
-    <section className="relative w-full overflow-hidden bg-white min-h-[90vh] flex items-center pt-16 pb-12 lg:pt-32 lg:pb-24">
+    <section className="relative w-full overflow-hidden bg-white min-h-[85vh] lg:min-h-[90vh] flex items-center pt-12 pb-10 lg:pt-32 lg:pb-24">
 
       {/* 1. Abstract Background Shapes - Optimized */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -91,7 +91,7 @@ export default function HeroSection() {
             </ScrollAnimation>
 
             <ScrollAnimation direction="up" delay={0.2}>
-              <h1 className="text-5xl sm:text-6xl lg:text-8xl font-black text-[#0a4031] tracking-tight leading-[1.1] lg:leading-[1] mb-6 font-sans">
+              <h1 className="text-4xl sm:text-6xl lg:text-8xl font-black text-[#0a4031] tracking-tight leading-[1.2] lg:leading-[1] mb-6 font-sans">
                 We <br />
                 <span className="relative inline-block">
                   <AnimatePresence mode="wait">
@@ -186,7 +186,7 @@ export default function HeroSection() {
                       initial={{ opacity: 0, x: 50, y: 50 }}
                       animate={{ opacity: 1, x: 0, y: 0 }}
                       transition={{ delay: 0.1 }}
-                      className="absolute top-[-5%] lg:top-[-10%] right-[0%] lg:right-[-5%] w-[110px] sm:w-[130px] lg:w-[160px] h-[110px] sm:h-[130px] lg:h-[160px] z-10"
+                      className="absolute top-[-8%] sm:top-[-5%] lg:top-[-10%] right-[-5%] sm:right-[0%] lg:right-[-5%] w-[100px] sm:w-[130px] lg:w-[160px] h-[100px] sm:h-[130px] lg:h-[160px] z-10"
                     >
                       <motion.div
                         animate={{ y: [-10, 10, -10] }}
@@ -202,7 +202,7 @@ export default function HeroSection() {
                       initial={{ opacity: 0, x: -50, y: -50 }}
                       animate={{ opacity: 1, x: 0, y: 0 }}
                       transition={{ delay: 0.2 }}
-                      className="absolute bottom-[-5%] lg:bottom-[-10%] left-[0%] lg:left-[-5%] w-[110px] sm:w-[130px] lg:w-[150px] h-[110px] sm:h-[130px] lg:h-[150px] z-30"
+                      className="absolute bottom-[-8%] sm:bottom-[-5%] lg:bottom-[-10%] left-[-5%] sm:left-[0%] lg:left-[-5%] w-[100px] sm:w-[130px] lg:w-[150px] h-[100px] sm:h-[130px] lg:h-[150px] z-30"
                     >
                       <motion.div
                         animate={{ y: [10, -10, 10] }}
@@ -340,7 +340,7 @@ export default function HeroSection() {
             </div>
           </div>
         </div>
-      </div>
-    </section>
+      </div >
+    </section >
   );
 }

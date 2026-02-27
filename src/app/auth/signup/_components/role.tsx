@@ -94,18 +94,21 @@ export default function RoleSelectionPage() {
               return (
                 <div
                   key={role.value}
-                  onClick={() => setSelectedRole(role.value)}
+                  onClick={() => {
+                    setSelectedRole(role.value);
+                    router.push(`${conts.paths.signup}?role=${role.value}`);
+                  }}
                   className={`relative p-6 border-2 rounded-2xl cursor-pointer transition-all ${isSelected
-                      ? "border-app_primary bg-green-50"
-                      : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-md"
+                    ? "border-app_primary bg-green-50 shadow-md scale-[1.02]"
+                    : "border-gray-200 bg-white hover:border-app_primary hover:shadow-md"
                     }`}
                 >
                   {/* Radio Button */}
                   <div className="flex items-start gap-3">
                     <div
                       className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 transition-colors ${isSelected
-                          ? "border-app_primary bg-app_primary"
-                          : "border-gray-300 bg-transparent"
+                        ? "border-app_primary bg-app_primary"
+                        : "border-gray-300 bg-transparent"
                         }`}
                     >
                       {isSelected && (
@@ -135,13 +138,6 @@ export default function RoleSelectionPage() {
             >
               <ArrowLeftOutlined />
               Back
-            </button>
-            <button
-              onClick={handleNext}
-              className="px-6 py-2.5 cursor-pointer rounded-lg text-white bg-app_primary hover:bg-green-700 transition-colors shadow-lg shadow-green-200 flex items-center gap-2"
-            >
-              Next
-              <ArrowRightOutlined />
             </button>
           </div>
         </div>

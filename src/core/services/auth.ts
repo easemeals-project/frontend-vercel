@@ -40,7 +40,7 @@ class AuthService {
       return getErrorMessage(error);
     }
   };
-  socialSignIn = async (provider: "Google" | "Facebook") => {
+  socialSignIn = async (provider: "Google" | "Facebook" | "Apple") => {
     try {
       // This redirects user to Google for authentication
       await signInWithRedirect({ provider });

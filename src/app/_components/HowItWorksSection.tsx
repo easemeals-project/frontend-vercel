@@ -48,7 +48,7 @@ export default function HowItWorksSection() {
 
           {/* Left Side: Dynamic Image Display - Plain & Clean */}
           <div className="order-2 lg:order-1 relative flex justify-center lg:justify-end">
-            <div className="relative w-full max-w-[500px] aspect-square bg-white rounded-[3rem] p-8 lg:p-12 shadow-2xl shadow-green-900/5 border border-gray-100">
+            <div className="relative w-full max-w-[500px] aspect-square bg-white rounded-3xl sm:rounded-[3rem] p-4 sm:p-8 lg:p-12 shadow-2xl shadow-green-900/5 border border-gray-100">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={activeStep}
