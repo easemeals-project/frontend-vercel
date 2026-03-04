@@ -22,7 +22,7 @@ import conts from "@/lib/conts";
 import { useQuery, useMutation } from "@apollo/client/react";
 import { GET_MEAL_SUGGESTIONS, GET_MEAL_BY_NAME, GET_MY_MEAL_PREFERENCES, GET_LATEST_MEAL_PLAN } from "@/graphql/queries";
 import { GENERATE_RAG_MEAL_PLAN, SAVE_WEEKLY_MEAL_PLAN } from "@/graphql/mutations";
-import { generateICal, downloadICal } from "@/lib/utils/calendar";
+import CalendarExportModal from "./_components/CalendarExportModal";
 import {
   GetMealSuggestionsResult,
   GetMealByNameResult,
@@ -55,6 +55,7 @@ export default function TimetablePage() {
   const router = useRouter();
   const [isGenerating, setIsGenerating] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [calendarModalOpen, setCalendarModalOpen] = useState(false);
 
   // Fetch prefs if needed
   const { data: prefsData } = useQuery<GetMyMealPreferencesResult>(GET_MY_MEAL_PREFERENCES, {
@@ -275,15 +276,11 @@ export default function TimetablePage() {
   };
 
   const handleExportToCalendar = () => {
-    if (!weeklyPlan) return;
-    try {
-      const ics = generateICal(weeklyPlan);
-      downloadICal(ics, `EaseMeals-Plan-${new Date().toISOString().split('T')[0]}.ics`);
-      message.success("Calendar export successful!");
-    } catch (e) {
-      console.error("Calendar export failed", e);
-      message.error("Failed to export calendar");
+    if (!weeklyPlan) {
+      message.error("Generate a meal plan first before exporting to calendar.");
+      return;
     }
+    setCalendarModalOpen(true);
   };
 
   const handleSavePlan = async () => {
@@ -622,6 +619,13 @@ export default function TimetablePage() {
           </div>
         </main>
       </div>
+
+      {/* Calendar Export Modal */}
+      <CalendarExportModal
+        open={calendarModalOpen}
+        onClose={() => setCalendarModalOpen(false)}
+        weeklyPlan={weeklyPlan}
+      />
     </div>
   );
 }
