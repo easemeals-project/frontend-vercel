@@ -50,7 +50,7 @@ const MEAL_TYPES = ["Breakfast", "Lunch", "Dinner"];
 export default function TimetablePage() {
   // --- Dynamic State ---
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [selectedBudget, setSelectedBudget] = useState<string>("HEALTHY");
+  const [selectedBudget, setSelectedBudget] = useState<string>("Healthy");
   const [weeklyPlan, setWeeklyPlan] = useState<WeeklyMealPlan | null>(null);
   const router = useRouter();
   const [isGenerating, setIsGenerating] = useState(false);
@@ -76,43 +76,40 @@ export default function TimetablePage() {
   );
 
   // --- Generator Logic ---
-  const generateTimetable = async () => {
+  const generateTimetable = async (budgetOverride?: string) => {
     setIsGenerating(true);
+    // use the override (from tier click) or fall back to current state
+    const activeBudget = budgetOverride ?? selectedBudget;
     try {
       // 1. Get Preferences
       const storedPrefs = sessionStorage.getItem("foodPreferences");
       let favoriteFoods: string[] = [];
       let dietaryRestrictions: string[] = [];
-      let budgetTier = "STANDARD";
       let weeklyBudget = 100000;
 
       if (storedPrefs) {
         const p = JSON.parse(storedPrefs);
         favoriteFoods = p.favoriteFoods || [];
         dietaryRestrictions = p.dietaryRestrictions || [];
-        if (p.budgetType) budgetTier = p.budgetType.toUpperCase();
         if (p.weeklyBudget) weeklyBudget = p.weeklyBudget;
       } else if (prefsData?.myMealPreferences) {
         const p = prefsData.myMealPreferences;
         favoriteFoods = p.favoriteMeals.map((m: any) => m.name);
         dietaryRestrictions = p.dietaryRestrictions;
-        // Simple mapping if backend still uses numeric budget
-        if (p.budget > 150000) budgetTier = "LUXURY";
-        else if (p.budget < 50000) budgetTier = "LOW";
-        else budgetTier = "STANDARD";
         weeklyBudget = p.budget || 100000;
       }
 
-      // If no stored budget, map selected tab to backend enum
-      if (selectedBudget === "Low Budget") budgetTier = "LOW";
-      else if (selectedBudget === "Luxury") budgetTier = "LUXURY";
+      // Map selected tab to backend enum
+      let budgetTier = "STANDARD";
+      if (activeBudget === "Low Budget") budgetTier = "LOW";
+      else if (activeBudget === "Luxury") budgetTier = "LUXURY";
       else budgetTier = "STANDARD";
 
       // 2. Call Backend
       const res = await generateMutation({
         variables: {
           input: {
-            selectedFoods: favoriteFoods.slice(0, 6), // RAG expects exactly 6
+            selectedFoods: favoriteFoods.slice(0, 6),
             dietaryRestrictions: dietaryRestrictions.map(d => d.toUpperCase().replace("-", "_")),
             budgetType: budgetTier,
             weeklyBudget: weeklyBudget
@@ -337,12 +334,8 @@ export default function TimetablePage() {
     }
   };
 
-  // --- Sync Tier selection with Backend enum ---
-  useEffect(() => {
-    if (!isInitialLoad) {
-      generateTimetable();
-    }
-  }, [selectedBudget]);
+  // NOTE: Tier regeneration is handled directly in the tab onClick below.
+  // We do NOT use a useEffect for this to avoid stale closure race conditions.
 
   // Trigger on Mount or Data Change
   useEffect(() => {
@@ -379,7 +372,7 @@ export default function TimetablePage() {
       // 3. Fallback to generation if no saved plan and not loading
       if (!isLoadingSaved && !savedPlanData?.latestMealPlan) {
         generateTimetable();
-        setIsInitialLoad(false);
+        // setIsInitialLoad is handled inside generateTimetable
       }
     };
 
@@ -505,7 +498,10 @@ export default function TimetablePage() {
               {["Low Budget", "Healthy", "Luxury"].map((tab) => (
                 <button
                   key={tab}
-                  onClick={() => setSelectedBudget(tab)}
+                  onClick={() => {
+                    setSelectedBudget(tab);
+                    generateTimetable(tab);
+                  }}
                   className={`pb-4 px-2 text-sm font-bold transition-all relative ${selectedBudget === tab
                     ? "text-app_secondary"
                     : "text-text2 hover:text-text1"
