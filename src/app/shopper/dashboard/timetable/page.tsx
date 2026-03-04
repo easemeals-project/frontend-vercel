@@ -62,7 +62,9 @@ export default function TimetablePage() {
   });
 
   // Fetch latest saved plan
-  const { data: savedPlanData, loading: isLoadingSaved } = useQuery<GetLatestMealPlanResult>(GET_LATEST_MEAL_PLAN);
+  const { data: savedPlanData, loading: isLoadingSaved, refetch: refetchLatest } = useQuery<GetLatestMealPlanResult>(GET_LATEST_MEAL_PLAN, {
+    fetchPolicy: 'network-only'
+  });
 
   // --- Backend Mutation ---
   const [generateMutation] = useMutation<GenerateRAGMealPlanResult, GenerateRAGMealPlanVariables>(
@@ -157,12 +159,16 @@ export default function TimetablePage() {
         windowWidth: timetableElement.scrollWidth,
         windowHeight: timetableElement.scrollHeight,
         onclone: (clonedDoc) => {
-          // Find all sticky headers and backdrop filters in the cloned document
-          const stickyElements = clonedDoc.querySelectorAll('.sticky, [class*="backdrop-blur"]');
-          stickyElements.forEach((el: any) => {
+          // Deep strip styles that cause PDF generation failures (oklch/oklab/shadows)
+          const problematicElements = clonedDoc.querySelectorAll(
+            '.sticky, [class*="backdrop-blur"], [class*="shadow"], .shadow-sm, .shadow-md, .shadow-lg, .shadow-xl'
+          );
+          problematicElements.forEach((el: any) => {
             el.style.position = 'static';
             el.style.backdropFilter = 'none';
             el.style.webkitBackdropFilter = 'none';
+            el.style.boxShadow = 'none';
+            el.style.textShadow = 'none';
           });
 
           // Ensure the capture area is fully visible in the clone
@@ -265,9 +271,25 @@ export default function TimetablePage() {
     }
   };
 
+  // --- Sync Tier selection with Backend enum ---
+  useEffect(() => {
+    if (!isInitialLoad) {
+      generateTimetable();
+    }
+  }, [selectedBudget]);
+
   // Trigger on Mount or Data Change
   useEffect(() => {
     const init = async () => {
+      // 0. Check for regeneration signal (from preferences)
+      const needsRegen = sessionStorage.getItem("needs_regeneration") === "true";
+      if (needsRegen) {
+        sessionStorage.removeItem("needs_regeneration");
+        generateTimetable();
+        setIsInitialLoad(false);
+        return;
+      }
+
       // 1. Prioritize Backend Data if available
       if (!isLoadingSaved && savedPlanData?.latestMealPlan) {
         setWeeklyPlan(savedPlanData.latestMealPlan);
@@ -289,7 +311,7 @@ export default function TimetablePage() {
       }
 
       // 3. Fallback to generation if no saved plan and not loading
-      if (!isLoadingSaved && !savedPlanData?.latestMealPlan && isInitialLoad) {
+      if (!isLoadingSaved && !savedPlanData?.latestMealPlan) {
         generateTimetable();
         setIsInitialLoad(false);
       }
@@ -356,10 +378,12 @@ export default function TimetablePage() {
               <DownloadOutlined className="text-xl" />
             </button>
             <button
-              className="p-2.5 rounded-full bg-gray-50 text-text2 hover:text-app_primary hover:bg-green-50 transition-all active:scale-95 shadow-sm"
-              title="Refresh Timetable"
+              onClick={() => generateTimetable()}
+              disabled={isGenerating}
+              className="p-2.5 rounded-full bg-gray-50 text-text2 hover:text-app_primary hover:bg-green-50 transition-all active:scale-95 shadow-sm disabled:opacity-50"
+              title="Refresh/Regenerate Timetable"
             >
-              <ReloadOutlined className="text-xl" />
+              <ReloadOutlined className={`text-xl ${isGenerating ? 'animate-spin' : ''}`} />
             </button>
           </div>
         </header>

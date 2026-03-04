@@ -120,15 +120,12 @@ export default function EditTimetablePage() {
         localStorage.setItem("currentTimetable", planStr);
         sessionStorage.setItem("currentTimetable", planStr);
 
-        Modal.confirm({
-          title: 'Changes Saved Successfully!',
-          icon: <CheckCircleOutlined style={{ color: '#52c41a' }} />,
-          content: 'Your meal plan has been updated. What would you like to do next?',
-          okText: 'Go to Checkout',
-          cancelText: 'Stay Here',
-          onOk: () => router.push(conts.paths.checkout),
-          onCancel: () => { }
-        });
+        message.success("Progress saved successfully!");
+
+        // Use a slight delay to allow the user to see the success message
+        setTimeout(() => {
+          router.push(conts.paths.timetable);
+        }, 800);
       }
     } catch (e) {
       console.error("Save failed", e);
@@ -171,12 +168,16 @@ export default function EditTimetablePage() {
         windowWidth: timetableElement.scrollWidth,
         windowHeight: timetableElement.scrollHeight,
         onclone: (clonedDoc) => {
-          // Find all sticky headers and backdrop filters in the cloned document
-          const stickyElements = clonedDoc.querySelectorAll('.sticky, [class*="backdrop-blur"]');
-          stickyElements.forEach((el: any) => {
+          // Deep strip styles that cause PDF generation failures (oklch/oklab/shadows)
+          const problematicElements = clonedDoc.querySelectorAll(
+            '.sticky, [class*="backdrop-blur"], [class*="shadow"], .shadow-sm, .shadow-md, .shadow-lg, .shadow-xl'
+          );
+          problematicElements.forEach((el: any) => {
             el.style.position = 'static';
             el.style.backdropFilter = 'none';
             el.style.webkitBackdropFilter = 'none';
+            el.style.boxShadow = 'none';
+            el.style.textShadow = 'none';
           });
 
           // Ensure the capture area is fully visible in the clone

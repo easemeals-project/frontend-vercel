@@ -164,6 +164,7 @@ export default function FoodPreferencesFull() {
         }));
 
         if (favoriteFoods.length >= MIN_FOODS) {
+            sessionStorage.setItem("needs_regeneration", "true");
             router.push(conts.paths.timetable);
         }
     };
