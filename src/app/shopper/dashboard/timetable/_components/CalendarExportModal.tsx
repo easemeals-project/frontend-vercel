@@ -45,10 +45,11 @@ const CALENDAR_OPTIONS: {
             subtitle: "Add to your workspace database",
             color: "border-gray-200 bg-white",
             Icon: () => (
-                <svg viewBox="0 0 24 24" className="w-7 h-7" fill="none">
-                    <rect width="24" height="24" rx="4" fill="#fff" stroke="#e5e7eb" />
-                    <path d="M6 6h7l5 5v7H6V6z" fill="#191919" opacity=".1" />
-                    <path d="M7 7h6l4 4v6H7V7zm1 1v8h8v-5l-3-3H8z" fill="#191919" />
+                // Official Notion logo mark
+                <svg viewBox="0 0 100 100" className="w-7 h-7" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="100" height="100" rx="18" fill="#fff" />
+                    <path d="M6.017 4.313l55.333-4.087c6.797-.583 8.543-.19 12.817 2.917l17.663 12.443c2.913 2.137 3.883 2.723 3.883 5.053v68.243c0 4.277-.973 6.827-6.8 7.22l-64.113 3.89c-4.47.3-6.617-.49-8.95-3.307L2.38 83.993c-2.53-3.107-3.55-5.44-3.55-8.153V10.7c0-3.497 1.363-6.413 7.187-6.387z" fill="#fff" />
+                    <path d="M61.35.227L6.017 4.313C.193 4.287-1.17 7.203-1.17 10.7v65.14c0 2.713 1.02 5.047 3.55 8.153l13.27 16.197c2.333 2.817 4.48 3.607 8.95 3.307l64.113-3.89c5.827-.393 6.8-2.943 6.8-7.22V23.64c0-2.17-.807-2.827-3.497-4.793L74.167 6.403C69.893 3.3 68.147 2.907 61.35.227zM25.92 19.523c-5.623.333-6.9.413-10.107-2.143L8.477 11.91c-.78-.78-.39-1.753 1.36-1.947l53.39-3.887c4.473-.39 6.803 1.167 8.557 2.53l9.123 6.61c.39.197 1.363 1.363.387 1.363l-55.333 3.304-.04-.36zM19.907 85.613V32.533c0-2.53.78-3.693 3.113-3.887l61.31-3.5c2.14-.193 3.113 1.167 3.113 3.69v52.69c0 2.53-.973 4.277-3.887 4.47l-59.83 3.5c-2.913.193-3.82-1.163-3.82-3.883zm58.467-53.473c.387 1.75 0 3.5-1.75 3.693l-2.917.583v42.773c-2.533 1.363-4.867 2.137-6.8 2.137-3.11 0-3.887-1.167-6.22-4.083l-19.03-29.94v28.967l6.03 1.363s0 3.5-4.867 3.5l-13.4.777c-.39-.78 0-2.723 1.363-3.11l3.5-1.167V40.667L29.48 40.28c-.39-1.75.58-4.277 3.307-4.473l14.367-.973 19.8 30.327V37.36l-5.047-.78c-.39-2.143.975-3.697 2.527-3.89l13.94-.55z" fill="#191919" />
                 </svg>
             ),
         },
@@ -58,13 +59,19 @@ const CALENDAR_OPTIONS: {
             subtitle: "Microsoft calendar integration",
             color: "border-blue-200 bg-blue-50",
             Icon: () => (
-                <svg viewBox="0 0 48 48" className="w-7 h-7">
-                    <rect x="2" y="6" width="44" height="36" rx="4" fill="#0078d4" />
-                    <rect x="8" y="14" width="18" height="2" rx="1" fill="#fff" opacity=".8" />
-                    <rect x="8" y="19" width="14" height="2" rx="1" fill="#fff" opacity=".6" />
-                    <rect x="8" y="24" width="18" height="2" rx="1" fill="#fff" opacity=".4" />
-                    <rect x="26" y="22" width="14" height="14" rx="2" fill="#50e6ff" opacity=".9" />
-                    <text x="33" y="33" textAnchor="middle" fontSize="8" fontWeight="bold" fill="#003087">C</text>
+                // Official Microsoft Outlook icon colours
+                <svg viewBox="0 0 100 100" className="w-7 h-7" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="100" height="100" rx="16" fill="#0078d4" />
+                    {/* envelope body */}
+                    <rect x="42" y="28" width="46" height="44" rx="4" fill="#fff" opacity="0.9" />
+                    {/* left panel (O) */}
+                    <rect x="10" y="20" width="36" height="60" rx="4" fill="#0078d4" />
+                    <ellipse cx="28" cy="50" rx="11" ry="13" fill="#fff" />
+                    <ellipse cx="28" cy="50" rx="6" ry="8" fill="#0078d4" />
+                    {/* email lines */}
+                    <line x1="50" y1="44" x2="80" y2="44" stroke="#0078d4" strokeWidth="3" strokeLinecap="round" opacity="0.4" />
+                    <line x1="50" y1="52" x2="80" y2="52" stroke="#0078d4" strokeWidth="3" strokeLinecap="round" opacity="0.4" />
+                    <line x1="50" y1="60" x2="68" y2="60" stroke="#0078d4" strokeWidth="3" strokeLinecap="round" opacity="0.4" />
                 </svg>
             ),
         },
@@ -73,18 +80,27 @@ const CALENDAR_OPTIONS: {
             name: "Apple Calendar",
             subtitle: "iCloud calendar integration",
             color: "border-gray-200 bg-white",
-            Icon: () => (
-                <svg viewBox="0 0 48 48" className="w-7 h-7">
-                    <rect x="2" y="8" width="44" height="38" rx="6" fill="#fff" stroke="#e5e7eb" strokeWidth="2" />
-                    <rect x="2" y="8" width="44" height="12" rx="5" fill="#ee4444" />
-                    <rect x="2" y="14" width="44" height="6" fill="#ee4444" />
-                    <circle cx="16" cy="8" r="3" fill="#c0392b" />
-                    <circle cx="32" cy="8" r="3" fill="#c0392b" />
-                    <text x="24" y="36" textAnchor="middle" fontSize="14" fontWeight="900" fill="#191919">
-                        {new Date().getDate()}
-                    </text>
-                </svg>
-            ),
+            Icon: () => {
+                const today = new Date().getDate();
+                return (
+                    // Accurate Apple Calendar icon: white body, red header, date number
+                    <svg viewBox="0 0 100 100" className="w-7 h-7" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="100" height="100" rx="22" fill="#fff" stroke="#e5e7eb" strokeWidth="3" />
+                        {/* Red header band */}
+                        <rect x="0" y="0" width="100" height="30" rx="22" fill="#f04a4a" />
+                        <rect x="0" y="10" width="100" height="20" fill="#f04a4a" />
+                        {/* Ring pegs */}
+                        <rect x="30" y="0" width="8" height="14" rx="4" fill="#c0392b" />
+                        <rect x="62" y="0" width="8" height="14" rx="4" fill="#c0392b" />
+                        {/* Date number */}
+                        <text x="50" y="80" textAnchor="middle" fontSize="46" fontWeight="900" fontFamily="-apple-system,Helvetica,Arial" fill="#1d1d1f">{today}</text>
+                        {/* Day label */}
+                        <text x="50" y="46" textAnchor="middle" fontSize="16" fontWeight="600" fontFamily="-apple-system,Helvetica,Arial" fill="#fff">
+                            {['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'][new Date().getDay()]}
+                        </text>
+                    </svg>
+                );
+            },
         },
     ];
 
