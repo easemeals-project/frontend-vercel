@@ -15,8 +15,8 @@ import {
   CalendarOutlined,
 } from "@ant-design/icons";
 import { FaExclamation, FaCheck } from "react-icons/fa6";
-import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable";
 import Sidebar from "../_components/Sidebar";
 import conts from "@/lib/conts";
 import { useQuery, useMutation } from "@apollo/client/react";
@@ -135,73 +135,142 @@ export default function TimetablePage() {
   };
 
 
-  const handleDownload = async () => {
-    console.log("Download triggered");
-    const timetableElement = document.getElementById("timetable-capture");
-
-    if (!timetableElement) {
-      console.error("Timetable element not found");
-      Modal.error({
-        title: "Download Failed",
-        content: "Could not find the timetable element. ID: timetable-capture"
-      });
+  const handleDownload = () => {
+    if (!weeklyPlan) {
+      message.error("No timetable to download. Please generate a plan first.");
       return;
     }
 
     try {
       message.loading({ content: "Generating PDF...", key: "downloading" });
 
-      const canvas = await html2canvas(timetableElement, {
-        scale: 2, // Higher resolution
-        useCORS: true,
-        logging: false,
-        backgroundColor: "#ffffff",
-        windowWidth: timetableElement.scrollWidth,
-        windowHeight: timetableElement.scrollHeight,
-        onclone: (clonedDoc) => {
-          // Deep strip styles that cause PDF generation failures (oklch/oklab/shadows)
-          const problematicElements = clonedDoc.querySelectorAll(
-            '.sticky, [class*="backdrop-blur"], [class*="shadow"], .shadow-sm, .shadow-md, .shadow-lg, .shadow-xl'
-          );
-          problematicElements.forEach((el: any) => {
-            el.style.position = 'static';
-            el.style.backdropFilter = 'none';
-            el.style.webkitBackdropFilter = 'none';
-            el.style.boxShadow = 'none';
-            el.style.textShadow = 'none';
-          });
+      const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const DAYS_SHORT = DAYS.map(d => d.substring(0, 3));
+      const GREEN: [number, number, number] = [12, 81, 63];
+      const ORANGE: [number, number, number] = [255, 107, 53];
+      const LIGHT_GREEN: [number, number, number] = [240, 248, 244];
+      const LIGHT_GRAY: [number, number, number] = [248, 249, 250];
+      const GRAY_LINE: [number, number, number] = [220, 220, 220];
 
-          // Ensure the capture area is fully visible in the clone
-          const captureEl = clonedDoc.getElementById('timetable-capture');
-          if (captureEl) {
-            captureEl.style.overflow = 'visible';
-            captureEl.style.height = 'auto';
-          }
+      // ---------- HEADER ----------
+      pdf.setFillColor(12, 81, 63);
+      pdf.rect(0, 0, pageWidth, 24, "F");
+
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(20);
+      pdf.setTextColor(255, 255, 255);
+      pdf.text("EaseMeals", 14, 14);
+
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(9);
+      pdf.setTextColor(200, 230, 210);
+      pdf.text("Weekly Meal Timetable", 14, 21);
+
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(9);
+      pdf.setTextColor(255, 200, 100);
+      const cost = `NGN ${weeklyPlan.weeklyCost.toLocaleString()}`;
+      pdf.text(cost, pageWidth - 14, 14, { align: "right" });
+      pdf.setFont("helvetica", "normal");
+      pdf.setTextColor(200, 230, 210);
+      pdf.text(`${weeklyPlan.budgetTier || selectedBudget} Tier  |  ${new Date().toLocaleDateString()}`, pageWidth - 14, 21, { align: "right" });
+
+      // ---------- TABLE SETUP ----------
+      const colCount = DAYS.length + 1;
+      const tableLeft = 10;
+      const tableRight = pageWidth - 10;
+      const tableWidth = tableRight - tableLeft;
+      const rowLabelW = 22;
+      const colW = (tableWidth - rowLabelW) / DAYS.length;
+      const rowH = 18;
+      const headerRowH = 10;
+      let yStart = 30;
+
+      // Column headers
+      pdf.setFillColor(...GREEN);
+      pdf.rect(tableLeft, yStart, tableWidth, headerRowH, "F");
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(8);
+      pdf.setTextColor(255, 255, 255);
+      pdf.text("Meal", tableLeft + rowLabelW / 2, yStart + 6.5, { align: "center" });
+      DAYS_SHORT.forEach((day, i) => {
+        const x = tableLeft + rowLabelW + i * colW + colW / 2;
+        pdf.text(day, x, yStart + 6.5, { align: "center" });
+      });
+
+      yStart += headerRowH;
+
+      // Data rows
+      MEAL_TYPES.forEach((mealType, rowIdx) => {
+        const bgColor = rowIdx % 2 === 0 ? LIGHT_GREEN : LIGHT_GRAY;
+        pdf.setFillColor(...bgColor);
+        pdf.rect(tableLeft, yStart, tableWidth, rowH, "F");
+
+        // Row label
+        pdf.setFillColor(12, 81, 63);
+        pdf.rect(tableLeft, yStart, rowLabelW, rowH, "F");
+        pdf.setFont("helvetica", "bold");
+        pdf.setFontSize(7);
+        pdf.setTextColor(255, 255, 255);
+        pdf.text(mealType, tableLeft + rowLabelW / 2, yStart + rowH / 2 + 1, { align: "center" });
+
+        // Cells
+        pdf.setFont("helvetica", "normal");
+        pdf.setFontSize(6.5);
+        pdf.setTextColor(40, 40, 40);
+        DAYS.forEach((day, i) => {
+          const dailyPlan = (weeklyPlan as any)[day.toLowerCase()];
+          const meal = dailyPlan?.[mealType.toLowerCase()];
+          const parts: string[] = [];
+          if (meal?.base?.name) parts.push(meal.base.name);
+          if (meal?.protein?.name) parts.push(meal.protein.name);
+          if (meal?.soup?.name) parts.push(meal.soup.name);
+          if (meal?.sides?.length) parts.push(...meal.sides.map((s: any) => s.name).filter(Boolean));
+
+          const cellText = parts.length > 0 ? parts.join(", ") : "-";
+          const cellX = tableLeft + rowLabelW + i * colW;
+          const maxWidth = colW - 4;
+          const wrapped = pdf.splitTextToSize(cellText, maxWidth);
+          pdf.text(wrapped.slice(0, 3), cellX + 2, yStart + 4);
+        });
+
+        // Grid lines
+        pdf.setDrawColor(...GRAY_LINE);
+        pdf.setLineWidth(0.2);
+        // Row bottom line
+        pdf.line(tableLeft, yStart + rowH, tableRight, yStart + rowH);
+        // Column separators
+        for (let i = 0; i <= DAYS.length; i++) {
+          const x = tableLeft + rowLabelW + i * colW;
+          pdf.line(x, yStart, x, yStart + rowH);
         }
+
+        yStart += rowH;
       });
 
-      console.log("Canvas generated successfully");
-      const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF({
-        orientation: "landscape",
-        unit: "mm",
-        format: "a4",
-      });
+      // Table border
+      pdf.setDrawColor(...GREEN);
+      pdf.setLineWidth(0.5);
+      pdf.rect(tableLeft, 30, tableWidth, headerRowH + MEAL_TYPES.length * rowH);
 
-      const imgWidth = 297; // A4 landscape width
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      // ---------- FOOTER ----------
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(7);
+      pdf.setTextColor(160, 160, 160);
+      pdf.text(
+        `EaseMeals Meal Timetable | Generated ${new Date().toLocaleDateString()}`,
+        pageWidth / 2,
+        pageHeight - 5,
+        { align: "center" }
+      );
 
-      pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
-      pdf.save(`EaseMeals-Timetable-${new Date().toISOString().split('T')[0]}.pdf`);
-
+      pdf.save(`EaseMeals-Timetable-${new Date().toISOString().split("T")[0]}.pdf`);
       message.success({ content: "Timetable downloaded successfully!", key: "downloading" });
     } catch (error: any) {
-      console.error("PDF generation failed", error);
-      message.error({ content: "Download failed", key: "downloading" });
-      Modal.error({
-        title: "Download Failed",
-        content: `Error: ${error.message || "Unknown error during PDF generation"}`
-      });
+      console.error("PDF generation failed:", error?.message || error);
+      message.error({ content: `Download failed: ${error?.message || "Unknown error"}`, key: "downloading" });
     }
   };
 
