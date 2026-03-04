@@ -13,7 +13,8 @@ import {
   CheckCircleOutlined,
   ShoppingCartOutlined,
   DashboardOutlined,
-  DownloadOutlined
+  DownloadOutlined,
+  CalendarOutlined
 } from "@ant-design/icons";
 import { Spin, Modal, AutoComplete, Input, Badge, Button, Empty, message } from "antd";
 import html2canvas from "html2canvas";
@@ -23,6 +24,7 @@ import { gql } from "@apollo/client";
 import conts from "@/lib/conts";
 import { RECALCULATE_MEAL_PLAN, SAVE_WEEKLY_MEAL_PLAN } from "@/graphql/mutations";
 import { GET_MEAL_SUGGESTIONS } from "@/graphql/queries";
+import { generateICal, downloadICal } from "@/lib/utils/calendar";
 import {
   WeeklyMealPlan,
   RecalculateMealPlanResult,
@@ -113,7 +115,7 @@ export default function EditTimetablePage() {
         variables: { input }
       });
       if (res.data?.saveWeeklyMealPlan) {
-        // Update local caches
+        // Update local caches immediately to override stale state
         const planStr = JSON.stringify(weeklyPlan);
         localStorage.setItem("currentTimetable", planStr);
         sessionStorage.setItem("currentTimetable", planStr);
@@ -131,6 +133,18 @@ export default function EditTimetablePage() {
     } catch (e) {
       console.error("Save failed", e);
       Modal.error({ title: 'Save Failed', content: 'Could not save your changes. Please check your network and try again.' });
+    }
+  };
+
+  const handleExportToCalendar = () => {
+    if (!weeklyPlan) return;
+    try {
+      const ics = generateICal(weeklyPlan);
+      downloadICal(ics, `EaseMeals-Draft-Plan-${new Date().toISOString().split('T')[0]}.ics`);
+      message.success("Draft calendar export successful!");
+    } catch (e) {
+      console.error("Calendar export failed", e);
+      message.error("Failed to export calendar");
     }
   };
 
@@ -152,10 +166,26 @@ export default function EditTimetablePage() {
       const canvas = await html2canvas(timetableElement, {
         scale: 2,
         useCORS: true,
-        logging: true,
+        logging: false,
         backgroundColor: "#ffffff",
         windowWidth: timetableElement.scrollWidth,
-        windowHeight: timetableElement.scrollHeight
+        windowHeight: timetableElement.scrollHeight,
+        onclone: (clonedDoc) => {
+          // Find all sticky headers and backdrop filters in the cloned document
+          const stickyElements = clonedDoc.querySelectorAll('.sticky, [class*="backdrop-blur"]');
+          stickyElements.forEach((el: any) => {
+            el.style.position = 'static';
+            el.style.backdropFilter = 'none';
+            el.style.webkitBackdropFilter = 'none';
+          });
+
+          // Ensure the capture area is fully visible in the clone
+          const captureEl = clonedDoc.getElementById('timetable-capture');
+          if (captureEl) {
+            captureEl.style.overflow = 'visible';
+            captureEl.style.height = 'auto';
+          }
+        }
       });
 
       console.log("Canvas generated successfully (Edit)");
@@ -218,7 +248,7 @@ export default function EditTimetablePage() {
   if (loading) return <div className="h-screen flex items-center justify-center bg-app_bg"><Spin size="large" tip="Loading your plan..." /></div>;
   if (!weeklyPlan) return <div className="p-12 text-center bg-app_bg min-h-screen flex flex-col items-center justify-center gap-4">
     <Empty description="No active plan found to edit" />
-    <Link href={conts.paths.timetable} className="px-6 py-2 bg-app_primary text-white rounded-lg font-bold">Go Back</Link>
+    <Link href={conts.paths.timetable} className="px-6 py-2 bg-app_secondary text-white rounded-lg font-bold">Go Back</Link>
   </div>;
 
   return (
@@ -231,21 +261,28 @@ export default function EditTimetablePage() {
               <ArrowLeftOutlined className="text-xl" />
             </Link>
             <div>
-              <h1 className="text-xl font-black text-text1 leading-none mb-1 text-app_primary">Editor</h1>
+              <h1 className="text-xl font-black text-text1 leading-none mb-1 text-app_secondary">Editor</h1>
               <p className="text-xs text-text2 font-medium uppercase tracking-widest opacity-70">Customize Your Delicacies</p>
             </div>
           </div>
           <div className="flex items-center gap-4">
             <button
+              onClick={handleExportToCalendar}
+              className="text-text2 hover:text-app_secondary transition-colors p-2 rounded-full hover:bg-gray-100"
+              title="Export to Calendar"
+            >
+              <CalendarOutlined className="text-xl" />
+            </button>
+            <button
               onClick={handleDownload}
-              className="text-text2 hover:text-text1 transition-colors p-2 rounded-full hover:bg-gray-100"
+              className="text-text2 hover:text-app_secondary transition-colors p-2 rounded-full hover:bg-gray-100"
               title="Download Draft"
             >
               <DownloadOutlined className="text-xl" />
             </button>
             <div className="hidden sm:flex flex-col items-end">
               <p className="text-[10px] text-text2 uppercase font-bold tracking-tighter">Current Total</p>
-              <p className="text-lg font-black text-app_primary leading-none">₦{weeklyPlan.weeklyCost.toLocaleString()}</p>
+              <p className="text-lg font-black text-app_secondary leading-none">₦{weeklyPlan.weeklyCost.toLocaleString()}</p>
             </div>
             <Badge
               status={weeklyPlan.budgetTier.toUpperCase() === 'LOW' ? 'warning' : 'success'}
@@ -267,7 +304,7 @@ export default function EditTimetablePage() {
         {DAYS.map((day) => (
           <section key={day} className="space-y-6">
             <div className="flex items-center gap-4">
-              <div className="h-10 w-10 bg-app_primary text-white rounded-xl flex items-center justify-center font-black text-lg shadow-lg shadow-app_primary/20">
+              <div className="h-10 w-10 bg-app_secondary text-white rounded-xl flex items-center justify-center font-black text-lg shadow-lg shadow-app_secondary/20">
                 {day.charAt(0)}
               </div>
               <h2 className="text-2xl font-black text-text1">{day}</h2>
@@ -315,7 +352,7 @@ export default function EditTimetablePage() {
               icon={isSaving ? <Spin size="small" /> : <SaveOutlined />}
               onClick={handleSave}
               disabled={isSaving || isRecalculating}
-              className="h-14 px-10 rounded-2xl font-black text-lg shadow-xl shadow-app_primary/20 flex items-center gap-2 bg-app_primary border-none"
+              className="h-14 px-10 rounded-2xl font-black text-lg shadow-xl shadow-app_secondary/20 flex items-center gap-2 bg-app_secondary border-none"
             >
               {isSaving ? "Saving..." : "Save Changes"}
             </Button>
@@ -330,12 +367,12 @@ function MealEditor({ day, type, composition, onUpdate }: { day: string, type: s
   const isSelected = (slot: any) => !!slot && slot.name !== "Searching...";
 
   return (
-    <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 space-y-5 hover:shadow-xl hover:border-app_primary/20 transition-all group overflow-hidden relative">
-      <div className="absolute -top-10 -right-10 w-24 h-24 bg-app_primary/5 rounded-full blur-2xl group-hover:bg-app_primary/10 transition-colors" />
+    <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 space-y-5 hover:shadow-xl hover:border-app_secondary/20 transition-all group overflow-hidden relative">
+      <div className="absolute -top-10 -right-10 w-24 h-24 bg-app_secondary/5 rounded-full blur-2xl group-hover:bg-app_secondary/10 transition-colors" />
 
       <div className="flex justify-between items-center relative">
         <div className="flex items-center gap-2">
-          <div className={`w-2 h-2 rounded-full ${isSelected(composition.base) ? 'bg-app_primary' : 'bg-gray-200 animate-pulse'}`} />
+          <div className={`w-2 h-2 rounded-full ${isSelected(composition.base) ? 'bg-app_secondary' : 'bg-gray-200 animate-pulse'}`} />
           <h3 className="font-black text-lg text-text1 tracking-tight">{type}</h3>
         </div>
         <Badge
@@ -438,12 +475,17 @@ function SlotSelector({ label, value, onSelect, onRemove }: { label: string, val
           onSelect(opt.food);
           setSearchValue("");
         }}
-        value={searchValue || (isSet ? value.name : "")}
+        value={isFocused ? searchValue : (isSet ? value.name : "")}
         className="w-full"
-        onFocus={() => setIsFocused(true)}
+        onFocus={() => {
+          setIsFocused(true);
+          if (isSet) setSearchValue(value.name);
+        }}
         onBlur={() => {
-          setIsFocused(false);
-          setSearchValue("");
+          setTimeout(() => {
+            setIsFocused(false);
+            setSearchValue("");
+          }, 200);
         }}
       >
         <Input

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Card, Input, Radio, Checkbox, Button } from "antd";
+import { Card, Input, Radio, Checkbox, Button, AutoComplete, message } from "antd";
 import {
   MenuOutlined,
   DownloadOutlined,
@@ -9,6 +9,16 @@ import {
   EnvironmentOutlined,
 } from "@ant-design/icons";
 import Sidebar from "../_components/Sidebar";
+import { useLazyQuery } from "@apollo/client/react";
+import { SEARCH_ADDRESSES, REVERSE_GEOCODE, GEOCODE_ADDRESS } from "@/graphql/queries";
+import {
+  SearchAddressesResult,
+  SearchAddressesVariables,
+  ReverseGeocodeResult,
+  ReverseGeocodeVariables,
+  GeocodeAddressResult,
+  GeocodeAddressVariables
+} from "@/lib/types";
 
 const DAYS = [
   { label: "31", day: "TODAY", weekday: "THU" },
@@ -25,6 +35,78 @@ export default function SchedulePage() {
   const [deliveryOption, setDeliveryOption] = useState("schedule");
   const [selectedDate, setSelectedDate] = useState("31");
   const [selectedMeals, setSelectedMeals] = useState<string[]>(["Dinner"]);
+
+  // Location States
+  const [address, setAddress] = useState("");
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
+  const [localAddressLoading, setLocalAddressLoading] = useState(false);
+  const [addressSearchOptions, setAddressSearchOptions] = useState<{ value: string }[]>([]);
+
+  // Geocode Queries
+  const [searchAddresses] = useLazyQuery<SearchAddressesResult, SearchAddressesVariables>(SEARCH_ADDRESSES);
+  const [reverseGeocode] = useLazyQuery<ReverseGeocodeResult, ReverseGeocodeVariables>(REVERSE_GEOCODE);
+  const [geocodeAddress] = useLazyQuery<GeocodeAddressResult, GeocodeAddressVariables>(GEOCODE_ADDRESS);
+
+  const handleSearchAddress = async (searchText: string) => {
+    setAddress(searchText);
+    if (!searchText || searchText.length < 3) {
+      setAddressSearchOptions([]);
+      return;
+    }
+    try {
+      const { data } = (await searchAddresses({ variables: { query: searchText } })) as { data?: SearchAddressesResult };
+      if (data?.searchAddresses) {
+        setAddressSearchOptions(data.searchAddresses.map((addr: string) => ({ value: addr })));
+      }
+    } catch (err) {
+      console.error("Address search failed", err);
+    }
+  };
+
+  const handleAddressSelect = async (selectedAddress: string) => {
+    setAddress(selectedAddress);
+    try {
+      const { data } = (await geocodeAddress({ variables: { address: selectedAddress } })) as { data?: GeocodeAddressResult };
+      if (data?.geocodeAddress) {
+        setLatitude(data.geocodeAddress.latitude);
+        setLongitude(data.geocodeAddress.longitude);
+      }
+    } catch (err) {
+      console.error("Geocoding failed", err);
+    }
+  };
+
+  const handleUseCurrentLocation = async () => {
+    setLocalAddressLoading(true);
+    if (!navigator.geolocation) {
+      message.error("Geolocation is not supported by your browser");
+      setLocalAddressLoading(false);
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        setLatitude(latitude);
+        setLongitude(longitude);
+        try {
+          const { data } = (await reverseGeocode({ variables: { lat: latitude, lon: longitude } })) as { data?: ReverseGeocodeResult };
+          const readableAddress = data?.reverseGeocode || `Lat: ${latitude.toFixed(6)}, Long: ${longitude.toFixed(6)}`;
+          setAddress(readableAddress);
+          message.success("Location fetched: " + (data?.reverseGeocode ? "Address resolved" : "Coordinates only"));
+        } catch (err) {
+          setAddress(`Lat: ${latitude.toFixed(6)}, Long: ${longitude.toFixed(6)}`);
+          message.warning("Location fetched, but address could not be resolved");
+        } finally {
+          setLocalAddressLoading(false);
+        }
+      },
+      (error) => {
+        message.error("Unable to retrieve location: " + error.message);
+        setLocalAddressLoading(false);
+      }
+    );
+  };
 
   const handleMealToggle = (meal: string) => {
     if (selectedMeals.includes(meal)) {
@@ -72,21 +154,39 @@ export default function SchedulePage() {
               Schedule Your Meal Delivery
             </h2>
 
-            {/* Delivery Location */}
             <div className="mb-8">
               <label className="block text-sm font-medium text-text2 mb-2">
                 Delivery Location
               </label>
               <div className="flex flex-col sm:flex-row gap-4">
-                <Input
-                  placeholder="Enter your delivery address"
-                  className="flex-1 h-11 rounded-lg border-gray-300 hover:border-app_primary focus:border-app_primary"
-                />
-                <button className="bg-app_secondary hover:bg-[#F4511E] text-white px-6 py-2.5 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors shadow-sm whitespace-nowrap">
-                  <EnvironmentOutlined />
-                  Use Current Location
+                <AutoComplete
+                  options={addressSearchOptions}
+                  onSearch={handleSearchAddress}
+                  onSelect={handleAddressSelect}
+                  value={address}
+                  onChange={(v) => setAddress(v)}
+                  className="flex-1"
+                >
+                  <Input
+                    placeholder="Enter your delivery address"
+                    className="h-11 rounded-lg border-gray-300 hover:border-app_primary focus:border-app_primary"
+                  />
+                </AutoComplete>
+                <button
+                  onClick={handleUseCurrentLocation}
+                  disabled={localAddressLoading}
+                  className="bg-app_secondary hover:bg-[#F4511E] text-white px-6 py-2.5 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors shadow-sm whitespace-nowrap disabled:opacity-50"
+                >
+                  <EnvironmentOutlined spin={localAddressLoading} />
+                  {localAddressLoading ? "Locating..." : "Use Current Location"}
                 </button>
               </div>
+              {(latitude && longitude) && (
+                <div className="mt-2 text-xs text-text2 flex items-center gap-1">
+                  <EnvironmentOutlined className="text-app_primary" />
+                  Exact coordinates saved: {latitude.toFixed(6)}, {longitude.toFixed(6)}
+                </div>
+              )}
             </div>
 
             {/* Delivery Options */}
@@ -136,16 +236,14 @@ export default function SchedulePage() {
                   <button
                     key={day.label}
                     onClick={() => setSelectedDate(day.label)}
-                    className={`flex flex-col items-center justify-center w-[72px] h-[84px] rounded-xl border transition-all shrink-0 ${
-                      selectedDate === day.label
-                        ? "bg-app_secondary border-app_secondary text-white shadow-md transform scale-105"
-                        : "bg-white border-gray-200 text-text1 hover:border-gray-300"
-                    }`}
+                    className={`flex flex-col items-center justify-center w-[72px] h-[84px] rounded-xl border transition-all shrink-0 ${selectedDate === day.label
+                      ? "bg-app_secondary border-app_secondary text-white shadow-md transform scale-105"
+                      : "bg-white border-gray-200 text-text1 hover:border-gray-300"
+                      }`}
                   >
                     <span
-                      className={`text-2xl font-bold ${
-                        selectedDate === day.label ? "text-white" : "text-text1"
-                      }`}
+                      className={`text-2xl font-bold ${selectedDate === day.label ? "text-white" : "text-text1"
+                        }`}
                     >
                       {day.label}
                     </span>

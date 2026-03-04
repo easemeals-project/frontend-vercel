@@ -207,3 +207,24 @@ export const GET_LATEST_MEAL_PLAN = gql`
     totalCost
   }
 `;
+
+export const SEARCH_ADDRESSES = gql`
+  query SearchAddresses($query: String!) {
+    searchAddresses(query: $query)
+  }
+`;
+
+export const REVERSE_GEOCODE = gql`
+  query ReverseGeocode($lat: Float!, $lon: Float!) {
+    reverseGeocode(lat: $lat, lon: $lon)
+  }
+`;
+
+export const GEOCODE_ADDRESS = gql`
+  query GeocodeAddress($address: String!) {
+    geocodeAddress(address: $address) {
+      latitude
+      longitude
+    }
+  }
+`;

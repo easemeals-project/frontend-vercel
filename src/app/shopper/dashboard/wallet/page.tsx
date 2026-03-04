@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Card, Spin, message } from "antd";
+import { Card, Spin, message, Modal, Button, Input } from "antd";
 import {
   MenuOutlined,
   DownloadOutlined,
@@ -11,16 +11,25 @@ import {
   ArrowDownOutlined,
 } from "@ant-design/icons";
 import Sidebar from "../_components/Sidebar";
-import { useQuery } from "@apollo/client/react";
+import { useQuery, useMutation } from "@apollo/client/react";
 import { GET_MY_WALLET } from "@/graphql/queries";
+import { TOP_UP_WALLET } from "@/graphql/mutations";
+import { loadPaystackScript, initializePaystack } from "@/lib/paystack";
 
 export default function WalletPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("All");
 
+  // Top-up State
+  const [isTopUpModalOpen, setIsTopUpModalOpen] = useState(false);
+  const [topUpAmount, setTopUpAmount] = useState<number>(5000);
+  const [isProcessingTopUp, setIsProcessingTopUp] = useState(false);
+
   const { data, loading, error, refetch } = useQuery<any>(GET_MY_WALLET, {
     pollInterval: 30000, // Poll every 30s
   });
+
+  const [topUpWallet] = useMutation(TOP_UP_WALLET);
 
   if (loading && !data) {
     return (
@@ -44,6 +53,52 @@ export default function WalletPage() {
       : transactions.filter((t: any) =>
         activeTab === "Credit" ? t.type === "CREDIT" : t.type === "DEBIT"
       );
+
+  const handleTopUp = async () => {
+    if (topUpAmount <= 0) {
+      message.error("Please enter a valid amount");
+      return;
+    }
+
+    try {
+      setIsProcessingTopUp(true);
+      await loadPaystackScript();
+
+      const reference = `TUP-WPT-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+
+      initializePaystack({
+        key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || "",
+        email: "shopper@easemeals.com", // In real app, use user.email
+        amount: topUpAmount,
+        ref: reference,
+        onSuccess: async (response) => {
+          try {
+            message.loading({ content: "Verifying payment...", key: "topup" });
+            await topUpWallet({
+              variables: {
+                amount: topUpAmount,
+                reference: response.reference
+              }
+            });
+            await refetch();
+            setIsTopUpModalOpen(false);
+            setIsProcessingTopUp(false);
+            message.success({ content: "Wallet topped up successfully!", key: "topup" });
+          } catch (err: any) {
+            setIsProcessingTopUp(false);
+            message.error({ content: "Verification failed: " + err.message, key: "topup" });
+          }
+        },
+        onCancel: () => {
+          setIsProcessingTopUp(false);
+          message.warning("Payment cancelled");
+        }
+      });
+    } catch (err: any) {
+      setIsProcessingTopUp(false);
+      message.error("Could not initialize Paystack: " + err.message);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-app_bg flex font-sans">
@@ -90,7 +145,7 @@ export default function WalletPage() {
               </h2>
               <button
                 className="w-full sm:w-1/2 bg-[#FF8A65] hover:bg-[#FFAB91] text-white py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors"
-                onClick={() => message.info("Top-up feature coming soon!")}
+                onClick={() => setIsTopUpModalOpen(true)}
               >
                 <PlusOutlined />
                 Add Money
@@ -101,8 +156,8 @@ export default function WalletPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                 <p className="text-sm text-text2 mb-2">Total Spent</p>
-                <p className="text-2xl font-bold text-text1 mb-1">₦0</p>
-                <p className="text-xs text-text2">Last 30 days: ₦0</p>
+                <p className="text-2xl font-bold text-text1 mb-1">₦{transactions.filter((t: any) => t.type === "DEBIT").reduce((acc: number, t: any) => acc + t.amount, 0).toLocaleString()}</p>
+                <p className="text-xs text-text2">Last 30 days transactions</p>
               </div>
               <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                 <p className="text-sm text-text2 mb-2">Total Cashback</p>
@@ -194,6 +249,64 @@ export default function WalletPage() {
           </div>
         </main>
       </div>
+
+      {/* Wallet Top-Up Modal */}
+      <Modal
+        title="Top Up EaseMeals Wallet"
+        open={isTopUpModalOpen}
+        onCancel={() => setIsTopUpModalOpen(false)}
+        footer={null}
+        width={400}
+      >
+        <div className="py-4 space-y-6">
+          <div className="text-center">
+            <p className="text-sm text-text2 mb-1">Current Balance</p>
+            <p className="text-3xl font-bold text-text1">{wallet.currency} {wallet.balance?.toLocaleString()}</p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-text1 mb-2">
+              Amount to Top Up (₦)
+            </label>
+            <Input
+              type="number"
+              size="large"
+              prefix="₦"
+              value={topUpAmount}
+              onChange={(e) => setTopUpAmount(Number(e.target.value))}
+              className="rounded-lg h-12"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            {[2000, 5000, 10000, 20000].map((amt) => (
+              <Button
+                key={amt}
+                onClick={() => setTopUpAmount(amt)}
+                className={`h-12 rounded-lg ${topUpAmount === amt ? 'border-[#FF7043] text-[#FF7043] bg-[#FF7043]/5' : ''}`}
+              >
+                +₦{amt.toLocaleString()}
+              </Button>
+            ))}
+          </div>
+
+          <Button
+            type="primary"
+            size="large"
+            block
+            loading={isProcessingTopUp}
+            onClick={handleTopUp}
+            className="bg-[#FF7043]! hover:bg-[#FF7043]/80! border-none h-12 font-bold rounded-lg mt-4"
+          >
+            Pay with Paystack
+          </Button>
+          <div className="text-center">
+            <p className="text-[10px] text-text3 mt-4">
+              Secure payments powered by Paystack.
+            </p>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

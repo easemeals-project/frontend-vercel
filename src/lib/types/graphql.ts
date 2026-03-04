@@ -303,3 +303,12 @@ export type GetMyOrderResult = {
 export type GetVendorsResult = {
   vendors: Vendor[];
 };
+
+export type SearchAddressesResult = { searchAddresses: string[] };
+export type SearchAddressesVariables = { query: string };
+
+export type ReverseGeocodeResult = { reverseGeocode: string };
+export type ReverseGeocodeVariables = { lat: number; lon: number };
+
+export type GeocodeAddressResult = { geocodeAddress: { latitude: number; longitude: number } };
+export type GeocodeAddressVariables = { address: string };

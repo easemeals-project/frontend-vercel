@@ -12,10 +12,10 @@ import {
   PlusOutlined,
   EnvironmentOutlined,
 } from "@ant-design/icons";
-import { Input, Switch, Button, Form, message, Modal, List, Tag, Space, Popconfirm } from "antd";
+import { AutoComplete, Input, Switch, Button, Form, message, Modal, List, Tag, Space, Popconfirm } from "antd";
 import Sidebar from "../_components/Sidebar";
-import { useQuery, useMutation } from "@apollo/client/react";
-import { GET_MY_PROFILE, GET_NOTIFICATIONS } from "@/graphql/queries";
+import { useQuery, useMutation, useLazyQuery } from "@apollo/client/react";
+import { GET_MY_PROFILE, GET_NOTIFICATIONS, SEARCH_ADDRESSES, REVERSE_GEOCODE, GEOCODE_ADDRESS } from "@/graphql/queries";
 import {
   UPDATE_PROFILE,
   SET_NOTIFICATION_PREFERENCES,
@@ -42,7 +42,13 @@ import {
   DeleteAddressVariables,
   DeleteAddressResult,
   SetDefaultAddressVariables,
-  SetDefaultAddressResult
+  SetDefaultAddressResult,
+  SearchAddressesResult,
+  SearchAddressesVariables,
+  ReverseGeocodeResult,
+  ReverseGeocodeVariables,
+  GeocodeAddressResult,
+  GeocodeAddressVariables
 } from "@/lib/types";
 import { FiLogOut, FiShield } from "react-icons/fi";
 import { MdOutlinePayment } from "react-icons/md";
@@ -58,6 +64,7 @@ export default function ProfilePage() {
   const [isAddAddressModalOpen, setIsAddAddressModalOpen] = useState(false);
   const [editingAddress, setEditingAddress] = useState<Address | null>(null);
   const [localAddressLoading, setLocalAddressLoading] = useState(false);
+  const [addressSearchOptions, setAddressSearchOptions] = useState<{ value: string }[]>([]);
 
   // GraphQL Hooks
   const {
@@ -76,6 +83,11 @@ export default function ProfilePage() {
   const [updateAddress, { loading: updatingAddress }] = useMutation<UpdateAddressResult, UpdateAddressVariables>(UPDATE_ADDRESS);
   const [deleteAddress] = useMutation<DeleteAddressResult, DeleteAddressVariables>(DELETE_ADDRESS);
   const [setDefaultAddress] = useMutation<SetDefaultAddressResult, SetDefaultAddressVariables>(SET_DEFAULT_ADDRESS);
+
+  // Geocode Queries
+  const [searchAddresses] = useLazyQuery<SearchAddressesResult, SearchAddressesVariables>(SEARCH_ADDRESSES);
+  const [reverseGeocode] = useLazyQuery<ReverseGeocodeResult, ReverseGeocodeVariables>(REVERSE_GEOCODE);
+  const [geocodeAddress] = useLazyQuery<GeocodeAddressResult, GeocodeAddressVariables>(GEOCODE_ADDRESS);
 
   // Notification State
   const [pushNotifications, setPushNotifications] = useState(true);
@@ -209,6 +221,35 @@ export default function ProfilePage() {
     }
   };
 
+  const handleSearchAddress = async (searchText: string) => {
+    if (!searchText || searchText.length < 3) {
+      setAddressSearchOptions([]);
+      return;
+    }
+    try {
+      const { data } = await searchAddresses({ variables: { query: searchText } });
+      if (data?.searchAddresses) {
+        setAddressSearchOptions(data.searchAddresses.map((addr: string) => ({ value: addr })));
+      }
+    } catch (err) {
+      console.error("Address search failed", err);
+    }
+  };
+
+  const handleAddressSelect = async (address: string) => {
+    try {
+      const { data } = await geocodeAddress({ variables: { address } });
+      if (data?.geocodeAddress) {
+        addressForm.setFieldsValue({
+          latitude: data.geocodeAddress.latitude,
+          longitude: data.geocodeAddress.longitude
+        });
+      }
+    } catch (err) {
+      console.error("Geocoding failed", err);
+    }
+  };
+
   const handleUseCurrentLocation = () => {
     setLocalAddressLoading(true);
     if (!navigator.geolocation) {
@@ -217,15 +258,28 @@ export default function ProfilePage() {
       return;
     }
     navigator.geolocation.getCurrentPosition(
-      (position) => {
+      async (position) => {
         const { latitude, longitude } = position.coords;
-        addressForm.setFieldsValue({
-          latitude,
-          longitude,
-          fullAddress: `Lat: ${latitude.toFixed(6)}, Long: ${longitude.toFixed(6)}` // Placeholder
-        });
-        message.success("Location fetched");
-        setLocalAddressLoading(false);
+        try {
+          const { data } = await reverseGeocode({ variables: { lat: latitude, lon: longitude } });
+          const readableAddress = data?.reverseGeocode || `Lat: ${latitude.toFixed(6)}, Long: ${longitude.toFixed(6)}`;
+
+          addressForm.setFieldsValue({
+            latitude,
+            longitude,
+            fullAddress: readableAddress
+          });
+          message.success("Location fetched: " + (data?.reverseGeocode ? "Address resolved" : "Coordinates only"));
+        } catch (err) {
+          addressForm.setFieldsValue({
+            latitude,
+            longitude,
+            fullAddress: `Lat: ${latitude.toFixed(6)}, Long: ${longitude.toFixed(6)}`
+          });
+          message.warning("Location fetched, but address could not be resolved");
+        } finally {
+          setLocalAddressLoading(false);
+        }
       },
       (error) => {
         message.error("Unable to retrieve location: " + error.message);
@@ -307,11 +361,11 @@ export default function ProfilePage() {
                   <div className="flex flex-wrap gap-4">
                     <div className="bg-green-50 px-4 py-2 rounded-lg">
                       <p className="text-sm text-text2">Total Orders</p>
-                      <p className="text-lg font-bold text-text1">0</p>
+                      <p className="text-lg font-bold text-text1">{profileData?.myProfile?.totalOrders || 0}</p>
                     </div>
                     <div className="bg-orange-50 px-4 py-2 rounded-lg">
                       <p className="text-sm text-text2">Member Since</p>
-                      <p className="text-lg font-bold text-text1">{profileData?.myProfile?.memberSince || "Jan 2025"}</p>
+                      <p className="text-lg font-bold text-text1">{profileData?.myProfile?.memberSince}</p>
                     </div>
                   </div>
                 </div>
@@ -390,13 +444,15 @@ export default function ProfilePage() {
             <div className="bg-white rounded-3xl shadow-xl p-8 border border-gray-100/50">
               <h2 className="text-xl font-bold text-text1 mb-4">Quick Actions</h2>
               <div className="space-y-4">
-                <button className="w-full flex items-center gap-3 p-4 hover:bg-gray-50 rounded-lg ring-2 ring-gray-100 transition-colors">
+                <button disabled className="w-full flex items-center gap-3 p-4 bg-gray-50/50 cursor-not-allowed rounded-lg ring-2 ring-gray-100 transition-colors">
                   <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center"><FiShield className="text-blue-600! size-5" /></div>
-                  <div className="text-left"><div className="font-semibold text-text1">Privacy & Security</div><div className="text-sm text-text2">Manage settings</div></div>
+                  <div className="text-left flex-1"><div className="font-semibold text-text1">Privacy & Security</div><div className="text-sm text-text2">Manage settings</div></div>
+                  <Tag color="orange">Coming Soon</Tag>
                 </button>
-                <button className="w-full flex items-center ring-2 ring-gray-100 gap-3 p-4 hover:bg-gray-50 rounded-lg transition-colors">
+                <button disabled className="w-full flex items-center ring-2 ring-gray-100 bg-gray-50/50 cursor-not-allowed gap-3 p-4 rounded-lg transition-colors">
                   <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center"><MdOutlinePayment className="text-green-600! size-5" /></div>
-                  <div className="text-left"><div className="font-semibold text-text1">Payment Methods</div><div className="text-sm text-text2">Manage options</div></div>
+                  <div className="text-left flex-1"><div className="font-semibold text-text1">Payment Methods</div><div className="text-sm text-text2">Manage options</div></div>
+                  <Tag color="orange">Coming Soon</Tag>
                 </button>
                 <button className="w-full flex items-center ring-2 ring-gray-100 gap-3 p-4 hover:bg-gray-50 rounded-lg transition-colors">
                   <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center"><FiLogOut className="text-red-600! size-5" /></div>
@@ -420,7 +476,14 @@ export default function ProfilePage() {
             <Input placeholder="Home" />
           </Form.Item>
           <Form.Item name="fullAddress" label="Address" rules={[{ required: true }]}>
-            <Input.TextArea rows={3} placeholder="123 Main St..." />
+            <AutoComplete
+              options={addressSearchOptions}
+              onSearch={handleSearchAddress}
+              onSelect={handleAddressSelect}
+              placeholder="123 Main St..."
+            >
+              <Input.TextArea rows={3} />
+            </AutoComplete>
           </Form.Item>
           <div className="flex gap-4 mb-4">
             <Form.Item name="latitude" label="Latitude" className="w-1/2">

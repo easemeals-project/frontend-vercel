@@ -12,6 +12,7 @@ import {
   FormOutlined,
   EditOutlined,
   SaveOutlined,
+  CalendarOutlined,
 } from "@ant-design/icons";
 import { FaExclamation, FaCheck } from "react-icons/fa6";
 import html2canvas from "html2canvas";
@@ -21,6 +22,7 @@ import conts from "@/lib/conts";
 import { useQuery, useMutation } from "@apollo/client/react";
 import { GET_MEAL_SUGGESTIONS, GET_MEAL_BY_NAME, GET_MY_MEAL_PREFERENCES, GET_LATEST_MEAL_PLAN } from "@/graphql/queries";
 import { GENERATE_RAG_MEAL_PLAN, SAVE_WEEKLY_MEAL_PLAN } from "@/graphql/mutations";
+import { generateICal, downloadICal } from "@/lib/utils/calendar";
 import {
   GetMealSuggestionsResult,
   GetMealByNameResult,
@@ -150,10 +152,26 @@ export default function TimetablePage() {
       const canvas = await html2canvas(timetableElement, {
         scale: 2, // Higher resolution
         useCORS: true,
-        logging: true, // Enable logging to see what html2canvas is doing
+        logging: false,
         backgroundColor: "#ffffff",
         windowWidth: timetableElement.scrollWidth,
-        windowHeight: timetableElement.scrollHeight
+        windowHeight: timetableElement.scrollHeight,
+        onclone: (clonedDoc) => {
+          // Find all sticky headers and backdrop filters in the cloned document
+          const stickyElements = clonedDoc.querySelectorAll('.sticky, [class*="backdrop-blur"]');
+          stickyElements.forEach((el: any) => {
+            el.style.position = 'static';
+            el.style.backdropFilter = 'none';
+            el.style.webkitBackdropFilter = 'none';
+          });
+
+          // Ensure the capture area is fully visible in the clone
+          const captureEl = clonedDoc.getElementById('timetable-capture');
+          if (captureEl) {
+            captureEl.style.overflow = 'visible';
+            captureEl.style.height = 'auto';
+          }
+        }
       });
 
       console.log("Canvas generated successfully");
@@ -178,6 +196,18 @@ export default function TimetablePage() {
         title: "Download Failed",
         content: `Error: ${error.message || "Unknown error during PDF generation"}`
       });
+    }
+  };
+
+  const handleExportToCalendar = () => {
+    if (!weeklyPlan) return;
+    try {
+      const ics = generateICal(weeklyPlan);
+      downloadICal(ics, `EaseMeals-Plan-${new Date().toISOString().split('T')[0]}.ics`);
+      message.success("Calendar export successful!");
+    } catch (e) {
+      console.error("Calendar export failed", e);
+      message.error("Failed to export calendar");
     }
   };
 
@@ -235,40 +265,39 @@ export default function TimetablePage() {
     }
   };
 
-  // Trigger on Mount or Tab Change
+  // Trigger on Mount or Data Change
   useEffect(() => {
     const init = async () => {
-      // 1. Check local cache (for continuity during same session)
-      const cached = localStorage.getItem("currentTimetable") || sessionStorage.getItem("currentTimetable");
-      if (cached) {
-        setWeeklyPlan(JSON.parse(cached));
+      // 1. Prioritize Backend Data if available
+      if (!isLoadingSaved && savedPlanData?.latestMealPlan) {
+        setWeeklyPlan(savedPlanData.latestMealPlan);
+        const planStr = JSON.stringify(savedPlanData.latestMealPlan);
+        localStorage.setItem("currentTimetable", planStr);
+        sessionStorage.setItem("currentTimetable", planStr);
         setIsInitialLoad(false);
         return;
       }
 
-      // 2. Check backend if no cache
-      if (!isLoadingSaved && savedPlanData?.latestMealPlan) {
-        setWeeklyPlan(savedPlanData.latestMealPlan);
-        localStorage.setItem("currentTimetable", JSON.stringify(savedPlanData.latestMealPlan));
-        setIsInitialLoad(false);
-        return;
+      // 2. Fallback to local cache only if backend is still loading or empty
+      if (isLoadingSaved) {
+        const cached = localStorage.getItem("currentTimetable") || sessionStorage.getItem("currentTimetable");
+        if (cached) {
+          setWeeklyPlan(JSON.parse(cached));
+          setIsInitialLoad(false);
+          return;
+        }
       }
 
       // 3. Fallback to generation if no saved plan and not loading
-      if (!isLoadingSaved && !savedPlanData?.latestMealPlan) {
+      if (!isLoadingSaved && !savedPlanData?.latestMealPlan && isInitialLoad) {
         generateTimetable();
+        setIsInitialLoad(false);
       }
     };
 
     init();
   }, [savedPlanData, isLoadingSaved]);
 
-  // Handle explicit tab changes (Reset cache and regenerate)
-  useEffect(() => {
-    if (!isInitialLoad) {
-      generateTimetable();
-    }
-  }, [selectedBudget]);
 
   // --- Loading Overlay Render ---
   if (isInitialLoad && isGenerating) {
@@ -313,8 +342,15 @@ export default function TimetablePage() {
 
           <div className="flex items-center gap-3">
             <button
+              onClick={handleExportToCalendar}
+              className="p-2.5 rounded-full bg-gray-50 text-text2 hover:text-app_secondary hover:bg-orange-50 transition-all active:scale-95 shadow-sm"
+              title="Export to Calendar"
+            >
+              <CalendarOutlined className="text-xl" />
+            </button>
+            <button
               onClick={handleDownload}
-              className="p-2.5 rounded-full bg-gray-50 text-text2 hover:text-app_primary hover:bg-green-50 transition-all active:scale-95 shadow-sm"
+              className="p-2.5 rounded-full bg-gray-50 text-text2 hover:text-app_secondary hover:bg-orange-50 transition-all active:scale-95 shadow-sm"
               title="Download Timetable"
             >
               <DownloadOutlined className="text-xl" />
@@ -352,7 +388,7 @@ export default function TimetablePage() {
                 <button
                   onClick={handleSavePlan}
                   disabled={isSaving || !weeklyPlan}
-                  className="px-4 py-3 rounded-full font-bold text-white bg-app_primary hover:bg-[#2E7D32] transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 shadow-md shadow-green-100"
+                  className="px-4 py-3 rounded-full font-bold text-white bg-app_secondary hover:bg-orange-600 transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 shadow-md shadow-orange-100"
                 >
                   <SaveOutlined className="text-base" />
                   {isSaving ? "Saving..." : "Save Plan"}
@@ -381,13 +417,13 @@ export default function TimetablePage() {
                   key={tab}
                   onClick={() => setSelectedBudget(tab)}
                   className={`pb-4 px-2 text-sm font-bold transition-all relative ${selectedBudget === tab
-                    ? "text-app_primary"
+                    ? "text-app_secondary"
                     : "text-text2 hover:text-text1"
                     }`}
                 >
                   {tab}
                   {selectedBudget === tab && (
-                    <span className="absolute bottom-0 left-0 w-full h-1 bg-app_primary rounded-t-full shadow-[0_-2px_4px_rgba(0,128,0,0.2)]" />
+                    <span className="absolute bottom-0 left-0 w-full h-1 bg-app_secondary rounded-t-full shadow-[0_-2px_4px_rgba(255,107,53,0.2)]" />
                   )}
                 </button>
               ))}
@@ -401,7 +437,7 @@ export default function TimetablePage() {
                   <h3 className="text-lg font-bold text-text1">Weekly Meal Plan</h3>
                   <div className="flex items-center justify-center sm:justify-end gap-2 text-xs text-text2 italic">
                     <span>{selectedBudget} Tier</span>
-                    <span className="lg:hidden flex items-center gap-1 text-app_primary animate-pulse">
+                    <span className="lg:hidden flex items-center gap-1 text-app_secondary animate-pulse">
                       <ShoppingCartOutlined className="rotate-90" /> Swipe to view
                     </span>
                   </div>
