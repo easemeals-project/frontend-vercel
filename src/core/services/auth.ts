@@ -1,15 +1,4 @@
-import {
-  signIn,
-  signUp,
-  signOut,
-  resendSignUpCode,
-  confirmSignUp,
-  resetPassword,
-  confirmResetPassword,
-  signInWithRedirect,
-  autoSignIn,
-  fetchAuthSession,
-} from "aws-amplify/auth";
+import { createClient } from "@/lib/supabase/client";
 import { InferType } from "yup";
 import {
   ResetPasswordSchema,
@@ -20,106 +9,126 @@ import conts from "@/lib/conts";
 import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
 import { getErrorMessage } from "@/lib/utils/helpers";
 import { UserRole } from "@/lib/types";
-// Do NOT import server-only helpers like getAuthUserServer here; this module
-// is used by client components. We'll rely on client-side fetchAuthSession
-// from `aws-amplify/auth` to confirm the session after `autoSignIn()`.
 
-// --- AppSync Service ---
 class AuthService {
+  private getSupabase() {
+    return createClient();
+  }
+
   signup = async (params: InferType<typeof SignUpSchema>, role: UserRole) => {
     try {
-      const { nextStep } = await signUp({
-        username: params.email,
+      const supabase = this.getSupabase();
+      const { data, error } = await supabase.auth.signUp({
+        email: params.email,
         password: params.password,
         options: {
-          userAttributes: { name: params.fullName, "custom:role": role },
-          autoSignIn: true,
+          data: {
+            name: params.fullName,
+            role: role,
+          },
         },
       });
+
+      if (error) return error.message;
     } catch (error) {
       return getErrorMessage(error);
     }
   };
+
   socialSignIn = async (provider: "Google" | "Facebook" | "Apple") => {
     try {
-      // This redirects user to Google for authentication
-      await signInWithRedirect({ provider });
+      const supabase = this.getSupabase();
+      const supabaseProvider = provider.toLowerCase() as "google" | "facebook" | "apple";
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: supabaseProvider,
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+      if (error) return error.message;
     } catch (error) {
       return getErrorMessage(error);
     }
   };
+
   verifySignUp = async (code: string, email: string) => {
     try {
-      // This redirects user to Google for authentication
-      await confirmSignUp({ confirmationCode: code, username: email });
-      await autoSignIn();
-      // Poll for a valid client-side session using the client fetchAuthSession
-      // so the redirect that happens in the UI won't hit the middleware
-      // before the session cookie and tokens are available.
-      const maxAttempts = 10;
-      let attempt = 0;
-      while (attempt < maxAttempts) {
-        try {
-          const session = await fetchAuthSession({ forceRefresh: false });
-          if (session?.tokens) break;
-        } catch (err) {
-          // swallow - we'll retry
-        }
-        await new Promise((resolve) => setTimeout(resolve, 200));
-        attempt++;
-      }
+      const supabase = this.getSupabase();
+      const { error } = await supabase.auth.verifyOtp({
+        email,
+        token: code,
+        type: "signup",
+      });
+      if (error) return error.message;
     } catch (error) {
       return getErrorMessage(error);
     }
   };
+
+  resendSignUpCode = async (email: string) => {
+    try {
+      const supabase = this.getSupabase();
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email,
+      });
+      if (error) return error.message;
+    } catch (error) {
+      return getErrorMessage(error);
+    }
+  };
+
   resetPassword = async (email: string) => {
     try {
-      // This redirects user to Google for authentication
-      await resetPassword({ username: email });
+      const supabase = this.getSupabase();
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}${conts.paths.resetPassword}`,
+      });
+      if (error) return error.message;
     } catch (error) {
       return getErrorMessage(error);
     }
   };
+
   confirmResetPassword = async (
     params: InferType<typeof ResetPasswordSchema>,
     email: string
   ) => {
     try {
-      // This redirects user to Google for authentication
-      await confirmResetPassword({
-        username: email,
-        newPassword: params.newPassword,
-        confirmationCode: params.confirmationCode,
+      const supabase = this.getSupabase();
+      const { error } = await supabase.auth.updateUser({
+        password: params.newPassword,
       });
+      if (error) return error.message;
     } catch (error) {
       return getErrorMessage(error);
     }
   };
+
   signin = async (
     params: InferType<typeof SignInSchema>,
     router: AppRouterInstance
   ) => {
     let redirectLink = conts.paths.dashboard;
     try {
-      const { isSignedIn, nextStep } = await signIn({
-        username: params.email,
+      const supabase = this.getSupabase();
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: params.email,
         password: params.password,
       });
 
-      if (nextStep.signInStep === "CONFIRM_SIGN_UP") {
-        await resendSignUpCode({
-          username: params.email,
-        });
-        redirectLink = `${conts.paths.verify_email}?email=${params.email}`;
-        return { redirectLink };
+      if (error) {
+        if (error.message.toLowerCase().includes("not confirmed") || error.message.toLowerCase().includes("email not confirmed")) {
+          return {
+            error: error.message,
+            redirectLink: `${conts.paths.verify_email}?email=${params.email}`,
+          };
+        }
+        return { error: error.message };
       }
 
-      if (isSignedIn) {
-        // Fetch session to get user attributes/role immediately
-        const session = await fetchAuthSession();
-        const role = session.tokens?.idToken?.payload["custom:role"] as UserRole;
-
-        // Return role so the caller can decide where to redirect
+      if (data.session && data.user) {
+        const role = (data.user.user_metadata?.role as UserRole) || UserRole.shopper;
         return { redirectLink, role };
       }
     } catch (error) {
@@ -130,8 +139,9 @@ class AuthService {
 
   signout = async (router?: AppRouterInstance) => {
     try {
-      await signOut();
-      localStorage.clear(); // Clear local storage including role
+      const supabase = this.getSupabase();
+      await supabase.auth.signOut();
+      localStorage.clear();
       if (router) {
         router.push(conts.paths.home);
       } else {
@@ -143,5 +153,4 @@ class AuthService {
   };
 }
 
-// --- Export a singleton instance ---
 export const authService = new AuthService();

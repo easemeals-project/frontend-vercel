@@ -149,7 +149,6 @@ export default function ProfilePage() {
       message.success("Preferences updated");
     } catch (error: any) {
       message.error("Failed to update preferences");
-      // Revert logic omitted for brevity
     }
   };
 
@@ -229,10 +228,14 @@ export default function ProfilePage() {
     try {
       const { data } = await searchAddresses({ variables: { query: searchText } });
       if (data?.searchAddresses) {
+        if (data.searchAddresses.length === 0) {
+          message.info("No addresses found for this search");
+        }
         setAddressSearchOptions(data.searchAddresses.map((addr: string) => ({ value: addr })));
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Address search failed", err);
+      message.error("Address search service is currently unavailable");
     }
   };
 
@@ -344,11 +347,12 @@ export default function ProfilePage() {
                     const file = e.target.files?.[0];
                     if (!file) return;
                     try {
+                      message.loading({ content: "Uploading...", key: "up-picture" });
                       await uploadProfilePicture({ variables: { file } });
-                      message.success("Profile picture updated");
+                      message.success({ content: "Profile picture updated", key: "up-picture" });
                       refetchProfile();
                     } catch (error: any) {
-                      message.error("Failed to upload: " + error.message);
+                      message.error({ content: "Failed to upload: " + error.message, key: "up-picture" });
                     }
                   }} />
                   <label htmlFor="profile-upload" className="absolute bottom-0 right-0 bg-white rounded-full p-2 shadow-md cursor-pointer hover:bg-gray-50 transition-colors">

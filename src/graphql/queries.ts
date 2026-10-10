@@ -131,6 +131,34 @@ export const GET_MY_ORDER = gql`
   }
 `;
 
+export const GET_MY_VENDOR_PROFILE = gql`
+  query GetMyVendorProfile {
+    myVendorProfile {
+      id
+      businessName
+      ownerName
+      email
+      phone
+      address
+      description
+      pictureURL
+      latitude
+      longitude
+      hours {
+        dayOfWeek
+        isOpen
+        openTime
+        closeTime
+      }
+      foods {
+        id
+        name
+        price
+      }
+    }
+  }
+`;
+
 export const GET_VENDORS = gql`
   query GetVendors {
     vendors {

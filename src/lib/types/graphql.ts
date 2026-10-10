@@ -312,3 +312,38 @@ export type ReverseGeocodeVariables = { lat: number; lon: number };
 
 export type GeocodeAddressResult = { geocodeAddress: { latitude: number; longitude: number } };
 export type GeocodeAddressVariables = { address: string };
+
+export type GetMyVendorProfileResult = { myVendorProfile: Vendor };
+
+export type UpsertVendorProfileVariables = {
+  input: {
+    businessName?: string;
+    ownerName?: string;
+    email: string;
+    phone: string;
+    address: string;
+    description?: string;
+    foodNames?: string[];
+    employmentStatus?: string;
+    monthlyIncome?: number;
+    ndlea_clearance?: boolean;
+    nafdac_registration?: boolean;
+    accept_terms?: boolean;
+  };
+};
+
+export type UpsertVendorProfileResult = { upsertVendorProfile: Vendor };
+
+export type SetBusinessHoursVariables = {
+  hours: {
+    dayOfWeek: number;
+    isOpen: boolean;
+    openTime: string;
+    closeTime: string;
+  }[];
+};
+
+export type SetBusinessHoursResult = { setBusinessHours: Vendor };
+
+export type UpdateVendorPictureVariables = { file: any };
+export type UpdateVendorPictureResult = { updateVendorPicture: Vendor };

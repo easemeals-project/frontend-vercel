@@ -15,7 +15,6 @@ import {
   RegisterUserResult,
   RegisterUserVariables,
 } from "@/lib/types";
-import { fetchUserAttributes } from "aws-amplify/auth";
 import { useMutation } from "@apollo/client/react";
 import { REGISTER_USER } from "@/graphql/mutations";
 

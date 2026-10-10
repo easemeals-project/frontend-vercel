@@ -1,14 +1,14 @@
 "use client";
 
 import { HttpLink } from "@apollo/client";
-import { ConfigProvider, Slider } from 'antd';
+import { ConfigProvider } from 'antd';
 import {
   ApolloNextAppProvider,
   ApolloClient,
   InMemoryCache,
 } from "@apollo/client-integration-nextjs";
 import { SetContextLink } from "@apollo/client/link/context";
-import { fetchAuthSession } from "aws-amplify/auth";
+import { createClient } from "./supabase/client";
 import conts from "./conts";
 
 function makeClient() {
@@ -18,9 +18,10 @@ function makeClient() {
     fetchOptions: { cache: "no-store" },
   });
 
-  const authLink = new SetContextLink(async (prevContext, operation) => {
-    const session = await fetchAuthSession(); // Get the latest token from storage
-    const token = session.tokens?.idToken?.toString();
+  const authLink = new SetContextLink(async (prevContext) => {
+    const supabase = createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
 
     return {
       headers: {
@@ -40,13 +41,13 @@ export function ApolloWrapper({ children }: { children: React.ReactNode }) {
   return (
     <ApolloNextAppProvider makeClient={makeClient}>
       <ConfigProvider
-    theme={{
-      token: {
-        colorPrimary: '#4CAF50', // Your desired primary color for the handle
-      },
-    }}
-  > 
-      {children}
+        theme={{
+          token: {
+            colorPrimary: '#4CAF50',
+          },
+        }}
+      > 
+        {children}
       </ConfigProvider>
     </ApolloNextAppProvider>
   );

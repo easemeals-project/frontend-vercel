@@ -7,7 +7,6 @@ import { useFormik } from "formik";
 import { ConfirmSchema } from "@/lib/types/auth";
 import conts from "@/lib/conts";
 import { authService } from "@/core/services/auth";
-import { resendSignUpCode } from "aws-amplify/auth";
 import OtpInput from "@/app/_components/global/OtpInput";
 
 export default function VerifyEmailForm() {
@@ -75,7 +74,7 @@ export default function VerifyEmailForm() {
     setMsg(null);
     setAuthError(null);
     try {
-      await resendSignUpCode({ username: email });
+      await authService.resendSignUpCode(email);
       setMsg("Code has been resent");
     } catch (error: any) {
       setAuthError("Error resending code.");

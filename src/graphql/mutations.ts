@@ -295,3 +295,41 @@ export const PAY_WITH_WALLET = gql`
     }
   }
 `;
+
+export const UPSERT_VENDOR_PROFILE = gql`
+  mutation UpsertVendorProfile($input: VendorInput!) {
+    upsertVendorProfile(input: $input) {
+      id
+      businessName
+      ownerName
+      email
+      phone
+      address
+      description
+      pictureURL
+    }
+  }
+`;
+
+export const SET_BUSINESS_HOURS = gql`
+  mutation SetBusinessHours($hours: [BusinessHourInput!]!) {
+    setBusinessHours(hours: $hours) {
+      id
+      hours {
+        dayOfWeek
+        isOpen
+        openTime
+        closeTime
+      }
+    }
+  }
+`;
+
+export const UPDATE_VENDOR_PICTURE = gql`
+  mutation UpdateVendorPicture($file: Upload!) {
+    updateVendorPicture(file: $file) {
+      id
+      pictureURL
+    }
+  }
+`;
