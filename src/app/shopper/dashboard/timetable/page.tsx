@@ -94,10 +94,26 @@ export default function TimetablePage() {
         if (p.weeklyBudget) weeklyBudget = p.weeklyBudget;
       } else if (prefsData?.myMealPreferences) {
         const p = prefsData.myMealPreferences;
-        favoriteFoods = p.favoriteMeals.map((m: any) => m.name);
-        dietaryRestrictions = p.dietaryRestrictions;
+        favoriteFoods = p.favoriteMeals?.map((m: any) => m.name) || [];
+        dietaryRestrictions = p.dietaryRestrictions || [];
         weeklyBudget = p.budget || 100000;
       }
+
+      // Default Nigerian staple foods if user has selected fewer than 6
+      const defaultFoods = [
+        "Pounded Yam",
+        "Semovita",
+        "Amala",
+        "Agege Bread",
+        "White Rice",
+        "Fried Plantain"
+      ];
+      const selectedSet = new Set(favoriteFoods);
+      for (const df of defaultFoods) {
+        if (selectedSet.size >= 6) break;
+        selectedSet.add(df);
+      }
+      const finalSelectedFoods = Array.from(selectedSet).slice(0, 6);
 
       // Map selected tab to backend enum
       let budgetTier = "STANDARD";
@@ -109,7 +125,7 @@ export default function TimetablePage() {
       const res = await generateMutation({
         variables: {
           input: {
-            selectedFoods: favoriteFoods.slice(0, 6),
+            selectedFoods: finalSelectedFoods,
             dietaryRestrictions: dietaryRestrictions.map(d => d.toUpperCase().replace("-", "_")),
             budgetType: budgetTier,
             weeklyBudget: weeklyBudget
