@@ -14,7 +14,6 @@ const protectedRoutes = [
 
 const publicAuthRoutes = [
   path.forgotPass,
-  path.resetPassword,
   path.signin,
   path.signup,
   path.verify_email,

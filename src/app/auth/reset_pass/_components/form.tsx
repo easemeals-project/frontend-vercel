@@ -9,6 +9,7 @@ import { EyeOutlined, EyeInvisibleOutlined } from "@ant-design/icons";
 import { ResetPasswordSchema } from "@/lib/types/auth";
 import conts from "@/lib/conts";
 import { authService } from "@/core/services/auth";
+import { createClient } from "@/lib/supabase/client";
 import { MsgType } from "@/lib/types";
 import Link from "next/link";
 
@@ -16,19 +17,10 @@ export function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
+  const [hasRecoverySession, setHasRecoverySession] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
-  // --- Get email from URL ---
-  useEffect(() => {
-    const emailFromUrl = searchParams.get("email");
-    if (emailFromUrl) {
-      setEmail(emailFromUrl);
-    } else {
-      router.push(conts.paths.forgotPass); // No email, send them back
-    }
-  }, [searchParams, router]);
 
   const formik = useFormik({
     initialValues: {
@@ -52,6 +44,38 @@ export function ResetPasswordForm() {
       setSubmitting(false);
     },
   });
+
+  // --- Get email from URL or active recovery session ---
+  useEffect(() => {
+    const initReset = async () => {
+      const supabase = createClient();
+      const emailFromUrl = searchParams.get("email");
+      const codeFromUrl = searchParams.get("code");
+
+      // If PKCE code is in URL from clicking email reset link, exchange it for session
+      if (codeFromUrl && codeFromUrl.length > 6) {
+        await supabase.auth.exchangeCodeForSession(codeFromUrl);
+      }
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        setHasRecoverySession(true);
+        setEmail(emailFromUrl || session.user.email || "");
+        formik.setFieldValue("confirmationCode", "000000");
+        return;
+      }
+
+      if (emailFromUrl) {
+        setEmail(emailFromUrl);
+        if (codeFromUrl && codeFromUrl.length === 6) {
+          formik.setFieldValue("confirmationCode", codeFromUrl);
+        }
+      } else {
+        router.push(conts.paths.forgotPass); // No email and no recovery session, send them back
+      }
+    };
+    initReset();
+  }, [searchParams, router]);
 
   // --- Style to match your sign-in inputs ---
   const getInputClasses = (
@@ -142,23 +166,25 @@ export function ResetPasswordForm() {
         ) : null}
       </div>
 
-      {/* Confirmation Code */}
-      <div className="relative">
-        <label className="block text-sm text-gray-600 mb-2">
-          Enter the code sent to <span className="font-medium">{email}</span>.
-        </label>
+      {/* Confirmation Code (only needed if user didn't arrive via verified email reset link) */}
+      {!hasRecoverySession && (
         <div className="relative">
-          <OtpInput
-            value={formik.values.confirmationCode}
-            onChange={(value) =>
-              formik.setFieldValue("confirmationCode", value)
-            }
-            onBlur={formik.handleBlur}
-            name="confirmationCode"
-            error={formik.errors.confirmationCode}
-          />
+          <label className="block text-sm text-gray-600 mb-2">
+            Enter the code sent to <span className="font-medium">{email}</span>.
+          </label>
+          <div className="relative">
+            <OtpInput
+              value={formik.values.confirmationCode}
+              onChange={(value) =>
+                formik.setFieldValue("confirmationCode", value)
+              }
+              onBlur={formik.handleBlur}
+              name="confirmationCode"
+              error={formik.errors.confirmationCode}
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Submit Button */}
       <div className="pt-4">
