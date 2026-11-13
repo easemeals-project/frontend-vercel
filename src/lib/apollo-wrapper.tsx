@@ -56,12 +56,9 @@ export function ApolloWrapper({ children }: { children: React.ReactNode }) {
       if (type === "recovery") {
         router.replace(conts.paths.resetPassword);
       } else if (type === "signup" || type === "magiclink" || type === "email") {
-        const role = session.user.user_metadata?.role || localStorage.getItem("userRole");
-        if (role === "vendor") {
-          router.replace(conts.paths.vendorOnboarding);
-        } else {
-          router.replace(conts.paths.foodPreferences);
-        }
+        supabase.auth.signOut().finally(() => {
+          router.replace(`${conts.paths.verify_email}?verified=true`);
+        });
       }
     });
   }, [router]);

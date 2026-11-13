@@ -1,7 +1,7 @@
 "use client";
 
 import { Card } from "antd";
-import { MailOutlined, CheckCircleOutlined } from "@ant-design/icons";
+import { MailOutlined, CheckCircleOutlined, LoginOutlined } from "@ant-design/icons";
 import { useEffect, useState, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
@@ -13,23 +13,22 @@ export default function VerifyEmailForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
+  const [isVerified, setIsVerified] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [checkingLink, setCheckingLink] = useState(false);
   const [resending, setResending] = useState(false);
 
-  const redirectAfterVerify = useCallback(
-    (roleOverride?: string) => {
-      sessionStorage.removeItem("pending_signup");
-      const role = roleOverride || localStorage.getItem("userRole");
-      if (role === "vendor") {
-        router.push(conts.paths.vendorOnboarding);
-      } else {
-        router.push(conts.paths.foodPreferences);
-      }
-    },
-    [router]
-  );
+  const markVerified = useCallback(async () => {
+    sessionStorage.removeItem("pending_signup");
+    try {
+      const supabase = createClient();
+      await supabase.auth.signOut();
+    } catch {
+      // ignore signOut errors
+    }
+    setIsVerified(true);
+  }, []);
 
   // Check if user already verified via email link (either in another tab or on phone)
   const checkEmailLinkVerified = useCallback(
@@ -46,12 +45,12 @@ export default function VerifyEmailForm() {
         } = await supabase.auth.getSession();
 
         if (session?.user) {
-          redirectAfterVerify(session.user.user_metadata?.role);
+          await markVerified();
           return true;
         }
 
         // If they verified on another device/tab where cookies weren't shared,
-        // sign in using the pending signup credentials stored during signup
+        // test signing in using the pending signup credentials stored during signup
         const pendingRaw = sessionStorage.getItem("pending_signup");
         if (pendingRaw) {
           const pending = JSON.parse(pendingRaw);
@@ -61,9 +60,7 @@ export default function VerifyEmailForm() {
               password: pending.password,
             });
             if (!error && data?.session) {
-              redirectAfterVerify(
-                pending.role || data.user?.user_metadata?.role
-              );
+              await markVerified();
               return true;
             }
           }
@@ -83,24 +80,33 @@ export default function VerifyEmailForm() {
       }
       return false;
     },
-    [redirectAfterVerify]
+    [markVerified]
   );
 
-  // Get email and code from URL + poll for link verification
+  // Get email, verified flag, and code from URL + poll for link verification
   useEffect(() => {
     const emailFromUrl = searchParams.get("email");
     const codeFromUrl = searchParams.get("code");
+    const verifiedFromUrl = searchParams.get("verified");
 
     if (emailFromUrl) {
       setEmail(emailFromUrl);
     }
 
+    if (verifiedFromUrl === "true") {
+      markVerified();
+      return;
+    }
+
     if (codeFromUrl) {
       const supabase = createClient();
-      supabase.auth.exchangeCodeForSession(codeFromUrl).then(({ error }) => {
-        if (!error) redirectAfterVerify();
+      supabase.auth.exchangeCodeForSession(codeFromUrl).then(() => {
+        markVerified();
       });
-    } else if (!emailFromUrl) {
+      return;
+    }
+
+    if (!emailFromUrl) {
       router.push(conts.paths.signup);
       return;
     }
@@ -111,7 +117,7 @@ export default function VerifyEmailForm() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
       if ((event === "SIGNED_IN" || event === "USER_UPDATED") && session) {
-        redirectAfterVerify(session.user?.user_metadata?.role);
+        markVerified();
       }
     });
 
@@ -125,7 +131,7 @@ export default function VerifyEmailForm() {
       subscription.unsubscribe();
       clearInterval(interval);
     };
-  }, [searchParams, router, checkEmailLinkVerified, redirectAfterVerify]);
+  }, [searchParams, router, checkEmailLinkVerified, markVerified]);
 
   const handleResendLink = async () => {
     setMsg(null);
@@ -150,8 +156,46 @@ export default function VerifyEmailForm() {
     }, 5000);
   };
 
+  if (isVerified) {
+    return (
+      <Card className="border-0 shadow-none bg-transparent">
+        <div className="space-y-6 text-center">
+          <div className="flex flex-col items-center justify-center rounded-2xl bg-green-50/80 border border-green-200 p-8 space-y-4">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-green-600 text-3xl shadow-sm">
+              <CheckCircleOutlined />
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900">
+              Verification Successful!
+            </h1>
+            <p className="text-sm text-gray-600 max-w-xs">
+              Your email address has been verified and your account is now active. You can now sign in to continue.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => router.push(conts.paths.signin)}
+            className="flex w-full items-center justify-center gap-2 rounded-lg cursor-pointer bg-app_primary px-4 py-3 text-base font-medium text-white shadow-sm hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all"
+          >
+            <LoginOutlined />
+            Return to Login Now
+          </button>
+        </div>
+      </Card>
+    );
+  }
+
   return (
     <Card className="border-0 shadow-none bg-transparent">
+      <div className="text-center mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">
+          Verify your email
+        </h1>
+        <p className="mt-2 text-sm text-gray-600">
+          We sent a verification link to your email address. Click the link in your inbox to activate your account.
+        </p>
+      </div>
+
       <div className="space-y-6">
         {authError && (
           <div className="rounded-md border border-red-400 bg-red-100 px-4 py-3 text-red-700 text-sm">
@@ -178,7 +222,7 @@ export default function VerifyEmailForm() {
             </p>
           </div>
           <p className="text-xs text-gray-500 max-w-xs">
-            Open your email and click the verification link. This page will automatically redirect once verified, or you can click <strong>Continue</strong> below.
+            Open your email and click the verification link. This page will automatically update once verified, or you can click <strong>Continue</strong> below.
           </p>
         </div>
 

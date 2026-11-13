@@ -51,8 +51,11 @@ export async function middleware(request: NextRequest) {
 
     const homeUrl = new URL(homeUrlStr, request.url);
 
-    // If they try to visit a public auth page, redirect to their role's home
-    if (publicAuthRoutes.some((route) => pathname.startsWith(route))) {
+    // If they try to visit a public auth page (except verification success screen), redirect to their role's home
+    if (
+      publicAuthRoutes.some((route) => pathname.startsWith(route)) &&
+      !(pathname.startsWith(path.verify_email) && searchParams.get("verified") === "true")
+    ) {
       return NextResponse.redirect(homeUrl);
     }
 

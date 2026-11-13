@@ -13,7 +13,7 @@ export async function GET(request: Request) {
   const supabase = await createClient();
 
   if (code) {
-    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
       if (type === "recovery") {
         return NextResponse.redirect(`${origin}${conts.paths.resetPassword}`);
@@ -21,16 +21,14 @@ export async function GET(request: Request) {
       if (next) {
         return NextResponse.redirect(`${origin}${next}`);
       }
-      const role = data.user?.user_metadata?.role;
-      if (role === "vendor") {
-        return NextResponse.redirect(`${origin}${conts.paths.vendorOnboarding}`);
-      }
-      return NextResponse.redirect(`${origin}${conts.paths.foodPreferences}`);
+      // Sign out temporary signup session so user can log in cleanly from the verification success page
+      await supabase.auth.signOut();
+      return NextResponse.redirect(`${origin}${conts.paths.verify_email}?verified=true`);
     }
   }
 
   if (token_hash && type) {
-    const { data, error } = await supabase.auth.verifyOtp({
+    const { error } = await supabase.auth.verifyOtp({
       type,
       token_hash,
     });
@@ -41,13 +39,12 @@ export async function GET(request: Request) {
       if (next) {
         return NextResponse.redirect(`${origin}${next}`);
       }
-      const role = data.user?.user_metadata?.role;
-      if (role === "vendor") {
-        return NextResponse.redirect(`${origin}${conts.paths.vendorOnboarding}`);
-      }
-      return NextResponse.redirect(`${origin}${conts.paths.foodPreferences}`);
+      await supabase.auth.signOut();
+      return NextResponse.redirect(`${origin}${conts.paths.verify_email}?verified=true`);
     }
   }
 
-  return NextResponse.redirect(`${origin}${conts.paths.signin}`);
+  // Even if PKCE code exchange couldn't complete (e.g. link opened in a different browser/device),
+  // Supabase's /auth/v1/verify endpoint already verified the email before redirecting here.
+  return NextResponse.redirect(`${origin}${conts.paths.verify_email}?verified=true`);
 }

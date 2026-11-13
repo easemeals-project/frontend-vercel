@@ -22,7 +22,7 @@ class AuthService {
         email: params.email,
         password: params.password,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          emailRedirectTo: `${window.location.origin}/auth/callback?type=signup`,
           data: {
             name: params.fullName,
             role: role,
@@ -72,6 +72,9 @@ class AuthService {
       const { error } = await supabase.auth.resend({
         type: "signup",
         email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback?type=signup`,
+        },
       });
       if (error) return error.message;
     } catch (error) {
