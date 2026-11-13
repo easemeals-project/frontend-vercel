@@ -166,26 +166,6 @@ export function ResetPasswordForm() {
         ) : null}
       </div>
 
-      {/* Confirmation Code (only needed if user didn't arrive via verified email reset link) */}
-      {!hasRecoverySession && (
-        <div className="relative">
-          <label className="block text-sm text-gray-600 mb-2">
-            Enter the code sent to <span className="font-medium">{email}</span>.
-          </label>
-          <div className="relative">
-            <OtpInput
-              value={formik.values.confirmationCode}
-              onChange={(value) =>
-                formik.setFieldValue("confirmationCode", value)
-              }
-              onBlur={formik.handleBlur}
-              name="confirmationCode"
-              error={formik.errors.confirmationCode}
-            />
-          </div>
-        </div>
-      )}
-
       {/* Submit Button */}
       <div className="pt-4">
         <button

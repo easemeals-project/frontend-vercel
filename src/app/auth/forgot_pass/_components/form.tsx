@@ -14,12 +14,14 @@ import Link from "next/link";
 export function ForgotPasswordForm() {
   const router = useRouter();
   const [authError, setAuthError] = useState<string | null>(null);
+  const [linkSent, setLinkSent] = useState<boolean>(false);
 
   const formik = useFormik({
     initialValues: { email: "" },
     validationSchema: ForgotPasswordSchema,
     onSubmit: async (values, { setSubmitting }) => {
       setAuthError(null);
+      setLinkSent(false);
       const error = await authService.resetPassword(values.email);
       // show background error
       if (error) {
@@ -28,7 +30,7 @@ export function ForgotPasswordForm() {
           setAuthError(null);
         }, 5000);
       } else {
-        router.push(`${conts.paths.resetPassword}?email=${values.email}`);
+        setLinkSent(true);
       }
       setSubmitting(false);
     },
@@ -52,8 +54,15 @@ export function ForgotPasswordForm() {
   return (
     <form onSubmit={formik.handleSubmit} className="space-y-6">
       {authError && (
-        <div className="rounded-md border border-red-400 bg-red-100 px-4 py-3 text-red-700">
+        <div className="rounded-md border border-red-400 bg-red-100 px-4 py-3 text-red-700 text-sm">
           <p>{authError}</p>
+        </div>
+      )}
+      {linkSent && (
+        <div className="rounded-md border border-green-400 bg-green-100 px-4 py-3 text-green-700 text-sm">
+          <p>
+            Password reset link sent to <strong>{formik.values.email}</strong>! Please check your email inbox and click the link to set a new password.
+          </p>
         </div>
       )}
 
@@ -88,7 +97,7 @@ export function ForgotPasswordForm() {
           disabled={formik.isSubmitting}
           className="flex w-full justify-center rounded-sm cursor-pointer bg-green-400 px-4 py-3 text-base font-medium text-white shadow-sm hover:bg-green-500 disabled:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
         >
-          {formik.isSubmitting ? "Sending Code..." : "Send Reset Code"}
+          {formik.isSubmitting ? "Sending Link..." : "Send Reset Link"}
         </button>
       </div>
       <div>

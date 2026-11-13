@@ -1,14 +1,13 @@
 "use client";
 
 import { Card } from "antd";
+import { MailOutlined, CheckCircleOutlined } from "@ant-design/icons";
 import { useEffect, useState, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useFormik } from "formik";
-import { ConfirmSchema } from "@/lib/types/auth";
+import Link from "next/link";
 import conts from "@/lib/conts";
 import { authService } from "@/core/services/auth";
 import { createClient } from "@/lib/supabase/client";
-import OtpInput from "@/app/_components/global/OtpInput";
 
 export default function VerifyEmailForm() {
   const router = useRouter();
@@ -17,6 +16,7 @@ export default function VerifyEmailForm() {
   const [authError, setAuthError] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [checkingLink, setCheckingLink] = useState(false);
+  const [resending, setResending] = useState(false);
 
   const redirectAfterVerify = useCallback(
     (roleOverride?: string) => {
@@ -37,6 +37,7 @@ export default function VerifyEmailForm() {
       if (isManualClick) {
         setCheckingLink(true);
         setAuthError(null);
+        setMsg(null);
       }
       try {
         const supabase = createClient();
@@ -50,7 +51,7 @@ export default function VerifyEmailForm() {
         }
 
         // If they verified on another device/tab where cookies weren't shared,
-        // try signing in with the pending signup credentials
+        // sign in using the pending signup credentials stored during signup
         const pendingRaw = sessionStorage.getItem("pending_signup");
         if (pendingRaw) {
           const pending = JSON.parse(pendingRaw);
@@ -60,7 +61,9 @@ export default function VerifyEmailForm() {
               password: pending.password,
             });
             if (!error && data?.session) {
-              redirectAfterVerify(pending.role || data.user?.user_metadata?.role);
+              redirectAfterVerify(
+                pending.role || data.user?.user_metadata?.role
+              );
               return true;
             }
           }
@@ -68,7 +71,7 @@ export default function VerifyEmailForm() {
 
         if (isManualClick) {
           setAuthError(
-            "Your email is not verified yet. Please click the verification link in your email or enter the 6-digit code."
+            "Email verification not detected yet. Please click the verification link sent to your inbox first, then click Continue."
           );
         }
       } catch {
@@ -90,22 +93,15 @@ export default function VerifyEmailForm() {
 
     if (emailFromUrl) {
       setEmail(emailFromUrl);
+    }
 
-      // If 6-digit code is present, auto-populate and submit
-      if (codeFromUrl && codeFromUrl.length === 6) {
-        formik.setFieldValue("confirmationCode", codeFromUrl);
-        setTimeout(() => {
-          formik.submitForm();
-        }, 500);
-      } else if (codeFromUrl && codeFromUrl.length > 6) {
-        // PKCE verification code from email link
-        const supabase = createClient();
-        supabase.auth.exchangeCodeForSession(codeFromUrl).then(({ error }) => {
-          if (!error) redirectAfterVerify();
-        });
-      }
-    } else {
-      router.push(conts.paths.signup); // No email, send them back
+    if (codeFromUrl) {
+      const supabase = createClient();
+      supabase.auth.exchangeCodeForSession(codeFromUrl).then(({ error }) => {
+        if (!error) redirectAfterVerify();
+      });
+    } else if (!emailFromUrl) {
+      router.push(conts.paths.signup);
       return;
     }
 
@@ -119,11 +115,11 @@ export default function VerifyEmailForm() {
       }
     });
 
-    // Check immediately and then poll every 4 seconds in case user clicked verification link in email
+    // Check immediately and then poll every 3 seconds
     checkEmailLinkVerified(false);
     const interval = setInterval(() => {
       checkEmailLinkVerified(false);
-    }, 4000);
+    }, 3000);
 
     return () => {
       subscription.unsubscribe();
@@ -131,39 +127,21 @@ export default function VerifyEmailForm() {
     };
   }, [searchParams, router, checkEmailLinkVerified, redirectAfterVerify]);
 
-  const formik = useFormik({
-    initialValues: {
-      confirmationCode: "", // This will be updated by our OTP inputs
-    },
-    validationSchema: ConfirmSchema,
-    onSubmit: async (values, { setSubmitting }) => {
-      const error = await authService.verifySignUp(
-        values.confirmationCode,
-        email
-      );
-      // show background error
-      if (error) {
-        setAuthError(error);
-        setTimeout(() => {
-          setAuthError(null);
-        }, 5000);
-        setSubmitting(false);
-      } else {
-        redirectAfterVerify();
-      }
-    },
-  });
-
-  // ------------------------------------------
-
-  const handleResendCode = async () => {
+  const handleResendLink = async () => {
     setMsg(null);
     setAuthError(null);
+    setResending(true);
     try {
-      await authService.resendSignUpCode(email);
-      setMsg("Code has been resent");
-    } catch (error: any) {
-      setAuthError("Error resending code.");
+      const err = await authService.resendSignUpCode(email);
+      if (err) {
+        setAuthError(err);
+      } else {
+        setMsg("Verification link has been resent to your email!");
+      }
+    } catch {
+      setAuthError("Error resending verification link.");
+    } finally {
+      setResending(false);
     }
 
     setTimeout(() => {
@@ -173,65 +151,74 @@ export default function VerifyEmailForm() {
   };
 
   return (
-    <Card>
-      <form onSubmit={formik.handleSubmit} className="space-y-6">
+    <Card className="border-0 shadow-none bg-transparent">
+      <div className="space-y-6">
         {authError && (
-          <div className="rounded-md border border-red-400 bg-red-100 px-4 py-3 text-red-700">
+          <div className="rounded-md border border-red-400 bg-red-100 px-4 py-3 text-red-700 text-sm">
             <p>{authError}</p>
           </div>
         )}
         {msg && (
-          <div className="rounded-md border border-green-400 bg-green-100 px-4 py-3 text-green-700">
+          <div className="rounded-md border border-green-400 bg-green-100 px-4 py-3 text-green-700 text-sm">
             <p>{msg}</p>
           </div>
         )}
 
-        <OtpInput
-          value={formik.values.confirmationCode}
-          onChange={(value) => formik.setFieldValue("confirmationCode", value)}
-          onBlur={formik.handleBlur}
-          name="confirmationCode"
-          error={formik.errors.confirmationCode}
-        />
+        {/* Email Info Box */}
+        <div className="flex flex-col items-center justify-center rounded-2xl bg-green-50/80 border border-green-200 p-6 text-center space-y-3">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-green-100 text-green-600 text-2xl">
+            <MailOutlined />
+          </div>
+          <div className="space-y-1">
+            <p className="text-sm text-gray-600">
+              Verification link sent to:
+            </p>
+            <p className="text-base font-bold text-gray-900 break-all">
+              {email}
+            </p>
+          </div>
+          <p className="text-xs text-gray-500 max-w-xs">
+            Open your email and click the verification link. This page will automatically redirect once verified, or you can click <strong>Continue</strong> below.
+          </p>
+        </div>
 
-        {/* Submit Button */}
-        <div className="space-y-3">
-          <button
-            type="submit"
-            disabled={formik.isSubmitting || !formik.isValid}
-            // Styles to match your image (light green button)
-            className="flex w-full justify-center rounded-sm cursor-pointer bg-green-400 px-4 py-3 text-base font-medium text-white shadow-sm hover:bg-green-500 disabled:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-          >
-            {formik.isSubmitting ? "Verifying..." : "Verify code"}
-          </button>
-
+        {/* Primary Continue Button */}
+        <div>
           <button
             type="button"
             disabled={checkingLink}
             onClick={() => checkEmailLinkVerified(true)}
-            className="flex w-full justify-center rounded-sm cursor-pointer border border-green-500 bg-white px-4 py-2.5 text-sm font-medium text-green-600 shadow-sm hover:bg-green-50 disabled:opacity-50"
+            className="flex w-full items-center justify-center gap-2 rounded-lg cursor-pointer bg-app_primary px-4 py-3 text-base font-medium text-white shadow-sm hover:opacity-95 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all"
           >
-            {checkingLink
-              ? "Checking verification status..."
-              : "Clicked the verification link in your email? Continue"}
+            <CheckCircleOutlined />
+            {checkingLink ? "Checking Verification..." : "I've Verified My Email — Continue"}
           </button>
         </div>
 
-        {/* Resend Code Link */}
-        <div className="text-center">
+        {/* Resend Link & Back to Sign In */}
+        <div className="text-center space-y-3">
           <p className="text-sm text-gray-600">
-            Didn't receive the code?{" "}
+            Didn&apos;t receive the email?{" "}
             <button
               type="button"
-              onClick={handleResendCode}
-              // Style to match your image (green link)
-              className="font-medium text-green-600 cursor-pointer hover:text-green-500"
+              disabled={resending}
+              onClick={handleResendLink}
+              className="font-semibold text-green-600 cursor-pointer hover:text-green-500 disabled:opacity-50"
             >
-              Resend code
+              {resending ? "Sending..." : "Resend verification link"}
             </button>
           </p>
+          <p className="text-xs text-gray-500">
+            Already verified?{" "}
+            <Link
+              href={conts.paths.signin}
+              className="font-medium text-app_primary hover:underline"
+            >
+              Sign in here
+            </Link>
+          </p>
         </div>
-      </form>
+      </div>
     </Card>
   );
 }

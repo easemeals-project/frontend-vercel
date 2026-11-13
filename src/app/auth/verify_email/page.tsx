@@ -17,7 +17,7 @@ export default function VerifyEmailPage() {
                 Verify your email
               </h1>
               <p className="mt-2 text-sm text-gray-600">
-                Enter the 6-digit code we sent to your email address.
+                We sent a verification link to your email address. Click the link in your inbox to activate your account.
               </p>
             </div>
 
