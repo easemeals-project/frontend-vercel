@@ -1,12 +1,13 @@
 "use client";
 
 import { Card } from "antd";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useFormik } from "formik";
 import { ConfirmSchema } from "@/lib/types/auth";
 import conts from "@/lib/conts";
 import { authService } from "@/core/services/auth";
+import { createClient } from "@/lib/supabase/client";
 import OtpInput from "@/app/_components/global/OtpInput";
 
 export default function VerifyEmailForm() {
@@ -15,8 +16,74 @@ export default function VerifyEmailForm() {
   const [email, setEmail] = useState("");
   const [authError, setAuthError] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
+  const [checkingLink, setCheckingLink] = useState(false);
 
-  // Get email and code from URL
+  const redirectAfterVerify = useCallback(
+    (roleOverride?: string) => {
+      sessionStorage.removeItem("pending_signup");
+      const role = roleOverride || localStorage.getItem("userRole");
+      if (role === "vendor") {
+        router.push(conts.paths.vendorOnboarding);
+      } else {
+        router.push(conts.paths.foodPreferences);
+      }
+    },
+    [router]
+  );
+
+  // Check if user already verified via email link (either in another tab or on phone)
+  const checkEmailLinkVerified = useCallback(
+    async (isManualClick = false) => {
+      if (isManualClick) {
+        setCheckingLink(true);
+        setAuthError(null);
+      }
+      try {
+        const supabase = createClient();
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
+        if (session?.user) {
+          redirectAfterVerify(session.user.user_metadata?.role);
+          return true;
+        }
+
+        // If they verified on another device/tab where cookies weren't shared,
+        // try signing in with the pending signup credentials
+        const pendingRaw = sessionStorage.getItem("pending_signup");
+        if (pendingRaw) {
+          const pending = JSON.parse(pendingRaw);
+          if (pending?.email && pending?.password) {
+            const { data, error } = await supabase.auth.signInWithPassword({
+              email: pending.email,
+              password: pending.password,
+            });
+            if (!error && data?.session) {
+              redirectAfterVerify(pending.role || data.user?.user_metadata?.role);
+              return true;
+            }
+          }
+        }
+
+        if (isManualClick) {
+          setAuthError(
+            "Your email is not verified yet. Please click the verification link in your email or enter the 6-digit code."
+          );
+        }
+      } catch {
+        // Ignore background polling errors
+      } finally {
+        if (isManualClick) {
+          setCheckingLink(false);
+        }
+      }
+      return false;
+    },
+    [redirectAfterVerify]
+  );
+
+  // Get email and code from URL + poll for link verification
   useEffect(() => {
     const emailFromUrl = searchParams.get("email");
     const codeFromUrl = searchParams.get("code");
@@ -24,18 +91,45 @@ export default function VerifyEmailForm() {
     if (emailFromUrl) {
       setEmail(emailFromUrl);
 
-      // If code is present, auto-populate and submit
+      // If 6-digit code is present, auto-populate and submit
       if (codeFromUrl && codeFromUrl.length === 6) {
         formik.setFieldValue("confirmationCode", codeFromUrl);
-        // We trigger submit in the next tick to ensure state is updated
         setTimeout(() => {
           formik.submitForm();
         }, 500);
+      } else if (codeFromUrl && codeFromUrl.length > 6) {
+        // PKCE verification code from email link
+        const supabase = createClient();
+        supabase.auth.exchangeCodeForSession(codeFromUrl).then(({ error }) => {
+          if (!error) redirectAfterVerify();
+        });
       }
     } else {
       router.push(conts.paths.signup); // No email, send them back
+      return;
     }
-  }, [searchParams, router]);
+
+    // Listen for auth state changes across tabs
+    const supabase = createClient();
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if ((event === "SIGNED_IN" || event === "USER_UPDATED") && session) {
+        redirectAfterVerify(session.user?.user_metadata?.role);
+      }
+    });
+
+    // Check immediately and then poll every 4 seconds in case user clicked verification link in email
+    checkEmailLinkVerified(false);
+    const interval = setInterval(() => {
+      checkEmailLinkVerified(false);
+    }, 4000);
+
+    return () => {
+      subscription.unsubscribe();
+      clearInterval(interval);
+    };
+  }, [searchParams, router, checkEmailLinkVerified, redirectAfterVerify]);
 
   const formik = useFormik({
     initialValues: {
@@ -55,15 +149,7 @@ export default function VerifyEmailForm() {
         }, 5000);
         setSubmitting(false);
       } else {
-        // Wait for authService.verifySignUp to confirm the session is present
-        // (it polls fetchAuthSession), then push to the appropriate route.
-        const role = localStorage.getItem("userRole"); // Assuming role is stored in localStorage during signup/login
-
-        if (role === "vendor") {
-          router.push(conts.paths.vendorOnboarding);
-        } else {
-          router.push(conts.paths.foodPreferences);
-        }
+        redirectAfterVerify();
       }
     },
   });
@@ -109,7 +195,7 @@ export default function VerifyEmailForm() {
         />
 
         {/* Submit Button */}
-        <div>
+        <div className="space-y-3">
           <button
             type="submit"
             disabled={formik.isSubmitting || !formik.isValid}
@@ -117,6 +203,17 @@ export default function VerifyEmailForm() {
             className="flex w-full justify-center rounded-sm cursor-pointer bg-green-400 px-4 py-3 text-base font-medium text-white shadow-sm hover:bg-green-500 disabled:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
           >
             {formik.isSubmitting ? "Verifying..." : "Verify code"}
+          </button>
+
+          <button
+            type="button"
+            disabled={checkingLink}
+            onClick={() => checkEmailLinkVerified(true)}
+            className="flex w-full justify-center rounded-sm cursor-pointer border border-green-500 bg-white px-4 py-2.5 text-sm font-medium text-green-600 shadow-sm hover:bg-green-50 disabled:opacity-50"
+          >
+            {checkingLink
+              ? "Checking verification status..."
+              : "Clicked the verification link in your email? Continue"}
           </button>
         </div>
 

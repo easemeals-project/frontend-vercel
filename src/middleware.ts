@@ -23,7 +23,18 @@ const publicAuthRoutes = [
 // This function can be marked `async` if using `await` inside
 export async function middleware(request: NextRequest) {
   const response = NextResponse.next();
-  const { pathname } = request.nextUrl;
+  const { pathname, searchParams } = request.nextUrl;
+
+  // If Supabase email verification or recovery redirects to the root URL with ?code= or ?token_hash=,
+  // forward it immediately to /auth/callback so the session is exchanged and redirected properly.
+  if (
+    pathname === "/" &&
+    (searchParams.has("code") || searchParams.has("token_hash"))
+  ) {
+    const callbackUrl = new URL("/auth/callback", request.url);
+    searchParams.forEach((val, key) => callbackUrl.searchParams.set(key, val));
+    return NextResponse.redirect(callbackUrl);
+  }
 
   const authData = await getAuthUserServer();
   const isAuthenticated = !!authData;
@@ -90,6 +101,7 @@ export async function middleware(request: NextRequest) {
 // `config.matcher` must be statically analyzable by Next.js
 export const config = {
   matcher: [
+    "/",
     "/shopper/:path*",
     "/vendor/:path*",
     "/chef/:path*",
