@@ -30,7 +30,8 @@ export default function SignUpForm() {
 
   const handleSocials = async (provider: "Google" | "Facebook" | "Apple") => {
     setAuthError(null);
-    const error = await authService.socialSignIn(provider);
+    localStorage.setItem("userRole", role);
+    const error = await authService.socialSignIn(provider, role);
     // show background error
     if (error) {
       setAuthError(error);

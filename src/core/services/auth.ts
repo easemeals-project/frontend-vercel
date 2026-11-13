@@ -36,14 +36,18 @@ class AuthService {
     }
   };
 
-  socialSignIn = async (provider: "Google" | "Facebook" | "Apple") => {
+  socialSignIn = async (
+    provider: "Google" | "Facebook" | "Apple",
+    role?: UserRole
+  ) => {
     try {
       const supabase = this.getSupabase();
       const supabaseProvider = provider.toLowerCase() as "google" | "facebook" | "apple";
+      const roleParam = role ? `&role=${encodeURIComponent(role)}` : "";
       const { error } = await supabase.auth.signInWithOAuth({
         provider: supabaseProvider,
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `${window.location.origin}/auth/callback?type=oauth${roleParam}`,
         },
       });
       if (error) return error.message;
