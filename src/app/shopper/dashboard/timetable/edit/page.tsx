@@ -459,6 +459,82 @@ function MealEditor({ day, type, composition, onUpdate }: { day: string, type: s
   );
 }
 
+const SLOT_SUGGESTIONS: Record<string, { id: string; name: string; price: number; category: string }[]> = {
+  base: [
+    { id: "Jollof Rice", name: "Jollof Rice", price: 1500, category: "BASE" },
+    { id: "White Rice", name: "White Rice", price: 1200, category: "BASE" },
+    { id: "Ofada Rice", name: "Ofada Rice", price: 1500, category: "BASE" },
+    { id: "Basmati Rice", name: "Basmati Rice", price: 1800, category: "BASE" },
+    { id: "Native Rice", name: "Native Rice", price: 1500, category: "BASE" },
+    { id: "Pounded Yam", name: "Pounded Yam", price: 1000, category: "BASE" },
+    { id: "Amala", name: "Amala", price: 800, category: "BASE" },
+    { id: "Semovita", name: "Semovita", price: 800, category: "BASE" },
+    { id: "Garri", name: "Garri", price: 600, category: "BASE" },
+    { id: "Fufu", name: "Fufu", price: 800, category: "BASE" },
+    { id: "Starch", name: "Starch", price: 800, category: "BASE" },
+    { id: "Wheat", name: "Wheat", price: 800, category: "BASE" },
+    { id: "White Spaghetti", name: "White Spaghetti", price: 1000, category: "BASE" },
+    { id: "Yam Pottage", name: "Yam Pottage", price: 1200, category: "BASE" },
+    { id: "Big Boiled Yam", name: "Big Boiled Yam", price: 1000, category: "BASE" },
+    { id: "Fried Yam", name: "Fried Yam", price: 950, category: "BASE" },
+    { id: "Agege Bread", name: "Agege Bread", price: 1000, category: "BASE" },
+    { id: "Toast Bread", name: "Toast Bread", price: 800, category: "BASE" },
+    { id: "Pap", name: "Pap", price: 600, category: "BASE" },
+    { id: "Custard", name: "Custard", price: 600, category: "BASE" },
+    { id: "Oat", name: "Oat", price: 700, category: "BASE" },
+    { id: "Pancake", name: "Pancake", price: 1000, category: "BASE" },
+    { id: "Waffle Crunch", name: "Waffle Crunch", price: 1200, category: "BASE" },
+  ],
+  protein: [
+    { id: "Turkey", name: "Turkey", price: 2000, category: "PROTEIN" },
+    { id: "Stew Chicken", name: "Stew Chicken", price: 2400, category: "PROTEIN" },
+    { id: "Beef", name: "Beef", price: 1000, category: "PROTEIN" },
+    { id: "Goat Meat", name: "Goat Meat", price: 1500, category: "PROTEIN" },
+    { id: "Croaker Fish", name: "Croaker Fish", price: 2200, category: "PROTEIN" },
+    { id: "Catfish", name: "Catfish", price: 1500, category: "PROTEIN" },
+    { id: "Titus Fish", name: "Titus Fish", price: 1200, category: "PROTEIN" },
+    { id: "Tilapia Fish", name: "Tilapia Fish", price: 1700, category: "PROTEIN" },
+    { id: "Hake Fish", name: "Hake Fish", price: 1200, category: "PROTEIN" },
+    { id: "Snail Big", name: "Snail Big", price: 3400, category: "PROTEIN" },
+    { id: "Stock Fish", name: "Stock Fish", price: 3500, category: "PROTEIN" },
+    { id: "Cow Leg Medium", name: "Cow Leg Medium", price: 1800, category: "PROTEIN" },
+    { id: "Ponmo", name: "Ponmo", price: 600, category: "PROTEIN" },
+    { id: "Boiled Egg", name: "Boiled Egg", price: 400, category: "PROTEIN" },
+    { id: "Scrambled Egg", name: "Scrambled Egg", price: 800, category: "PROTEIN" },
+    { id: "Omelette", name: "Omelette", price: 800, category: "PROTEIN" },
+    { id: "Akara", name: "Akara", price: 500, category: "PROTEIN" },
+    { id: "Moi Moi Leaf", name: "Moi Moi Leaf", price: 600, category: "PROTEIN" },
+    { id: "Sausage", name: "Sausage", price: 500, category: "PROTEIN" },
+  ],
+  soup: [
+    { id: "Egusi", name: "Egusi", price: 800, category: "SOUP" },
+    { id: "Efo Riro", name: "Efo Riro", price: 800, category: "SOUP" },
+    { id: "Ewedu", name: "Ewedu", price: 500, category: "SOUP" },
+    { id: "Gbegiri", name: "Gbegiri", price: 500, category: "SOUP" },
+    { id: "Ogbono", name: "Ogbono", price: 800, category: "SOUP" },
+    { id: "Afang", name: "Afang", price: 900, category: "SOUP" },
+    { id: "Edikaikong", name: "Edikaikong", price: 900, category: "SOUP" },
+    { id: "Banga & Fish", name: "Banga & Fish", price: 1350, category: "SOUP" },
+    { id: "Bitterleaf Soup", name: "Bitterleaf Soup", price: 800, category: "SOUP" },
+    { id: "Mixed Okro", name: "Mixed Okro", price: 700, category: "SOUP" },
+    { id: "Plain Okro", name: "Plain Okro", price: 600, category: "SOUP" },
+    { id: "Ofada Sauce", name: "Ofada Sauce", price: 1100, category: "SOUP" },
+    { id: "Fish Sauce", name: "Fish Sauce", price: 850, category: "SOUP" },
+  ],
+  side: [
+    { id: "Fried Plantain", name: "Fried Plantain", price: 500, category: "SIDE" },
+    { id: "Moi Moi Leaf", name: "Moi Moi Leaf", price: 500, category: "SIDE" },
+    { id: "Plastic Moi-Moi", name: "Plastic Moi-Moi", price: 500, category: "SIDE" },
+    { id: "Stewed Beans", name: "Stewed Beans", price: 500, category: "SIDE" },
+    { id: "Boiled Plantain", name: "Boiled Plantain", price: 500, category: "SIDE" },
+    { id: "Diced Plantain", name: "Diced Plantain", price: 500, category: "SIDE" },
+    { id: "Green Vegetable", name: "Green Vegetable", price: 500, category: "SIDE" },
+    { id: "Chicken Spring Roll", name: "Chicken Spring Roll", price: 500, category: "SIDE" },
+    { id: "Deep Fried Samosa", name: "Deep Fried Samosa", price: 500, category: "SIDE" },
+    { id: "French Fries", name: "French Fries", price: 650, category: "SIDE" },
+  ],
+};
+
 function SlotSelector({ label, value, onSelect, onRemove }: { label: string, value: any, onSelect: (food: any) => void, onRemove?: () => void }) {
   const [options, setOptions] = useState<{ value: string, label: string, food: any }[]>([]);
   const [searchValue, setSearchValue] = useState("");
@@ -466,20 +542,48 @@ function SlotSelector({ label, value, onSelect, onRemove }: { label: string, val
 
   const [searchFoods, { loading, data }] = useLazyQuery<GetMealSuggestionsResult>(GET_MEAL_SUGGESTIONS);
 
-  useEffect(() => {
-    if (data?.searchFoods) {
-      setOptions(data.searchFoods.map((f: any) => ({
-        value: f.name,
-        label: `${f.name} - ₦${f.price || 500}`,
-        food: f
-      })));
+  const slotKey = label.toLowerCase().startsWith("side") ? "side" : label.toLowerCase();
+
+  const updateDropdownOptions = (queryText: string, remoteFoods?: any[]) => {
+    const q = queryText.trim().toLowerCase();
+    const localList = SLOT_SUGGESTIONS[slotKey] || SLOT_SUGGESTIONS.base;
+    const filteredLocal = localList.filter((item) => q === "" || item.name.toLowerCase().includes(q));
+
+    const remoteMapped = (remoteFoods || []).map((f: any) => ({
+      id: f.id || f.name,
+      name: f.name,
+      price: f.price || 500,
+      category: f.category || slotKey.toUpperCase(),
+    }));
+
+    const seen = new Set<string>();
+    const combined: { value: string; label: string; food: any }[] = [];
+
+    for (const item of [...remoteMapped, ...filteredLocal]) {
+      const key = item.name.toLowerCase();
+      if (!seen.has(key)) {
+        seen.add(key);
+        combined.push({
+          value: item.name,
+          label: `${item.name} - ₦${(item.price || 500).toLocaleString()}`,
+          food: item,
+        });
+      }
+      if (combined.length >= 12) break;
     }
-  }, [data]);
+
+    setOptions(combined);
+  };
+
+  useEffect(() => {
+    updateDropdownOptions(searchValue, data?.searchFoods);
+  }, [data, searchValue, slotKey]);
 
   const handleSearch = (v: string) => {
     setSearchValue(v);
-    if (v.length > 2) {
-      searchFoods({ variables: { query: v, limit: 10 } });
+    updateDropdownOptions(v, data?.searchFoods);
+    if (v.trim().length >= 1) {
+      searchFoods({ variables: { query: v.trim(), limit: 10 } });
     }
   };
 
@@ -500,12 +604,14 @@ function SlotSelector({ label, value, onSelect, onRemove }: { label: string, val
         onSelect={(val, opt) => {
           onSelect(opt.food);
           setSearchValue("");
+          setIsFocused(false);
         }}
         value={isFocused ? searchValue : (isSet ? value.name : "")}
         className="w-full"
         onFocus={() => {
           setIsFocused(true);
-          if (isSet) setSearchValue(value.name);
+          setSearchValue("");
+          updateDropdownOptions("", data?.searchFoods);
         }}
         onBlur={() => {
           setTimeout(() => {
