@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { getAuthUserServer } from "./lib/utils/auth-utils";
+import { createServerClient } from "@supabase/ssr";
 import conts from "./lib/conts";
 import { UserRole } from "./lib/types";
 
@@ -22,7 +22,11 @@ const publicAuthRoutes = [
 
 // This function can be marked `async` if using `await` inside
 export async function middleware(request: NextRequest) {
-  const response = NextResponse.next();
+  let response = NextResponse.next({
+    request: {
+      headers: request.headers,
+    },
+  });
   const { pathname, searchParams } = request.nextUrl;
 
   // If Supabase email verification or recovery redirects to the root URL with ?code= or ?token_hash=,
@@ -36,25 +40,55 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(callbackUrl);
   }
 
-  const authData = await getAuthUserServer();
-  const isAuthenticated = !!authData;
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "",
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value)
+          );
+          response = NextResponse.next({
+            request: {
+              headers: request.headers,
+            },
+          });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options)
+          );
+        },
+      },
+    }
+  );
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  const isAuthenticated = !!session?.user;
 
   const signInUrl = new URL(conts.paths.signin, request.url);
 
   if (isAuthenticated) {
-    const userRole = authData.user?.role?.toLowerCase();
+    const userRole = (session.user.user_metadata?.role || "shopper").toLowerCase();
 
     // Determine home based on role
-    let homeUrlStr = path.shopper; // Default/Shopper home (now /shopper/dashboard)
+    let homeUrlStr = path.timetable; // Default/Shopper home (/shopper/dashboard/timetable)
     if (userRole === UserRole.chef.toLowerCase()) homeUrlStr = path.chef;
-    else if (userRole === UserRole.vendor.toLowerCase()) homeUrlStr = path.vendor;
+    else if (userRole === UserRole.vendor.toLowerCase()) homeUrlStr = path.vendorDashboard;
 
     const homeUrl = new URL(homeUrlStr, request.url);
 
-    // If they try to visit a public auth page (except verification success screen), redirect to their role's home
+    // Redirect logged-in users from landing page (/), /shopper root, or public auth pages directly to timetable/home
     if (
-      publicAuthRoutes.some((route) => pathname.startsWith(route)) &&
-      !(pathname.startsWith(path.verify_email) && searchParams.get("verified") === "true")
+      pathname === "/" ||
+      pathname === path.shopper ||
+      (publicAuthRoutes.some((route) => pathname.startsWith(route)) &&
+        !(pathname.startsWith(path.verify_email) && searchParams.get("verified") === "true"))
     ) {
       return NextResponse.redirect(homeUrl);
     }

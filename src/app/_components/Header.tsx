@@ -8,12 +8,36 @@ import conts from "@/lib/conts";
 import uniqid from "uniqid";
 import { HeaderProps } from "@/lib/types";
 import { authService } from "@/core/services/auth";
+import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 
 export default function Header({ user }: HeaderProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    // Client-side session check: if user reopens tab on landing page while logged in, redirect to timetable
+    const checkSession = async () => {
+      if (user) {
+        router.replace(
+          user.role?.toLowerCase() === "vendor"
+            ? conts.paths.vendorDashboard
+            : conts.paths.timetable
+        );
+        return;
+      }
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const role = (session.user.user_metadata?.role || "shopper").toLowerCase();
+        router.replace(
+          role === "vendor" ? conts.paths.vendorDashboard : conts.paths.timetable
+        );
+      }
+    };
+    checkSession();
+  }, [user, router]);
 
   useEffect(() => {
     const handleScroll = () => {
