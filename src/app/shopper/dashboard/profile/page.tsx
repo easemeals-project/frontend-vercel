@@ -755,10 +755,12 @@ export default function ProfilePage() {
             <div className="bg-white rounded-3xl shadow-xl p-8 border border-gray-100/50">
               <h2 className="text-xl font-bold text-text1 mb-4">Quick Actions</h2>
               <div className="space-y-4">
-                <button disabled className="w-full flex items-center gap-3 p-4 bg-gray-50/50 cursor-not-allowed rounded-lg ring-2 ring-gray-100 transition-colors">
+                <button
+                  onClick={() => router.push("/privacy")}
+                  className="w-full flex items-center gap-3 p-4 hover:bg-gray-50 cursor-pointer rounded-lg ring-2 ring-gray-100 transition-colors"
+                >
                   <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center"><FiShield className="text-blue-600! size-5" /></div>
-                  <div className="text-left flex-1"><div className="font-semibold text-text1">Privacy & Security</div><div className="text-sm text-text2">Manage settings</div></div>
-                  <Tag color="orange">Coming Soon</Tag>
+                  <div className="text-left flex-1"><div className="font-semibold text-text1">Privacy &amp; Security</div><div className="text-sm text-text2">Terms &amp; Privacy Policy</div></div>
                 </button>
                 <button disabled className="w-full flex items-center ring-2 ring-gray-100 bg-gray-50/50 cursor-not-allowed gap-3 p-4 rounded-lg transition-colors">
                   <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center"><MdOutlinePayment className="text-green-600! size-5" /></div>

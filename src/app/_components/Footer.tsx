@@ -135,10 +135,18 @@ export default function Footer() {
         </div>
 
         {/* Bottom Bar */}
-        <div className="mt-12 border-t border-gray-800 pt-8 text-center text-sm text-gray-400">
+        <div className="mt-12 border-t border-gray-800 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-400">
           <p>
             &copy; {new Date().getFullYear()} EaseMeals. All rights reserved.
           </p>
+          <div className="flex items-center gap-6">
+            <Link href={conts.paths.terms} className="hover:text-green-400 transition-colors">
+              Terms &amp; Conditions
+            </Link>
+            <Link href={conts.paths.privacy} className="hover:text-green-400 transition-colors">
+              Privacy Policy
+            </Link>
+          </div>
         </div>
       </div>
     </footer>
