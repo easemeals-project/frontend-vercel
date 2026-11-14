@@ -5,7 +5,7 @@ export const REGISTER_USER = gql`
     registerUser(name: $name, role: $role) {
       id
       name
-      role
+      roles
     }
   }
 `;
@@ -15,8 +15,11 @@ export const UPDATE_PROFILE = gql`
     updateMyProfile(input: $input) {
       id
       name
+      email
       phone
-      deliveryAddress
+      pictureURL
+      memberSince
+      totalOrders
     }
   }
 `;

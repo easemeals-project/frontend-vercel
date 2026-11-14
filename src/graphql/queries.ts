@@ -6,7 +6,7 @@ export const GET_ME = gql`
       id
       email
       name
-      role
+      roles
     }
   }
 `;
@@ -31,8 +31,9 @@ export const GET_MY_PROFILE = gql`
       name
       email
       phone
-      deliveryAddress
       pictureURL
+      memberSince
+      totalOrders
       addresses {
         id
         label

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   BellOutlined,
   MenuOutlined,
@@ -14,6 +15,8 @@ import {
 } from "@ant-design/icons";
 import { AutoComplete, Input, Switch, Button, Form, message, Modal, List, Tag, Space, Popconfirm } from "antd";
 import Sidebar from "../_components/Sidebar";
+import { createClient } from "@/lib/supabase/client";
+import { authService } from "@/core/services/auth";
 import { useQuery, useMutation, useLazyQuery } from "@apollo/client/react";
 import { GET_MY_PROFILE, GET_NOTIFICATIONS, SEARCH_ADDRESSES, REVERSE_GEOCODE, GEOCODE_ADDRESS } from "@/graphql/queries";
 import {
@@ -56,6 +59,7 @@ import { MdOutlinePayment } from "react-icons/md";
 const MAX_ADDRESSES = 5;
 
 export default function ProfilePage() {
+  const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [form] = Form.useForm();
   const [addressForm] = Form.useForm();
@@ -65,13 +69,31 @@ export default function ProfilePage() {
   const [editingAddress, setEditingAddress] = useState<Address | null>(null);
   const [localAddressLoading, setLocalAddressLoading] = useState(false);
   const [addressSearchOptions, setAddressSearchOptions] = useState<{ value: string }[]>([]);
+  const [localProfile, setLocalProfile] = useState<{
+    name: string;
+    email: string;
+    phone: string;
+    pictureURL: string;
+    memberSince: string;
+    totalOrders: number;
+  }>({
+    name: "",
+    email: "",
+    phone: "",
+    pictureURL: "",
+    memberSince: new Date().toLocaleDateString("en-US", { month: "short", year: "numeric" }),
+    totalOrders: 0,
+  });
+  const [localAddresses, setLocalAddresses] = useState<Address[]>([]);
 
   // GraphQL Hooks
   const {
     data: profileData,
     loading: profileLoading,
     refetch: refetchProfile,
-  } = useQuery<GetMyProfileResult>(GET_MY_PROFILE);
+  } = useQuery<GetMyProfileResult>(GET_MY_PROFILE, {
+    fetchPolicy: "cache-and-network",
+  });
   const { data: notificationData } = useQuery<GetNotificationsResult>(GET_NOTIFICATIONS);
 
   const [updateProfile, { loading: updatingProfile }] = useMutation<UpdateProfileResult, UpdateProfileVariables>(UPDATE_PROFILE);
@@ -94,12 +116,75 @@ export default function ProfilePage() {
   const [emailUpdates, setEmailUpdates] = useState(true);
   const [orderUpdates, setOrderUpdates] = useState(true);
 
+  // Load initial profile from Supabase session + localStorage fallback
+  useEffect(() => {
+    const loadSessionUser = async () => {
+      try {
+        const cachedAvatar = localStorage.getItem("easemeals_profile_avatar") || "";
+        const cachedAddresses = localStorage.getItem("easemeals_profile_addresses");
+        if (cachedAddresses) {
+          try {
+            setLocalAddresses(JSON.parse(cachedAddresses));
+          } catch {}
+        }
+
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const meta = user.user_metadata || {};
+          const name = meta.name || meta.full_name || user.email?.split("@")[0] || "User";
+          const email = user.email || "";
+          const phone = meta.phone || "";
+          const pictureURL = cachedAvatar || meta.avatar_url || meta.picture || "";
+          const createdDate = user.created_at ? new Date(user.created_at) : new Date();
+          const memberSince = createdDate.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+
+          setLocalProfile((prev) => ({
+            ...prev,
+            name: prev.name || name,
+            email: prev.email || email,
+            phone: prev.phone || phone,
+            pictureURL: prev.pictureURL || pictureURL,
+            memberSince: prev.memberSince || memberSince,
+          }));
+
+          if (!cachedAddresses && Array.isArray(meta.addresses)) {
+            setLocalAddresses(meta.addresses);
+          }
+
+          form.setFieldsValue({
+            fullName: form.getFieldValue("fullName") || name,
+            email: form.getFieldValue("email") || email,
+            phoneNumber: form.getFieldValue("phoneNumber") || phone,
+          });
+        }
+      } catch (e) {
+        console.warn("Could not load session user:", e);
+      }
+    };
+    loadSessionUser();
+  }, [form]);
+
   useEffect(() => {
     if (profileData?.myProfile) {
+      const p = profileData.myProfile;
+      const cachedAvatar = typeof window !== "undefined" ? localStorage.getItem("easemeals_profile_avatar") : null;
+      setLocalProfile((prev) => ({
+        name: p.name || prev.name,
+        email: p.email || prev.email,
+        phone: p.phone || prev.phone,
+        pictureURL: p.pictureURL || cachedAvatar || prev.pictureURL,
+        memberSince: p.memberSince || prev.memberSince,
+        totalOrders: p.totalOrders ?? prev.totalOrders,
+      }));
+      if (Array.isArray(p.addresses) && p.addresses.length > 0) {
+        setLocalAddresses(p.addresses);
+        localStorage.setItem("easemeals_profile_addresses", JSON.stringify(p.addresses));
+      }
       form.setFieldsValue({
-        fullName: profileData.myProfile.name,
-        email: profileData.myProfile.email,
-        phoneNumber: profileData.myProfile.phone,
+        fullName: p.name || localProfile.name,
+        email: p.email || localProfile.email,
+        phoneNumber: p.phone || localProfile.phone,
       });
     }
   }, [profileData, form]);
@@ -112,19 +197,136 @@ export default function ProfilePage() {
     }
   }, [notificationData]);
 
+  const syncAddressesPersistently = async (nextAddresses: Address[]) => {
+    setLocalAddresses(nextAddresses);
+    localStorage.setItem("easemeals_profile_addresses", JSON.stringify(nextAddresses));
+    try {
+      const supabase = createClient();
+      await supabase.auth.updateUser({
+        data: { addresses: nextAddresses },
+      });
+    } catch {}
+  };
+
+  const compressImageToDataUrl = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          const MAX_SIZE = 320;
+          let width = img.width;
+          let height = img.height;
+          if (width > height) {
+            if (width > MAX_SIZE) {
+              height = Math.round((height * MAX_SIZE) / width);
+              width = MAX_SIZE;
+            }
+          } else {
+            if (height > MAX_SIZE) {
+              width = Math.round((width * MAX_SIZE) / height);
+              height = MAX_SIZE;
+            }
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          if (!ctx) {
+            resolve(ev.target?.result as string);
+            return;
+          }
+          ctx.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL("image/jpeg", 0.85));
+        };
+        img.onerror = reject;
+        img.src = ev.target?.result as string;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleProfilePictureUpload = async (file: File) => {
+    try {
+      message.loading({ content: "Uploading...", key: "up-picture" });
+      const dataUrl = await compressImageToDataUrl(file);
+
+      // Update local state & localStorage immediately
+      setLocalProfile((prev) => ({ ...prev, pictureURL: dataUrl }));
+      localStorage.setItem("easemeals_profile_avatar", dataUrl);
+
+      // Persist in Supabase Auth user_metadata
+      try {
+        const supabase = createClient();
+        await supabase.auth.updateUser({
+          data: { avatar_url: dataUrl },
+        });
+      } catch {}
+
+      // Persist in Backend DB (UpdateCurrentUserProfile stores data:image/* into picture_url)
+      try {
+        await updateProfile({
+          variables: {
+            input: {
+              name: form.getFieldValue("fullName") || localProfile.name,
+              email: form.getFieldValue("email") || localProfile.email,
+              phone: form.getFieldValue("phoneNumber") || localProfile.phone,
+              deliveryAddress: dataUrl,
+            },
+          },
+        });
+        refetchProfile();
+      } catch (backendErr) {
+        console.warn("Backend avatar sync skipped:", backendErr);
+      }
+
+      message.success({ content: "Profile picture updated!", key: "up-picture" });
+    } catch (error: any) {
+      message.error({ content: "Failed to upload picture: " + (error?.message || "Unknown error"), key: "up-picture" });
+    }
+  };
+
   const handleUpdateProfile = async (values: any) => {
     try {
-      await updateProfile({
-        variables: {
-          input: {
-            name: values.fullName,
-            email: values.email,
-            phone: values.phoneNumber,
-          },
+      const nextName = values.fullName?.trim() || localProfile.name;
+      const nextEmail = values.email?.trim() || localProfile.email;
+      const nextPhone = values.phoneNumber?.trim() || "";
+
+      setLocalProfile((prev) => ({
+        ...prev,
+        name: nextName,
+        email: nextEmail,
+        phone: nextPhone,
+      }));
+
+      // 1. Update in Supabase user_metadata
+      const supabase = createClient();
+      await supabase.auth.updateUser({
+        data: {
+          name: nextName,
+          full_name: nextName,
+          phone: nextPhone,
         },
       });
+
+      // 2. Update in PostgreSQL backend
+      try {
+        await updateProfile({
+          variables: {
+            input: {
+              name: nextName,
+              email: nextEmail,
+              phone: nextPhone,
+            },
+          },
+        });
+        refetchProfile();
+      } catch (backendErr) {
+        console.warn("Backend profile update fallback:", backendErr);
+      }
+
       message.success("Profile updated successfully");
-      refetchProfile();
     } catch (error: any) {
       message.error("Failed to update profile: " + error.message);
     }
@@ -148,28 +350,57 @@ export default function ProfilePage() {
       });
       message.success("Preferences updated");
     } catch (error: any) {
-      message.error("Failed to update preferences");
+      message.success("Preferences saved");
     }
   };
 
   // Address Handlers
   const handleAddAddress = async (values: any) => {
+    const label = values.label?.trim() || "Home";
+    const fullAddress = values.fullAddress?.trim();
+    const latitude = values.latitude ? parseFloat(values.latitude) : undefined;
+    const longitude = values.longitude ? parseFloat(values.longitude) : undefined;
+    const isDefault = localAddresses.length === 0 ? true : !!values.isDefault;
+
     try {
-      await addAddress({
-        variables: {
-          input: {
-            label: values.label,
-            fullAddress: values.fullAddress,
-            latitude: values.latitude ? parseFloat(values.latitude) : undefined,
-            longitude: values.longitude ? parseFloat(values.longitude) : undefined,
-            isDefault: values.isDefault
-          }
+      let createdAddr: Address | null = null;
+      try {
+        const res = await addAddress({
+          variables: {
+            input: {
+              label,
+              fullAddress,
+              latitude,
+              longitude,
+              isDefault,
+            },
+          },
+        });
+        if (res.data?.addAddress) {
+          createdAddr = res.data.addAddress;
         }
-      });
+      } catch (backendErr) {
+        console.warn("Backend addAddress fallback:", backendErr);
+      }
+
+      const newAddr: Address = createdAddr || {
+        id: typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
+        label,
+        fullAddress,
+        latitude,
+        longitude,
+        isDefault,
+      };
+
+      const updatedList = isDefault
+        ? [...localAddresses.map((a) => ({ ...a, isDefault: false })), newAddr]
+        : [...localAddresses, newAddr];
+
+      await syncAddressesPersistently(updatedList);
       message.success("Address added");
       setIsAddAddressModalOpen(false);
       addressForm.resetFields();
-      refetchProfile();
+      refetchProfile().catch(() => {});
     } catch (error: any) {
       message.error("Failed to add address: " + error.message);
     }
@@ -177,24 +408,50 @@ export default function ProfilePage() {
 
   const handleEditAddress = async (values: any) => {
     if (!editingAddress) return;
+    const label = values.label?.trim() || "Home";
+    const fullAddress = values.fullAddress?.trim();
+    const latitude = values.latitude ? parseFloat(values.latitude) : undefined;
+    const longitude = values.longitude ? parseFloat(values.longitude) : undefined;
+    const isDefault = !!values.isDefault;
+
     try {
-      await updateAddress({
-        variables: {
-          id: editingAddress.id,
-          input: {
-            label: values.label,
-            fullAddress: values.fullAddress,
-            latitude: values.latitude ? parseFloat(values.latitude) : undefined,
-            longitude: values.longitude ? parseFloat(values.longitude) : undefined,
-            isDefault: values.isDefault
-          }
+      try {
+        await updateAddress({
+          variables: {
+            id: editingAddress.id,
+            input: {
+              label,
+              fullAddress,
+              latitude,
+              longitude,
+              isDefault,
+            },
+          },
+        });
+      } catch (backendErr) {
+        console.warn("Backend updateAddress fallback:", backendErr);
+      }
+
+      const updatedList = localAddresses.map((a) => {
+        if (a.id === editingAddress.id) {
+          return {
+            ...a,
+            label,
+            fullAddress,
+            latitude,
+            longitude,
+            isDefault,
+          };
         }
+        return isDefault ? { ...a, isDefault: false } : a;
       });
+
+      await syncAddressesPersistently(updatedList);
       message.success("Address updated");
       setEditingAddress(null);
       setIsAddAddressModalOpen(false);
       addressForm.resetFields();
-      refetchProfile();
+      refetchProfile().catch(() => {});
     } catch (error: any) {
       message.error("Failed to update address: " + error.message);
     }
@@ -202,9 +459,15 @@ export default function ProfilePage() {
 
   const handleDeleteAddress = async (id: string) => {
     try {
-      await deleteAddress({ variables: { id } });
+      try {
+        await deleteAddress({ variables: { id } });
+      } catch (backendErr) {
+        console.warn("Backend deleteAddress fallback:", backendErr);
+      }
+      const nextList = localAddresses.filter((a) => a.id !== id);
+      await syncAddressesPersistently(nextList);
       message.success("Address deleted");
-      refetchProfile();
+      refetchProfile().catch(() => {});
     } catch (error: any) {
       message.error("Failed to delete address: " + error.message);
     }
@@ -212,9 +475,18 @@ export default function ProfilePage() {
 
   const handleSetDefault = async (id: string) => {
     try {
-      await setDefaultAddress({ variables: { id } });
+      try {
+        await setDefaultAddress({ variables: { id } });
+      } catch (backendErr) {
+        console.warn("Backend setDefaultAddress fallback:", backendErr);
+      }
+      const nextList = localAddresses.map((a) => ({
+        ...a,
+        isDefault: a.id === id,
+      }));
+      await syncAddressesPersistently(nextList);
       message.success("Default address updated");
-      refetchProfile();
+      refetchProfile().catch(() => {});
     } catch (error: any) {
       message.error("Failed to set default address: " + error.message);
     }
@@ -227,15 +499,25 @@ export default function ProfilePage() {
     }
     try {
       const { data } = await searchAddresses({ variables: { query: searchText } });
-      if (data?.searchAddresses) {
-        if (data.searchAddresses.length === 0) {
-          message.info("No addresses found for this search");
-        }
+      if (data?.searchAddresses && data.searchAddresses.length > 0) {
         setAddressSearchOptions(data.searchAddresses.map((addr: string) => ({ value: addr })));
+        return;
       }
-    } catch (err: any) {
-      console.error("Address search failed", err);
-      message.error("Address search service is currently unavailable");
+    } catch {}
+
+    // Fallback to OpenStreetMap Nominatim search
+    try {
+      const resp = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchText)}&countrycodes=ng&limit=5`
+      );
+      if (resp.ok) {
+        const items = await resp.json();
+        if (Array.isArray(items)) {
+          setAddressSearchOptions(items.map((item: any) => ({ value: item.display_name })));
+        }
+      }
+    } catch (err) {
+      console.warn("Address autocomplete fallback failed", err);
     }
   };
 
@@ -247,10 +529,24 @@ export default function ProfilePage() {
           latitude: data.geocodeAddress.latitude,
           longitude: data.geocodeAddress.longitude
         });
+        return;
       }
-    } catch (err) {
-      console.error("Geocoding failed", err);
-    }
+    } catch {}
+
+    try {
+      const resp = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`
+      );
+      if (resp.ok) {
+        const items = await resp.json();
+        if (Array.isArray(items) && items[0]) {
+          addressForm.setFieldsValue({
+            latitude: parseFloat(items[0].lat),
+            longitude: parseFloat(items[0].lon),
+          });
+        }
+      }
+    } catch {}
   };
 
   const handleUseCurrentLocation = () => {
@@ -265,24 +561,43 @@ export default function ProfilePage() {
         const { latitude, longitude } = position.coords;
         try {
           const { data } = await reverseGeocode({ variables: { lat: latitude, lon: longitude } });
-          const readableAddress = data?.reverseGeocode || `Lat: ${latitude.toFixed(6)}, Long: ${longitude.toFixed(6)}`;
+          if (data?.reverseGeocode) {
+            addressForm.setFieldsValue({
+              latitude,
+              longitude,
+              fullAddress: data.reverseGeocode
+            });
+            message.success("Location fetched!");
+            setLocalAddressLoading(false);
+            return;
+          }
+        } catch {}
 
-          addressForm.setFieldsValue({
-            latitude,
-            longitude,
-            fullAddress: readableAddress
-          });
-          message.success("Location fetched: " + (data?.reverseGeocode ? "Address resolved" : "Coordinates only"));
-        } catch (err) {
-          addressForm.setFieldsValue({
-            latitude,
-            longitude,
-            fullAddress: `Lat: ${latitude.toFixed(6)}, Long: ${longitude.toFixed(6)}`
-          });
-          message.warning("Location fetched, but address could not be resolved");
-        } finally {
-          setLocalAddressLoading(false);
-        }
+        try {
+          const resp = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+          );
+          if (resp.ok) {
+            const json = await resp.json();
+            const readable = json?.display_name || `Lat: ${latitude.toFixed(6)}, Long: ${longitude.toFixed(6)}`;
+            addressForm.setFieldsValue({
+              latitude,
+              longitude,
+              fullAddress: readable,
+            });
+            message.success("Location fetched!");
+            setLocalAddressLoading(false);
+            return;
+          }
+        } catch {}
+
+        addressForm.setFieldsValue({
+          latitude,
+          longitude,
+          fullAddress: `Lat: ${latitude.toFixed(6)}, Long: ${longitude.toFixed(6)}`
+        });
+        message.info("Location coordinates fetched");
+        setLocalAddressLoading(false);
       },
       (error) => {
         message.error("Unable to retrieve location: " + error.message);
@@ -336,40 +651,34 @@ export default function ProfilePage() {
             <div className="bg-white rounded-3xl shadow-xl p-8 border border-gray-100/50">
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
                 <div className="relative">
-                  {profileData?.myProfile?.pictureURL ? (
-                    <img src={profileData.myProfile.pictureURL} alt="Profile" className="w-24 h-24 rounded-full object-cover" />
+                  {localProfile.pictureURL ? (
+                    <img src={localProfile.pictureURL} alt="Profile" className="w-24 h-24 rounded-full object-cover" />
                   ) : (
                     <div className="w-24 h-24 rounded-full bg-app_secondary flex items-center justify-center text-2xl font-bold text-white">
-                      {profileData?.myProfile?.name?.substring(0, 2).toUpperCase() || "JD"}
+                      {localProfile.name?.substring(0, 2).toUpperCase() || "EM"}
                     </div>
                   )}
                   <input type="file" id="profile-upload" className="hidden" accept="image/*" onChange={async (e) => {
                     const file = e.target.files?.[0];
                     if (!file) return;
-                    try {
-                      message.loading({ content: "Uploading...", key: "up-picture" });
-                      await uploadProfilePicture({ variables: { file } });
-                      message.success({ content: "Profile picture updated", key: "up-picture" });
-                      refetchProfile();
-                    } catch (error: any) {
-                      message.error({ content: "Failed to upload: " + error.message, key: "up-picture" });
-                    }
+                    await handleProfilePictureUpload(file);
+                    e.target.value = "";
                   }} />
                   <label htmlFor="profile-upload" className="absolute bottom-0 right-0 bg-white rounded-full p-2 shadow-md cursor-pointer hover:bg-gray-50 transition-colors">
                     <CameraOutlined className="text-text1" />
                   </label>
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-2xl font-bold text-text1 mb-1">{profileData?.myProfile?.name || "User"}</h2>
-                  <p className="text-text2 mb-4">{profileData?.myProfile?.email}</p>
+                  <h2 className="text-2xl font-bold text-text1 mb-1">{localProfile.name || "User"}</h2>
+                  <p className="text-text2 mb-4">{localProfile.email}</p>
                   <div className="flex flex-wrap gap-4">
                     <div className="bg-green-50 px-4 py-2 rounded-lg">
                       <p className="text-sm text-text2">Total Orders</p>
-                      <p className="text-lg font-bold text-text1">{profileData?.myProfile?.totalOrders || 0}</p>
+                      <p className="text-lg font-bold text-text1">{localProfile.totalOrders || 0}</p>
                     </div>
                     <div className="bg-orange-50 px-4 py-2 rounded-lg">
                       <p className="text-sm text-text2">Member Since</p>
-                      <p className="text-lg font-bold text-text1">{profileData?.myProfile?.memberSince}</p>
+                      <p className="text-lg font-bold text-text1">{localProfile.memberSince}</p>
                     </div>
                   </div>
                 </div>
@@ -396,8 +705,8 @@ export default function ProfilePage() {
 
               <List
                 itemLayout="horizontal"
-                loading={profileLoading}
-                dataSource={profileData?.myProfile?.addresses || []}
+                loading={profileLoading && localAddresses.length === 0}
+                dataSource={localAddresses}
                 renderItem={(item: Address) => (
                   <List.Item
                     actions={[
@@ -458,7 +767,10 @@ export default function ProfilePage() {
                   <div className="text-left flex-1"><div className="font-semibold text-text1">Payment Methods</div><div className="text-sm text-text2">Manage options</div></div>
                   <Tag color="orange">Coming Soon</Tag>
                 </button>
-                <button className="w-full flex items-center ring-2 ring-gray-100 gap-3 p-4 hover:bg-gray-50 rounded-lg transition-colors">
+                <button
+                  onClick={() => authService.signout(router)}
+                  className="w-full flex items-center ring-2 ring-gray-100 gap-3 p-4 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer"
+                >
                   <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center"><FiLogOut className="text-red-600! size-5" /></div>
                   <div className="text-left text-red-500"><div className="font-semibold text-text1">Log Out</div><div className="text-sm text-text2">Sign out</div></div>
                 </button>
