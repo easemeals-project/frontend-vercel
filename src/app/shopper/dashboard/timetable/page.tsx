@@ -23,6 +23,7 @@ import { useQuery, useMutation } from "@apollo/client/react";
 import { GET_MEAL_SUGGESTIONS, GET_MEAL_BY_NAME, GET_MY_MEAL_PREFERENCES, GET_LATEST_MEAL_PLAN } from "@/graphql/queries";
 import { GENERATE_RAG_MEAL_PLAN, SAVE_WEEKLY_MEAL_PLAN } from "@/graphql/mutations";
 import CalendarExportModal from "./_components/CalendarExportModal";
+import FeedbackModal from "./_components/FeedbackModal";
 import {
   GetMealSuggestionsResult,
   GetMealByNameResult,
@@ -56,6 +57,7 @@ export default function TimetablePage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [calendarModalOpen, setCalendarModalOpen] = useState(false);
+  const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
 
   // Fetch prefs if needed
   const { data: prefsData } = useQuery<GetMyMealPreferencesResult>(GET_MY_MEAL_PREFERENCES, {
@@ -168,6 +170,10 @@ export default function TimetablePage() {
           setTimeout(() => {
             setCalendarModalOpen(true);
           }, 500);
+        } else if (!localStorage.getItem("easemeals_feedback_shown")) {
+          setTimeout(() => {
+            setFeedbackModalOpen(true);
+          }, 1200);
         }
       }
 
@@ -391,6 +397,11 @@ export default function TimetablePage() {
         localStorage.setItem("currentTimetable", planStr);
         sessionStorage.setItem("currentTimetable", planStr);
         setIsInitialLoad(false);
+        if (!localStorage.getItem("easemeals_feedback_shown")) {
+          setTimeout(() => {
+            setFeedbackModalOpen(true);
+          }, 1500);
+        }
         return;
       }
 
@@ -646,8 +657,21 @@ export default function TimetablePage() {
       {/* Calendar Export Modal */}
       <CalendarExportModal
         open={calendarModalOpen}
-        onClose={() => setCalendarModalOpen(false)}
+        onClose={() => {
+          setCalendarModalOpen(false);
+          if (!localStorage.getItem("easemeals_feedback_shown")) {
+            setTimeout(() => {
+              setFeedbackModalOpen(true);
+            }, 600);
+          }
+        }}
         weeklyPlan={weeklyPlan}
+      />
+
+      {/* One-Time Feedback Modal */}
+      <FeedbackModal
+        open={feedbackModalOpen}
+        onClose={() => setFeedbackModalOpen(false)}
       />
     </div>
   );
