@@ -238,24 +238,6 @@ export default function SignInForm() {
                 <FcGoogle className="mr-4 scale-150" />
                 Sign in with Google
               </button>
-
-              <button
-                type="button"
-                onClick={() => handleSocials("Facebook")}
-                className="w-full cursor-pointer flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-[#1877F2] hover:bg-[#166fe5] transition-colors"
-              >
-                <FaFacebook className="mr-4 scale-150" />
-                Sign in with Facebook
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleSocials("Apple")}
-                className="w-full cursor-pointer flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-black hover:bg-gray-900 transition-colors"
-              >
-                <FaApple className="mr-4 scale-150 mb-1" />
-                Sign in with Apple
-              </button>
             </div>
           </>
         )}
