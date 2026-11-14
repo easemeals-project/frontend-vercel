@@ -530,24 +530,20 @@ export default function TimetablePage() {
 
             {/* Tabs */}
             <div className="flex gap-8 border-b border-gray-200 px-2 overflow-x-auto custom-scrollbar whitespace-nowrap">
-              {[
-                { key: "Low Budget", label: "Low Budget (₦2,000 - ₦4,500)" },
-                { key: "Healthy", label: "Medium / Healthy (₦3,500 - ₦6,500)" },
-                { key: "Luxury", label: "High / Luxury (> ₦7,000)" },
-              ].map((tab) => (
+              {["Low Budget", "Healthy", "Luxury"].map((tab) => (
                 <button
-                  key={tab.key}
+                  key={tab}
                   onClick={() => {
-                    setSelectedBudget(tab.key);
-                    generateTimetable(tab.key);
+                    setSelectedBudget(tab);
+                    generateTimetable(tab);
                   }}
-                  className={`pb-4 px-2 text-sm font-bold transition-all relative cursor-pointer ${selectedBudget === tab.key
+                  className={`pb-4 px-2 text-sm font-bold transition-all relative ${selectedBudget === tab
                     ? "text-app_secondary"
                     : "text-text2 hover:text-text1"
                     }`}
                 >
-                  {tab.label}
-                  {selectedBudget === tab.key && (
+                  {tab}
+                  {selectedBudget === tab && (
                     <span className="absolute bottom-0 left-0 w-full h-1 bg-app_secondary rounded-t-full shadow-[0_-2px_4px_rgba(255,107,53,0.2)]" />
                   )}
                 </button>
@@ -630,27 +626,18 @@ export default function TimetablePage() {
               <h3 className="text-base font-bold text-text1 mb-6">
                 Nutrition Summary
               </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="bg-orange-50 border border-orange-100 p-4 rounded-2xl flex flex-col justify-center">
-                  <p className="text-[10px] font-black uppercase tracking-wider text-orange-600 mb-1">Average Cost Per Meal</p>
-                  <p className="text-2xl font-black text-text1">
-                    {weeklyPlan ? `₦${Math.round(weeklyPlan.weeklyCost / 21).toLocaleString()}` : "₦0"}
-                  </p>
-                  <p className="text-[11px] font-semibold text-text2 mt-0.5">
-                    Target: {selectedBudget === "Low Budget" ? "₦2,000 - ₦4,500" : selectedBudget === "Luxury" ? "> ₦7,000" : "₦3,500 - ₦6,500"}
-                  </p>
-                </div>
-                <div className="bg-blue-50 border border-blue-100 p-4 rounded-2xl flex flex-col justify-center">
-                  <p className="text-[10px] font-black uppercase tracking-wider text-blue-600 mb-1">Daily Average Cost (3 Meals)</p>
+                  <p className="text-[10px] font-black uppercase tracking-wider text-orange-600 mb-1">Weekly Average Cost</p>
                   <p className="text-2xl font-black text-text1">
                     {weeklyPlan ? `₦${Math.round(weeklyPlan.weeklyCost / 7).toLocaleString()}` : "₦0"}
                   </p>
                 </div>
                 <div className="bg-green-50 border border-green-100 p-4 rounded-2xl flex flex-col justify-center">
-                  <p className="text-[10px] font-black uppercase tracking-wider text-green-700 mb-1">Budget Tier</p>
+                  <p className="text-[10px] font-black uppercase tracking-wider text-green-700 mb-1">Budget Status</p>
                   <div className="flex items-center gap-2">
                     <p className="text-2xl font-black text-text1 uppercase">
-                      {selectedBudget === "Low Budget" ? "LOW" : selectedBudget === "Luxury" ? "HIGH" : "MEDIUM"}
+                      {weeklyPlan?.budgetTier || "Standard"}
                     </p>
                     <FaCheck className="text-app_primary text-lg" />
                   </div>
