@@ -135,9 +135,21 @@ export default function ProfilePage() {
           const name = meta.name || meta.full_name || user.email?.split("@")[0] || "User";
           const email = user.email || "";
           const phone = meta.phone || "";
-          const pictureURL = cachedAvatar || meta.avatar_url || meta.picture || "";
+          const metaAvatar =
+            typeof meta.avatar_url === "string" && !meta.avatar_url.startsWith("data:")
+              ? meta.avatar_url
+              : typeof meta.picture === "string" && !meta.picture.startsWith("data:")
+              ? meta.picture
+              : "";
+          const pictureURL = cachedAvatar || metaAvatar;
           const createdDate = user.created_at ? new Date(user.created_at) : new Date();
           const memberSince = createdDate.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+
+          // If a base64 data URI was previously saved in user_metadata, strip it so cookies stay small
+          if (typeof meta.avatar_url === "string" && meta.avatar_url.startsWith("data:")) {
+            localStorage.setItem("easemeals_profile_avatar", meta.avatar_url);
+            supabase.auth.updateUser({ data: { avatar_url: null } }).catch(() => {});
+          }
 
           setLocalProfile((prev) => ({
             ...prev,
@@ -200,12 +212,6 @@ export default function ProfilePage() {
   const syncAddressesPersistently = async (nextAddresses: Address[]) => {
     setLocalAddresses(nextAddresses);
     localStorage.setItem("easemeals_profile_addresses", JSON.stringify(nextAddresses));
-    try {
-      const supabase = createClient();
-      await supabase.auth.updateUser({
-        data: { addresses: nextAddresses },
-      });
-    } catch {}
   };
 
   const compressImageToDataUrl = (file: File): Promise<string> => {
@@ -252,17 +258,9 @@ export default function ProfilePage() {
       message.loading({ content: "Uploading...", key: "up-picture" });
       const dataUrl = await compressImageToDataUrl(file);
 
-      // Update local state & localStorage immediately
+      // Update local state & localStorage immediately (never put base64 images in Supabase user_metadata/cookies!)
       setLocalProfile((prev) => ({ ...prev, pictureURL: dataUrl }));
       localStorage.setItem("easemeals_profile_avatar", dataUrl);
-
-      // Persist in Supabase Auth user_metadata
-      try {
-        const supabase = createClient();
-        await supabase.auth.updateUser({
-          data: { avatar_url: dataUrl },
-        });
-      } catch {}
 
       // Persist in Backend DB (UpdateCurrentUserProfile stores data:image/* into picture_url)
       try {
