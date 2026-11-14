@@ -219,6 +219,14 @@ export default function CalendarExportModal({ open, onClose, weeklyPlan }: Calen
                         {connecting ? "Connecting..." : "Connect"}
                     </button>
 
+                    <button
+                        type="button"
+                        onClick={handleClose}
+                        className="w-full py-2 text-xs font-semibold text-text2 hover:text-text1 transition-colors"
+                    >
+                        Maybe Later
+                    </button>
+
                     <p className="text-center text-xs text-text2 pb-1">
                         {selected === "apple" || selected === "notion"
                             ? "Downloads an .ics file that works with any calendar"

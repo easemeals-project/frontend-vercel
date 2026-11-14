@@ -154,11 +154,21 @@ export default function TimetablePage() {
 
       if (res.data?.generateRAGMealPlan) {
         const generated = res.data.generateRAGMealPlan;
+        const isFirstTimeGeneration =
+          !localStorage.getItem("onboarding_complete") ||
+          !localStorage.getItem("calendar_prompt_shown");
         setWeeklyPlan(generated);
         sessionStorage.setItem("currentTimetable", JSON.stringify(generated));
         localStorage.setItem("currentTimetable", JSON.stringify(generated));
         localStorage.setItem("onboarding_complete", "true");
         autoSavePlan(generated);
+
+        if (isFirstTimeGeneration) {
+          localStorage.setItem("calendar_prompt_shown", "true");
+          setTimeout(() => {
+            setCalendarModalOpen(true);
+          }, 500);
+        }
       }
 
     } catch (e) {
