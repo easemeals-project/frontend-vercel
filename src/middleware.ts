@@ -83,10 +83,17 @@ export async function middleware(request: NextRequest) {
 
     const homeUrl = new URL(homeUrlStr, request.url);
 
-    // Redirect logged-in users from landing page (/), /shopper root, or public auth pages directly to timetable/home
+    // Redirect logged-in users from landing page (/), /shopper root, hidden MVP routes, or public auth pages directly to timetable/home
+    const hiddenMvpRoutes = [
+      path.vendors,
+      path.schedule,
+      path.wallet,
+      path.event,
+    ];
     if (
       pathname === "/" ||
       pathname === path.shopper ||
+      hiddenMvpRoutes.some((route) => pathname.startsWith(route)) ||
       (publicAuthRoutes.some((route) => pathname.startsWith(route)) &&
         !(pathname.startsWith(path.verify_email) && searchParams.get("verified") === "true"))
     ) {

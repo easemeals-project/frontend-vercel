@@ -23,26 +23,27 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       path: conts.paths.timetable,
       icon: <CalendarOutlined />,
     },
-    {
-      name: "Vendors",
-      path: conts.paths.vendors,
-      icon: <ShopOutlined />,
-    },
-    {
-      name: "Schedule",
-      path: conts.paths.schedule,
-      icon: <ClockCircleOutlined />,
-    },
-    {
-      name: "Wallet",
-      path: conts.paths.wallet,
-      icon: <WalletOutlined />,
-    },
-    {
-      name: "Event",
-      path: conts.paths.event,
-      icon: <CalendarOutlined />,
-    },
+    // Hidden for initial MVP:
+    // {
+    //   name: "Vendors",
+    //   path: conts.paths.vendors,
+    //   icon: <ShopOutlined />,
+    // },
+    // {
+    //   name: "Schedule",
+    //   path: conts.paths.schedule,
+    //   icon: <ClockCircleOutlined />,
+    // },
+    // {
+    //   name: "Wallet",
+    //   path: conts.paths.wallet,
+    //   icon: <WalletOutlined />,
+    // },
+    // {
+    //   name: "Event",
+    //   path: conts.paths.event,
+    //   icon: <CalendarOutlined />,
+    // },
     {
       name: "Profile",
       path: conts.paths.profile,
