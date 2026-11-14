@@ -91,6 +91,18 @@ export default function EditTimetablePage() {
     };
   };
 
+  const autoSaveEditedPlan = (planToSave: WeeklyMealPlan) => {
+    const planStr = JSON.stringify(planToSave);
+    localStorage.setItem("currentTimetable", planStr);
+    sessionStorage.setItem("currentTimetable", planStr);
+
+    const input = convertToInput(planToSave);
+    input.name = "Edited Meal Plan " + new Date().toLocaleDateString();
+    saveMutation({ variables: { input } }).catch(e => {
+      console.warn("Background auto-save to backend failed:", e);
+    });
+  };
+
   const handleRecalculate = async (currentPlan: WeeklyMealPlan) => {
     try {
       const input = convertToInput(currentPlan);
@@ -99,9 +111,13 @@ export default function EditTimetablePage() {
       });
       if (res.data?.recalculateMealPlan) {
         setWeeklyPlan(res.data.recalculateMealPlan);
+        autoSaveEditedPlan(res.data.recalculateMealPlan);
+      } else {
+        autoSaveEditedPlan(currentPlan);
       }
     } catch (e) {
       console.error("Recalculate failed", e);
+      autoSaveEditedPlan(currentPlan);
     }
   };
 

@@ -153,10 +153,12 @@ export default function TimetablePage() {
       });
 
       if (res.data?.generateRAGMealPlan) {
-        setWeeklyPlan(res.data.generateRAGMealPlan);
-        sessionStorage.setItem("currentTimetable", JSON.stringify(res.data.generateRAGMealPlan));
-        localStorage.setItem("currentTimetable", JSON.stringify(res.data.generateRAGMealPlan));
+        const generated = res.data.generateRAGMealPlan;
+        setWeeklyPlan(generated);
+        sessionStorage.setItem("currentTimetable", JSON.stringify(generated));
+        localStorage.setItem("currentTimetable", JSON.stringify(generated));
         localStorage.setItem("onboarding_complete", "true");
+        autoSavePlan(generated);
       }
 
     } catch (e) {
@@ -315,15 +317,14 @@ export default function TimetablePage() {
     setCalendarModalOpen(true);
   };
 
-  const handleSavePlan = async () => {
-    if (!weeklyPlan) return;
+  const autoSavePlan = async (planToSave: WeeklyMealPlan) => {
+    if (!planToSave) return;
 
     try {
-      // Convert current plan to input format
       const input: any = {};
       DAYS.forEach(day => {
         const d = day.toLowerCase();
-        const daily = (weeklyPlan as any)[d];
+        const daily = (planToSave as any)[d];
         input[d] = {
           breakfast: {
             base: daily.breakfast.base ? { id: daily.breakfast.base.id || daily.breakfast.base.name, quantity: 1 } : null,
@@ -346,26 +347,15 @@ export default function TimetablePage() {
         };
       });
 
-      input.weeklyCost = weeklyPlan.weeklyCost;
-      input.budgetTier = weeklyPlan.budgetTier;
+      input.weeklyCost = planToSave.weeklyCost;
+      input.budgetTier = planToSave.budgetTier;
       input.name = "Weekly Meal Plan " + new Date().toLocaleDateString();
 
-      const res = await saveMutation({
+      await saveMutation({
         variables: { input }
       });
-
-      if (res.data?.saveWeeklyMealPlan) {
-        Modal.success({
-          title: 'Plan Saved!',
-          content: 'Your meal plan has been permanently saved to your account.',
-        });
-      }
     } catch (e) {
-      console.error("Save failed", e);
-      Modal.error({
-        title: 'Save Failed',
-        content: 'There was an error saving your meal plan. Please try again.',
-      });
+      console.warn("Auto-save plan skipped or failed:", e);
     }
   };
 
@@ -503,14 +493,6 @@ export default function TimetablePage() {
                   <ReloadOutlined className="text-base" />
                   Regenerate
                 </Link>
-                <button
-                  onClick={handleSavePlan}
-                  disabled={isSaving || !weeklyPlan}
-                  className="px-4 py-3 rounded-full font-bold text-white bg-app_secondary hover:bg-orange-600 transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 shadow-md shadow-orange-100"
-                >
-                  <SaveOutlined className="text-base" />
-                  {isSaving ? "Saving..." : "Save Plan"}
-                </button>
                 <Link
                   href={conts.paths.timetable + "/edit"}
                   className="px-4 py-3 rounded-full font-bold text-app_secondary text-sm border-2 border-app_secondary hover:bg-orange-50 transition-all active:scale-95 flex items-center justify-center gap-2 shadow-sm"
@@ -520,7 +502,7 @@ export default function TimetablePage() {
                 </Link>
                 <Link
                   href={conts.paths.checkout}
-                  className="bg-app_secondary hover:bg-[#F4511E] text-white text-sm px-6 py-3 rounded-full font-bold flex items-center justify-center gap-2 transition-all active:scale-95 shadow-md shadow-orange-100"
+                  className="col-span-2 md:col-span-1 bg-app_secondary hover:bg-[#F4511E] text-white text-sm px-6 py-3 rounded-full font-bold flex items-center justify-center gap-2 transition-all active:scale-95 shadow-md shadow-orange-100"
                 >
                   <ShoppingCartOutlined className="text-base" />
                   Checkout
