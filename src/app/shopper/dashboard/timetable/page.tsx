@@ -170,10 +170,6 @@ export default function TimetablePage() {
           setTimeout(() => {
             setCalendarModalOpen(true);
           }, 500);
-        } else if (!localStorage.getItem("easemeals_feedback_shown")) {
-          setTimeout(() => {
-            setFeedbackModalOpen(true);
-          }, 1200);
         }
       }
 
@@ -319,6 +315,14 @@ export default function TimetablePage() {
 
       pdf.save(`EaseMeals-Timetable-${new Date().toISOString().split("T")[0]}.pdf`);
       message.success({ content: "Timetable downloaded successfully!", key: "downloading" });
+
+      // Trigger one-time feedback modal after downloading timetable
+      if (!localStorage.getItem("easemeals_feedback_shown")) {
+        localStorage.setItem("easemeals_feedback_shown", "true");
+        setTimeout(() => {
+          setFeedbackModalOpen(true);
+        }, 500);
+      }
     } catch (error: any) {
       console.error("PDF generation failed:", error?.message || error);
       message.error({ content: `Download failed: ${error?.message || "Unknown error"}`, key: "downloading" });
@@ -397,11 +401,6 @@ export default function TimetablePage() {
         localStorage.setItem("currentTimetable", planStr);
         sessionStorage.setItem("currentTimetable", planStr);
         setIsInitialLoad(false);
-        if (!localStorage.getItem("easemeals_feedback_shown")) {
-          setTimeout(() => {
-            setFeedbackModalOpen(true);
-          }, 1500);
-        }
         return;
       }
 
@@ -424,6 +423,21 @@ export default function TimetablePage() {
 
     init();
   }, [savedPlanData, isLoadingSaved]);
+
+  // Trigger one-time feedback modal after 1 minute (60,000ms) on the timetable page
+  useEffect(() => {
+    if (!weeklyPlan) return;
+    if (localStorage.getItem("easemeals_feedback_shown")) return;
+
+    const timer = setTimeout(() => {
+      if (!localStorage.getItem("easemeals_feedback_shown")) {
+        localStorage.setItem("easemeals_feedback_shown", "true");
+        setFeedbackModalOpen(true);
+      }
+    }, 60000);
+
+    return () => clearTimeout(timer);
+  }, [weeklyPlan]);
 
 
   // --- Loading Overlay Render ---
@@ -657,14 +671,7 @@ export default function TimetablePage() {
       {/* Calendar Export Modal */}
       <CalendarExportModal
         open={calendarModalOpen}
-        onClose={() => {
-          setCalendarModalOpen(false);
-          if (!localStorage.getItem("easemeals_feedback_shown")) {
-            setTimeout(() => {
-              setFeedbackModalOpen(true);
-            }, 600);
-          }
-        }}
+        onClose={() => setCalendarModalOpen(false)}
         weeklyPlan={weeklyPlan}
       />
 
