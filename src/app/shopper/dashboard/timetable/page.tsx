@@ -78,25 +78,33 @@ export default function TimetablePage() {
   // --- Generator Logic ---
   const generateTimetable = async (budgetOverride?: string) => {
     setIsGenerating(true);
-    // use the override (from tier click) or fall back to current state
-    const activeBudget = budgetOverride ?? selectedBudget;
     try {
       // 1. Get Preferences
       const storedPrefs = sessionStorage.getItem("foodPreferences");
       let favoriteFoods: string[] = [];
       let dietaryRestrictions: string[] = [];
-      let weeklyBudget = 100000;
+      let prefTab: string | undefined;
 
       if (storedPrefs) {
         const p = JSON.parse(storedPrefs);
         favoriteFoods = p.favoriteFoods || [];
         dietaryRestrictions = p.dietaryRestrictions || [];
-        if (p.weeklyBudget) weeklyBudget = p.weeklyBudget;
+        if (p.timetableTab) prefTab = p.timetableTab;
+        else if (p.budget === "LOW") prefTab = "Low Budget";
+        else if (p.budget === "LUXURY") prefTab = "Luxury";
+        else if (p.budget === "STANDARD" || p.budget === "HEALTHY") prefTab = "Healthy";
       } else if (prefsData?.myMealPreferences) {
         const p = prefsData.myMealPreferences;
         favoriteFoods = p.favoriteMeals?.map((m: any) => m.name) || [];
         dietaryRestrictions = p.dietaryRestrictions || [];
-        weeklyBudget = p.budget || 100000;
+        if (p.budget === 1) prefTab = "Low Budget";
+        else if (p.budget === 3) prefTab = "Luxury";
+        else prefTab = "Healthy";
+      }
+
+      const activeBudget = budgetOverride ?? prefTab ?? selectedBudget;
+      if (activeBudget !== selectedBudget) {
+        setSelectedBudget(activeBudget);
       }
 
       // Default Nigerian staple foods if user has selected fewer than 6
@@ -115,11 +123,22 @@ export default function TimetablePage() {
       }
       const finalSelectedFoods = Array.from(selectedSet).slice(0, 6);
 
-      // Map selected tab to backend enum
+      // Map selected tab to backend enum & weekly budget ceiling
+      // Low: ₦2,000 - ₦4,500 / meal (max ₦94,500/wk)
+      // Medium (Healthy/Standard): ₦3,500 - ₦6,500 / meal (max ₦136,500/wk)
+      // High (Luxury): > ₦7,000 / meal (max ₦250,000/wk)
       let budgetTier = "STANDARD";
-      if (activeBudget === "Low Budget") budgetTier = "LOW";
-      else if (activeBudget === "Luxury") budgetTier = "LUXURY";
-      else budgetTier = "STANDARD";
+      let weeklyBudget = 136500;
+      if (activeBudget === "Low Budget") {
+        budgetTier = "LOW";
+        weeklyBudget = 94500;
+      } else if (activeBudget === "Luxury") {
+        budgetTier = "LUXURY";
+        weeklyBudget = 250000;
+      } else {
+        budgetTier = "STANDARD";
+        weeklyBudget = 136500;
+      }
 
       // 2. Call Backend
       const res = await generateMutation({
@@ -511,20 +530,24 @@ export default function TimetablePage() {
 
             {/* Tabs */}
             <div className="flex gap-8 border-b border-gray-200 px-2 overflow-x-auto custom-scrollbar whitespace-nowrap">
-              {["Low Budget", "Healthy", "Luxury"].map((tab) => (
+              {[
+                { key: "Low Budget", label: "Low Budget (₦2,000 - ₦4,500)" },
+                { key: "Healthy", label: "Medium / Healthy (₦3,500 - ₦6,500)" },
+                { key: "Luxury", label: "High / Luxury (> ₦7,000)" },
+              ].map((tab) => (
                 <button
-                  key={tab}
+                  key={tab.key}
                   onClick={() => {
-                    setSelectedBudget(tab);
-                    generateTimetable(tab);
+                    setSelectedBudget(tab.key);
+                    generateTimetable(tab.key);
                   }}
-                  className={`pb-4 px-2 text-sm font-bold transition-all relative ${selectedBudget === tab
+                  className={`pb-4 px-2 text-sm font-bold transition-all relative cursor-pointer ${selectedBudget === tab.key
                     ? "text-app_secondary"
                     : "text-text2 hover:text-text1"
                     }`}
                 >
-                  {tab}
-                  {selectedBudget === tab && (
+                  {tab.label}
+                  {selectedBudget === tab.key && (
                     <span className="absolute bottom-0 left-0 w-full h-1 bg-app_secondary rounded-t-full shadow-[0_-2px_4px_rgba(255,107,53,0.2)]" />
                   )}
                 </button>
@@ -607,18 +630,27 @@ export default function TimetablePage() {
               <h3 className="text-base font-bold text-text1 mb-6">
                 Nutrition Summary
               </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="bg-orange-50 border border-orange-100 p-4 rounded-2xl flex flex-col justify-center">
-                  <p className="text-[10px] font-black uppercase tracking-wider text-orange-600 mb-1">Weekly Average Cost</p>
+                  <p className="text-[10px] font-black uppercase tracking-wider text-orange-600 mb-1">Average Cost Per Meal</p>
+                  <p className="text-2xl font-black text-text1">
+                    {weeklyPlan ? `₦${Math.round(weeklyPlan.weeklyCost / 21).toLocaleString()}` : "₦0"}
+                  </p>
+                  <p className="text-[11px] font-semibold text-text2 mt-0.5">
+                    Target: {selectedBudget === "Low Budget" ? "₦2,000 - ₦4,500" : selectedBudget === "Luxury" ? "> ₦7,000" : "₦3,500 - ₦6,500"}
+                  </p>
+                </div>
+                <div className="bg-blue-50 border border-blue-100 p-4 rounded-2xl flex flex-col justify-center">
+                  <p className="text-[10px] font-black uppercase tracking-wider text-blue-600 mb-1">Daily Average Cost (3 Meals)</p>
                   <p className="text-2xl font-black text-text1">
                     {weeklyPlan ? `₦${Math.round(weeklyPlan.weeklyCost / 7).toLocaleString()}` : "₦0"}
                   </p>
                 </div>
                 <div className="bg-green-50 border border-green-100 p-4 rounded-2xl flex flex-col justify-center">
-                  <p className="text-[10px] font-black uppercase tracking-wider text-green-700 mb-1">Budget Status</p>
+                  <p className="text-[10px] font-black uppercase tracking-wider text-green-700 mb-1">Budget Tier</p>
                   <div className="flex items-center gap-2">
                     <p className="text-2xl font-black text-text1 uppercase">
-                      {weeklyPlan?.budgetTier || "Standard"}
+                      {selectedBudget === "Low Budget" ? "LOW" : selectedBudget === "Luxury" ? "HIGH" : "MEDIUM"}
                     </p>
                     <FaCheck className="text-app_primary text-lg" />
                   </div>
