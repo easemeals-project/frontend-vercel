@@ -120,6 +120,7 @@ class AuthService {
         password: params.newPassword,
       });
       if (error) return error.message;
+      await supabase.auth.signOut();
     } catch (error) {
       return getErrorMessage(error);
     }
