@@ -19,19 +19,35 @@ export default function SignUpForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [role, setRole] = useState<UserRole>(UserRole.shopper);
+  const fromPreferences = searchParams.get("from") === "preferences";
 
-  // Get email from URL
+  // Get role from URL
   useEffect(() => {
     const role = searchParams.get("role");
     if (role && Object.values(UserRole).includes(role as UserRole)) {
       setRole(role.toLocaleLowerCase() as UserRole);
     }
-  }, []);
+  }, [searchParams]);
 
   const handleSocials = async (provider: "Google" | "Facebook" | "Apple") => {
     setAuthError(null);
     localStorage.setItem("userRole", role);
-    const error = await authService.socialSignIn(provider, role);
+    if (fromPreferences) {
+      localStorage.setItem("post_signup_target", "timetable");
+    } else {
+      localStorage.removeItem("foodPreferences");
+      sessionStorage.removeItem("foodPreferences");
+      localStorage.removeItem("currentTimetable");
+      sessionStorage.removeItem("currentTimetable");
+      localStorage.setItem("post_signup_target", "preferences");
+    }
+    const nextTarget =
+      role === UserRole.vendor
+        ? conts.paths.vendorDashboard
+        : fromPreferences
+        ? conts.paths.timetable
+        : conts.paths.foodPreferences;
+    const error = await authService.socialSignIn(provider, role, nextTarget);
     // show background error
     if (error) {
       setAuthError(error);
@@ -59,6 +75,15 @@ export default function SignUpForm() {
         }, 5000);
       } else {
         localStorage.setItem("userRole", role); // Store role for verification redirect
+        if (fromPreferences) {
+          localStorage.setItem("post_signup_target", "timetable");
+        } else {
+          localStorage.removeItem("foodPreferences");
+          sessionStorage.removeItem("foodPreferences");
+          localStorage.removeItem("currentTimetable");
+          sessionStorage.removeItem("currentTimetable");
+          localStorage.setItem("post_signup_target", "preferences");
+        }
         sessionStorage.setItem(
           "pending_signup",
           JSON.stringify({
@@ -94,6 +119,11 @@ export default function SignUpForm() {
   return (
     <div className="bg-white/80 backdrop-blur-xl shadow-2xl rounded-3xl p-6 border border-white/50">
       <form onSubmit={formik.handleSubmit} className="space-y-4">
+        {fromPreferences && (
+          <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-xs font-semibold text-[#0c513f]">
+            Your food preferences are saved! Create an account to generate and view your personalized meal timetable.
+          </div>
+        )}
         {authError && (
           <div className="rounded-md border border-red-400 bg-red-100 px-4 py-3 text-red-700">
             <p>{authError}</p>

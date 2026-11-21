@@ -10,7 +10,7 @@ export default function CtaSection() {
     {
       title: "Become a User",
       desc: "Get personalized meal plans & grocery delivery.",
-      link: "/register",
+      link: "/auth/signup",
       bg: "bg-green-50 hover:bg-green-100",
       text: "text-green-700",
       icon: <FaUser />,

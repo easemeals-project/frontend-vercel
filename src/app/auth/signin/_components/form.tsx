@@ -85,14 +85,23 @@ export default function SignInForm() {
           return;
         }
 
-        // 2. Shopper Logic: Check if they have a meal plan
+        // 2. Shopper Logic:
+        // - If user signed up directly (post_signup_target === "preferences"), go to Food Preferences first
+        // - If user entered preferences before signing up (post_signup_target === "timetable" or foodPreferences exists), go to Timetable
+        const postSignupTarget = localStorage.getItem("post_signup_target");
+        const hasPreferences =
+          localStorage.getItem("foodPreferences") !== null ||
+          sessionStorage.getItem("foodPreferences") !== null;
         const hasMealPlan = localStorage.getItem("currentTimetable") !== null;
-        if (hasMealPlan) {
-          router.push(conts.paths.dashboard);
-        } else {
-          // If no meal plan, go to timetable generation (acting as onboarding)
-          // Use paths.timetable if that's where creation happens, or dashboard if it handles it
+
+        if (postSignupTarget === "preferences") {
+          localStorage.removeItem("post_signup_target");
+          router.push(conts.paths.foodPreferences);
+        } else if (postSignupTarget === "timetable" || hasPreferences || hasMealPlan) {
+          localStorage.removeItem("post_signup_target");
           router.push(conts.paths.timetable);
+        } else {
+          router.push(conts.paths.foodPreferences);
         }
       }
       setSubmitting(false);

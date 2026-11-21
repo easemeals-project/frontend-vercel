@@ -119,7 +119,7 @@ export default function HeroSection() {
             <ScrollAnimation direction="up" delay={0.4}>
               <div className="flex flex-col sm:flex-row gap-5 justify-center lg:justify-start w-full sm:w-auto items-center">
                 <Link
-                  href={conts.paths.dashboard}
+                  href={conts.paths.foodPreferences}
                   className="group relative flex items-center justify-center px-10 py-5 bg-[#0a4031] text-white text-xl font-bold rounded-full overflow-hidden shadow-2xl hover:scale-105 active:scale-95 transition-all duration-300 w-full sm:w-auto"
                 >
                   <span className="relative z-10 flex items-center gap-3">

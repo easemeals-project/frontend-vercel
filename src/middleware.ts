@@ -132,7 +132,12 @@ export async function middleware(request: NextRequest) {
   }
 
   // --- USER IS NOT AUTHENTICATED ---
-  // If they try to visit a protected route, redirect to signin
+  // Allow guests to access the Food Preferences page (/shopper/dashboard/food-preferences) before signing up
+  if (pathname.startsWith(path.foodPreferences)) {
+    return response;
+  }
+
+  // If they try to visit any other protected route, redirect to signin
   if (protectedRoutes.some((route) => pathname.startsWith(route))) {
     signInUrl.searchParams.set("redirectedFrom", pathname);
     return NextResponse.redirect(signInUrl);

@@ -82,7 +82,9 @@ export default function TimetablePage() {
     setIsGenerating(true);
     try {
       // 1. Get Preferences
-      const storedPrefs = sessionStorage.getItem("foodPreferences");
+      const storedPrefs =
+        sessionStorage.getItem("foodPreferences") ||
+        localStorage.getItem("foodPreferences");
       let favoriteFoods: string[] = [];
       let dietaryRestrictions: string[] = [];
       let prefTab: string | undefined;
@@ -385,10 +387,21 @@ export default function TimetablePage() {
   // Trigger on Mount or Data Change
   useEffect(() => {
     const init = async () => {
-      // 0. Check for regeneration signal (from preferences)
-      const needsRegen = sessionStorage.getItem("needs_regeneration") === "true";
+      // If user just signed up directly without setting preferences first, take them to Food Preferences
+      if (localStorage.getItem("post_signup_target") === "preferences") {
+        localStorage.removeItem("post_signup_target");
+        router.replace(conts.paths.foodPreferences);
+        return;
+      }
+
+      // 0. Check for regeneration signal (from preferences before or after signup)
+      const needsRegen =
+        sessionStorage.getItem("needs_regeneration") === "true" ||
+        localStorage.getItem("needs_regeneration") === "true";
       if (needsRegen) {
         sessionStorage.removeItem("needs_regeneration");
+        localStorage.removeItem("needs_regeneration");
+        localStorage.removeItem("post_signup_target");
         generateTimetable();
         setIsInitialLoad(false);
         return;
@@ -416,13 +429,21 @@ export default function TimetablePage() {
 
       // 3. Fallback to generation if no saved plan and not loading
       if (!isLoadingSaved && !savedPlanData?.latestMealPlan) {
+        const hasLocalPrefs =
+          !!sessionStorage.getItem("foodPreferences") ||
+          !!localStorage.getItem("foodPreferences");
+        const hasRemotePrefs = !!prefsData?.myMealPreferences?.favoriteMeals?.length;
+        if (!hasLocalPrefs && !hasRemotePrefs) {
+          router.replace(conts.paths.foodPreferences);
+          return;
+        }
         generateTimetable();
         // setIsInitialLoad is handled inside generateTimetable
       }
     };
 
     init();
-  }, [savedPlanData, isLoadingSaved]);
+  }, [savedPlanData, isLoadingSaved, prefsData, router]);
 
   // Trigger one-time feedback modal after 1 minute (60,000ms) on the timetable page
   useEffect(() => {

@@ -13,6 +13,7 @@ import {
     DownOutlined,
 } from "@ant-design/icons";
 import conts from "@/lib/conts";
+import { createClient } from "@/lib/supabase/client";
 import {
     GetMyMealPreferencesResult,
     UpsertFoodPreferencesResult,
@@ -143,17 +144,37 @@ export default function FoodPreferencesFull() {
     >(UPSERT_FOOD_PREFERENCES);
 
     useEffect(() => {
-        if (data?.myMealPreferences) {
+        if (data?.myMealPreferences && data.myMealPreferences.favoriteMeals?.length > 0) {
             const prefs = data.myMealPreferences;
             setFavoriteFoods(prefs.favoriteMeals.map((m: any) => m.name));
-            setDietaryRestrictions(prefs.dietaryRestrictions);
-            setFamilySize(prefs.familySize);
+            setDietaryRestrictions(prefs.dietaryRestrictions || []);
+            setFamilySize(prefs.familySize || 1);
             // Map budget (Backend float: 1.0=Low, 2.0=Medium, 3.0=High)
             const bVal = prefs.budget;
             if (bVal && bVal <= 1) setBudget("low");
             else if (bVal && bVal > 2) setBudget("high");
             else setBudget("medium");
+            return;
         }
+        // Fallback to locally stored preferences if available
+        try {
+            const raw = sessionStorage.getItem("foodPreferences") || localStorage.getItem("foodPreferences");
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                if (Array.isArray(parsed.favoriteFoods) && parsed.favoriteFoods.length > 0) {
+                    setFavoriteFoods(parsed.favoriteFoods);
+                }
+                if (Array.isArray(parsed.dietaryRestrictions)) {
+                    setDietaryRestrictions(parsed.dietaryRestrictions);
+                }
+                if (parsed.familySize) {
+                    setFamilySize(Number(parsed.familySize) || 1);
+                }
+                if (parsed.budget === "LOW") setBudget("low");
+                else if (parsed.budget === "LUXURY") setBudget("high");
+                else if (parsed.budget) setBudget("medium");
+            }
+        } catch {}
     }, [data]);
 
     // Calculate progress (capped at 100%)
@@ -211,7 +232,10 @@ export default function FoodPreferencesFull() {
     };
 
     const handleGenerateTimetable = async () => {
-        await handleSave();
+        if (favoriteFoods.length < MIN_FOODS) {
+            message.warning(`Please add at least ${MIN_FOODS} food items.`);
+            return;
+        }
 
         let budgetEnum = "STANDARD";
         let timetableTab = "Healthy";
@@ -226,19 +250,35 @@ export default function FoodPreferencesFull() {
             weeklyBudget = 250000;
         }
 
-        sessionStorage.setItem("foodPreferences", JSON.stringify({
+        const prefsPayload = JSON.stringify({
             favoriteFoods,
             dietaryRestrictions,
             familySize,
             budget: budgetEnum,
             timetableTab,
             weeklyBudget: weeklyBudget * Math.max(1, familySize),
-        }));
+        });
 
-        if (favoriteFoods.length >= MIN_FOODS) {
-            sessionStorage.setItem("needs_regeneration", "true");
-            router.push(conts.paths.timetable);
+        sessionStorage.setItem("foodPreferences", prefsPayload);
+        localStorage.setItem("foodPreferences", prefsPayload);
+        sessionStorage.setItem("needs_regeneration", "true");
+        localStorage.setItem("needs_regeneration", "true");
+
+        const supabase = createClient();
+        const { data: { session } } = await supabase.auth.getSession();
+
+        if (!session?.user) {
+            // Guest flow: preferences collected first -> prompt to sign up -> then timetable
+            localStorage.setItem("post_signup_target", "timetable");
+            message.info("Preferences saved! Please sign up to generate your personalized timetable.");
+            router.push(`${conts.paths.signup}?from=preferences`);
+            return;
         }
+
+        // Logged-in flow: save preferences to backend and proceed to timetable
+        localStorage.removeItem("post_signup_target");
+        await handleSave();
+        router.push(conts.paths.timetable);
     };
 
     const dietaryOptions = [
